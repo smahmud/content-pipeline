@@ -1,13 +1,13 @@
 # 🧠 Content Pipeline
 
-A modular, multi-agent pipeline for extracting, enriching, and publishing audio-based content from platforms like YouTube.  
+A modular, multi-agent pipeline for extracting, enriching, and publishing media content from multiple platforms including YouTube, TikTok, and Vimeo.  
 Built for transparency, auditability, and enterprise-grade scalability.
 
 ## 🧩 Architecture Overview
 
-- **Multi-agent orchestration** via MCP server  
-- **LLM enrichment** and semantic tagging  
-- **GUI integration** for contributor workflows  
-- **Transparent logging** and schema discipline
+- **Modular extractors** for YouTube and local files with extensible platform support
+- **AI-powered transcription** with multiple engine options (Whisper local, API, auto-selection)  
+- **Schema-driven design** with structured metadata and transcript validation
+- **CLI-first architecture** with planned GUI and MCP server integration
 
-📚 See full documentation in [`docs/README.md`](docs/README.md)
+� [Get Started](docs/installation-guide.md) | 📚 [Full Documentation](docs/README.md)

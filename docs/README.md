@@ -1,27 +1,30 @@
 # 🧠 Content Pipeline
 
-A modular, multi-agent pipeline for extracting, enriching, and publishing audio-based content from platforms like YouTube.  
-Designed for transparency, auditability, and enterprise-grade scalability.
+A modular, multi-agent pipeline for extracting, enriching, and publishing media content from platforms like YouTube, TikTok, and Vimeo. Designed for transparency, auditability, and enterprise-grade scalability.
 
 ---
 
 ## 🚀 Overview
 
-This project orchestrates audio extraction, transcription, metadata enrichment, and publishing workflows across multiple platforms. It supports CLI invocation, schema enforcement, and future agent-based routing via an MCP server.
+This project orchestrates audio extraction, transcription, metadata enrichment, and publishing workflows across multiple platforms. It supports CLI invocation, schema enforcement, and future agent-based routing via an MCP server. Powered by AI transcription and LLM enrichment for intelligent content transformation and multi-format publishing.
 
-For system internals, see [docs/architecture.md](docs/architecture.md).  
-For folder layout, see [docs/project_structure.md](docs/project_structure.md).  
-For testing strategy and coverage, see [docs/test_strategy.md](docs/test_strategy.md).
-For schema definitions, see [transcript_schema.md](transcript_schema.md) and [metadata_schema.md](metadata_schema.md)
+For installation and setup, see [installation-guide.md](installation-guide.md).  
+For CLI commands and usage, see [cli-commands.md](cli-commands.md).  
+For system internals, see [architecture.md](architecture.md).  
+For folder layout, see [project_structure.md](project_structure.md).  
+For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 
 ---
 
 ## 📦 Key Features
 
-- Modular extractors for YouTube and local files, with shared interface for future platforms
-- CLI orchestration with structured logging and error handling
-- Unified metadata schema with validation and test coverage
-- Semantic versioning and milestone-based release discipline
+- Multi-platform content extraction and ingestion (YouTube, TikTok, Vimeo, local files, cloud storage)
+- AI-powered transcription with multiple engine support (Whisper local, API, auto-selection)
+- LLM-driven content enrichment and semantic analysis (summarization, tagging, chapters, highlights)
+- Multi-format content generation and publishing (blogs, tweet threads, SEO metadata, social media)
+- Enterprise-grade architecture with schema validation and audit trails
+- Modular CLI-first design with GUI and API interfaces
+- Flexible storage and deployment options (local, cloud, hybrid, multi-provider)
 
 ---
 
@@ -35,32 +38,30 @@ For schema definitions, see [transcript_schema.md](transcript_schema.md) and [me
 - Metadata extraction and schema enforcement
 - Architecture overhaul and multi-agent readiness
 - Transcriber functionality with Whisper adapter, transcript normalization, and schema persistence
-
----
+- Modular CLI architecture with `cli/` package, shared options, extensible subcommands, and comprehensive testing
 
 ### 🧭 Upcoming
-
-- 🔧 Refactor CLI into modular subcommands with `cli/` folder, improving maintainability and contributor onboarding
-- 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata  
-- 📝 Format outputs for publishing (blogs, threads, chapters, SEO)  
-- 📦 Archive and index enriched content in a searchable store  
-- 🧠 Integrate MCP server into extraction and transcription workflows
-- 🖥️ Build a GUI for reviewing and editing metadata  
+- Enhanced Transcription & Configuration: Explicit engine selection (whisper-local, whisper-api, auto), YAML configuration management, environment variable support, and user-controlled output paths
+- 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata
+- 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
+- 📦 Archive and index enriched content in a searchable store
+- 🧠 Integrate MCP server for agent routing, retries, and tagging
+- 🖥️ Build a GUI for reviewing and editing metadata
 - 📊 Add real-time observability: logging, tracing, and metrics
 
 ---
 
-## 📄 License
+## � License
 
 This project is licensed under  
 **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
 
 You may:
-- Share and adapt the material with attribution  
-- Not use it for commercial purposes  
-- Not use it for training machine learning models (including LLMs) without explicit permission  
+- Share and adapt the material with attribution
+- Not use it for commercial purposes
+- Not use it for training machine learning models (including LLMs) without explicit permission
 
 See [LICENSE.md](../LICENSE.md) for full legal terms.  
 Full license text: [https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)
-
-
+</content>
+</invoke>

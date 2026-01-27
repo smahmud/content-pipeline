@@ -1,9 +1,11 @@
 """
-File: main_cli.py
+Extract Subcommand Module
 
-Command-line interface for running the transcription pipeline.
-Handles audio extraction, adapter selection, transcription, and output persistence.
+This module implements the extract subcommand for the Content Pipeline CLI.
+It handles audio and metadata extraction from various sources including
+YouTube URLs, local files, and cloud storage.
 """
+
 import os
 import json
 import sys
@@ -13,36 +15,21 @@ from pipeline.extractors.youtube.extractor import YouTubeExtractor
 from pipeline.extractors.dispatch import classify_source
 from pipeline.extractors.schema.metadata import build_local_placeholder_metadata
 from pipeline.extractors.local.file_audio import extract_audio_from_file
-from pipeline.config.logging_config import configure_logging
-from pipeline.transcribers.adapters.whisper import WhisperAdapter
-from pipeline.transcribers.normalize import normalize_transcript_v1
-from pipeline.transcribers.persistence import LocalFilePersistence
+from .shared_options import input_option, output_option
+from .help_texts import EXTRACT_HELP, EXTRACT_SOURCE_HELP, EXTRACT_OUTPUT_HELP
 
-from cli.help_texts import (
-    EXTRACT_SOURCE_HELP,
-    EXTRACT_OUTPUT_HELP,
-    TRANSCRIBE_SOURCE_HELP,
-    TRANSCRIBE_OUTPUT_HELP,
-    TRANSCRIBE_LANGUAGE_HELP
-)
 
-# Config logging
-configure_logging()
-
-# Now you can use logging as usual
-logging.info("CLI started")
-
-@click.group()
-def cli():
-    """Content Pipeline CLI"""
-    pass
-
-@cli.command()
-@click.option("--source", required=True, help=EXTRACT_SOURCE_HELP)
-@click.option("--output", default="output.mp3", help=EXTRACT_OUTPUT_HELP)
+@click.command()
+@input_option(help=EXTRACT_SOURCE_HELP)
+@output_option(help=EXTRACT_OUTPUT_HELP)
 def extract(source, output):
     """
-    Extract audio from the source file and save it to the specified output path.    
+    Extract audio from the source file and save it to the specified output path.
+    
+    Supports extraction from:
+    - YouTube URLs (streaming)
+    - Local video files (file_system)
+    - Cloud storage URLs (storage) - placeholder for future implementation
     """
     source_type = classify_source(source)
     
@@ -50,7 +37,7 @@ def extract(source, output):
     output_path = os.path.join("output", output)
     metadata_path = output_path.replace(".mp3", ".json")
 
-    if source_type =="streaming":        
+    if source_type == "streaming":        
         extractor = YouTubeExtractor()
         try:
             metadata = extractor.extract_metadata(source)            
@@ -81,7 +68,7 @@ def extract(source, output):
         # Placeholder for future extractor logic
         logging.warning("Cloud storage extraction not yet implemented.")
 
-    else: # file_system
+    else:  # file_system
         if not os.path.exists(source):
             logging.error(f"Input file not found: {source}")
             print("Error: Input file does not exist.")
@@ -104,43 +91,3 @@ def extract(source, output):
             print("Warning: Audio extraction failed.")
         
     print("\n Done. You may continue using the terminal.")
-
-
-@cli.command()
-@click.option("--source", required=True, help=TRANSCRIBE_SOURCE_HELP)
-@click.option("--output", default="transcript.json", help=TRANSCRIBE_OUTPUT_HELP)
-@click.option("--language", default=None, help=TRANSCRIBE_LANGUAGE_HELP)
-def transcribe(source, output, language):
-    """
-    Extract audio from the source, run transcription, and save the normalized transcript.
-    """
-    # Validate source file
-    if not os.path.exists(source):
-        logging.error(f"Audio file not found: {source}")
-        print("Error: Audio file does not exist.")
-        sys.exit(1)
-
-    # Prepare output paths
-    os.makedirs("output", exist_ok=True)
-    output_path = os.path.join("output", output)
-
-    # Run transcription
-    adapter = WhisperAdapter(model_name="base")  # You can make model configurable later
-    raw_transcript = adapter.transcribe(source, language=language)
-    transcript = normalize_transcript_v1(raw_transcript, adapter)
-
-    # Save transcript
-    try:
-        strategy = LocalFilePersistence()
-        strategy.persist(transcript, output_path)
-        logging.info(f"Transcript saved to: {output_path}")
-    except Exception as e:
-        logging.error(f"Failed to save transcript: {e}")
-        print("Warning: Could not save transcript.")
-
-    print("\n Done. Transcript generated.")
-
-if __name__ == "__main__":
-    cli()
-
-

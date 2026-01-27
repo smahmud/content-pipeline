@@ -27,3 +27,16 @@ output/
 *.code-workspace
 .vscode/
 
+# Documentation folders excluded from versioning
+docs/milestones/
+docs/planing/
+docs/strategy/
+docs/tools/
+docs/code_review/
+
+# Kiro development artifacts
+.kiro/
+
+# Hypothesis testing artifacts
+.hypothesis/
+

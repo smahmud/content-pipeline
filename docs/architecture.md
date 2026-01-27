@@ -79,22 +79,16 @@ Handles transcript serialization and file output:
 
 ---
 
-### 2. CLI Orchestration
+### 3. CLI Orchestration
 
-`main_cli.py` — CLI entry point located at the project root
+Modular CLI architecture refactored in v0.6.0 into the `cli/` package.
 
-Invokes pipeline stages via command-line. Uses Click-based named options with contributor-friendly help text and schema-enforced output.
-
----
-
-#### 🧩 Pipeline Entry
-
-The CLI is organized into subcommands using Click groups:
+The CLI is organized into subcommands using Click groups with shared components:
 
 - `extract` — triggers the extraction pipeline
 - `transcribe` — triggers the transcription pipeline
 
-Each subcommand accepts named options for clarity and contributor ergonomics.
+Each subcommand is implemented as a separate module with reusable decorators and centralized help text.
 
 ---
 
@@ -113,7 +107,7 @@ Output includes:
 
 #### 📝 Transcribe Flags
 
-Used when `--transcribe` is active:
+Used with the `transcribe` subcommand:
 
 - `--source` — path to the input audio file (`.mp3`)
 - `--output` — path for saving transcript output (`.json`)
@@ -128,7 +122,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 3. Schema Enforcement
+### 4. Schema Enforcement
 
 #### `pipeline/extractors/schema/metadata.py`
 
@@ -144,7 +138,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 4. Configuration & Logging
+### 5. Configuration & Logging
 
 #### `pipeline/config/logging_config.py`
 
@@ -153,7 +147,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 5. Utilities
+### 6. Utilities
 
 #### `pipeline/utils/retry.py`
 
@@ -162,7 +156,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-## 6. Multi-Agent Protocol (Planned)
+## 7. Multi-Agent Protocol (Planned)
 
 The pipeline will integrate with an MCP server to support agent-based orchestration:
 
@@ -172,7 +166,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 7. Observability & Testing
+## 8. Observability & Testing
 
 - Integration tests validate CLI behavior and extractor output
 - Logging is unified across all components
@@ -180,7 +174,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 8. Test Coverage
+## 9. Test Coverage
 
 - Unit tests validate extractor logic, schema compliance, and CLI flag behavior
 - Integration tests simulate real input scenarios across platforms and verify output normalization
@@ -195,6 +189,8 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
   - `v0.2.x`: CLI integration and logging hardening
   - `v0.3.x`: Metadata extraction and schema enforcement
   - `v0.4.x`: Architecture overhaul and multi-agent readiness
+  - `v0.5.x`: Transcriber functionality with Whisper integration
+  - `v0.6.0`: CLI refactoring with modular architecture
 
 ---
 
@@ -205,7 +201,7 @@ For full folder and file layout, see [project_structure.md](project_structure.md
 ---
 
 ## 🧭 Future Directions
-- 🔧 Refactor CLI into modular subcommands with `cli/` folder, improving maintainability and contributor onboarding
+- 🧠 Enhanced transcription with explicit engine selection and configuration management
 - 🤖 Summarize transcripts with LLMs to generate structured highlights, tags, and semantic metadata  
 - 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across major social media platforms
 - 📦 Archive and index all enriched content into a searchable store  

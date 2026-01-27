@@ -13,16 +13,19 @@ The testing strategy ensures that all core components — extractors, CLI orches
 ## 2. Test Types
 
 - **Unit Tests**  
-  Validate isolated functions and classes, especially in extractors and schema utilities.
+  Validate isolated functions and classes, especially in extractors, CLI subcommands, and schema utilities.
 
 - **Integration Tests**  
-  Simulate end-to-end flows across CLI, extractors, and metadata normalization.
+  Simulate end-to-end flows across modular CLI, extractors, and metadata normalization.
+
+- **Property-Based Tests**  
+  Use Hypothesis to validate universal properties across CLI operations, ensuring correctness across input ranges.
 
 - **Schema Validation**  
-  Enforce field-level correctness using `pipeline/schema/metadata.py`.
+  Enforce field-level correctness using `pipeline/schema/metadata.py` and `TranscriptV1` schemas.
 
-- **CLI Invocation Tests**  
-  Ensure CLI commands execute correctly with expected flags and outputs.
+- **CLI Subcommand Tests**  
+  Ensure modular CLI commands (`extract`, `transcribe`) execute correctly with shared options and help text consistency.
 
 - **Transcript Normalization Tests**  
   Validate `TranscriptV1` schema compliance and adapter behavior across transcriber outputs.
@@ -50,8 +53,12 @@ tests/
 │   └── sample_whisper_raw_output.json
 ├── output/
 ├── cli/
-│   ├── test_extract_cli.py
-│   └── test_transcribe_cli.py
+│   ├── test_extract.py              # Extract subcommand tests
+│   ├── test_transcribe.py           # Transcribe subcommand tests
+│   ├── test_shared_options.py       # Shared decorator tests
+│   └── test_help_texts.py           # Help text consistency tests
+├── property_tests/
+│   └── test_cli_properties.py       # Property-based tests for CLI refactoring
 ├── integration/
 │   ├── test_extract_pipeline_flow.py
 │   └── test_transcribe_pipeline_flow.py
@@ -72,7 +79,6 @@ tests/
 │       ├── test_persistence.py
 │       ├── test_transcriber.py
 │       └── test_validate.py
-
 ```
 
 ---
@@ -94,6 +100,12 @@ To exclude integration tests and run only unit tests:
 pytest -m "not integration"
 ```
 
+To run only property-based tests:
+
+```bash
+pytest -m "property"
+```
+
 To run only slow tests:
 
 ```bash
@@ -111,13 +123,17 @@ Run the full test suite:
 ```bash
 pytest tests/
 ```
-Run all tests in a specific file:
+Run CLI-specific tests:
 ```bash
-pytest tests/cli/test_extract_cli.py
+pytest tests/cli/
+```
+Run property-based tests:
+```bash
+pytest tests/property_tests/
 ```
 Run a specific test function by name:
 ```bash
-pytest tests/integration/test_extract_pipeline_flow.py::test_extract_audio_from_youtube_integration
+pytest tests/cli/test_transcribe.py::TestTranscribeCommand::test_transcribe_help_output
 ```
 
 >**Note:**
@@ -133,25 +149,49 @@ External dependencies are mocked using `unittest.mock` to ensure deterministic b
 - **YouTube downloads** and file I/O are mocked to avoid network and disk dependencies  
 - **Whisper transcription** is mocked in transcriber adapter tests to isolate normalization and persistence logic  
 - **Metadata builders** are tested with placeholder inputs to avoid real source classification
+- **CLI subcommands** use Click's CliRunner for isolated testing without subprocess calls
+
+### 6. Property-Based Testing Strategy
+
+Property-based tests use Hypothesis to validate universal behaviors across CLI operations:
+
+- **Subcommand Independence**: CLI commands work without importing main_cli.py
+- **Shared Decorator Equivalence**: Shared decorators behave identically to inline Click options
+- **Command Routing**: Click group routes commands correctly to respective modules
+- **Help Text Consistency**: Help output matches centralized constants
+- **Backward Compatibility**: v0.6.0 maintains v0.5.0 CLI interface compatibility
+- **Error Message Consistency**: Error conditions produce consistent, helpful messages
+
+Each property test validates correctness across randomized input ranges, catching edge cases that unit tests might miss.
 
 ---
 
-### 6. Milestone Coverage — v0.5.0
+### 7. Testing Coverage by Milestone
 
-- Transcriber adapter behavior using OpenAI Whisper  
-- Transcript normalization with `TranscriptV1` schema  
-- File-system persistence for transcript and metadata artifacts  
-- CLI subcommand routing via `click` group (`extract`, `transcribe`)  
-- Source classification via `dispatch.classify_source()`  
-- Metadata schema validation for structural source types (`streaming`, `storage`, `file_system`)
+The test strategy evolves with each milestone to ensure comprehensive coverage:
 
----
+#### **Current Testing Focus (v0.6.0)**
+- Modular CLI architecture validation
+- Property-based testing for universal CLI behaviors  
+- Subcommand independence and routing verification
+- Shared decorator behavioral equivalence
+- Help text consistency across commands
+- Backward compatibility with previous CLI interface
 
-### 7. Future Plans
+#### **Next Testing Phase (v0.6.5)**
+- Engine selection and factory pattern testing
+- Configuration management and YAML parsing validation
+- Environment variable integration testing
+- Breaking change migration guidance verification
+- Multi-engine adapter protocol conformance
+
+*For complete milestone details, see [docs/README.md](README.md#milestone-status)*
+
+### 8. Future Testing Plans
 
 - Add test coverage for streaming transcription and confidence scoring  
 - Validate transcript enrichment and segment filtering logic  
-- Scaffold CLI test coverage for modular subcommands (`extract`, `transcribe`, etc.)  
 - Introduce extractor interface compliance tests for future platforms (TikTok, Vimeo)  
 - Integrate coverage reporting and CI hooks for milestone tracking
+- Multi-engine transcription quality and performance benchmarking
 

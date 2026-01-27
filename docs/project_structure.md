@@ -1,6 +1,6 @@
 # 🧱 Project Structure
 
-This document outlines the folder and file layout of the Multi-Agent Content Pipeline. It reflects modularity, semantic discipline, and milestone-aligned growth across extractors, enrichment, publishing, and orchestration.
+This document outlines the folder and file layout of the Content Pipeline. It reflects modularity, semantic discipline, and milestone-aligned growth across extractors, transcription, and CLI architecture.
 
 ---
 
@@ -20,7 +20,20 @@ pipeline/
 │   ├── schemas/             # Transcript normalization models (e.g. transcript_v1)
 ├── config/                  # Logging and runtime setup
 ├── utils/                   # Reusable helpers (e.g., retry logic)
-├── main_cli.py                   # CLI entry point for orchestrating extractors
+```
+
+## 🖥️ `cli/` — Modular CLI Architecture
+
+Refactored in v0.6.0 into a modular, extensible CLI package:
+
+```text
+cli/
+├── __init__.py              # Main CLI group and command registration
+├── __main__.py              # Module execution entry point (python -m cli)
+├── extract.py               # Extract subcommand implementation
+├── transcribe.py            # Transcribe subcommand implementation
+├── shared_options.py        # Reusable option decorators
+└── help_texts.py            # Centralized help text constants
 ```
 
 ---
@@ -29,6 +42,7 @@ pipeline/
 
 - **Unit tests** for extractors, transcriber adapters, schema validators, and utility functions  
 - **Integration tests** for CLI workflows (`extract`, `transcribe`) and pipeline orchestration  
+- **Property-based tests** for CLI behavior validation using Hypothesis framework
 - **Schema compliance** checks for metadata and transcript models (`TranscriptV1`)  
 - **Persistence tests** for transcript and metadata file outputs  
 - **Error handling** tests to ensure graceful failure and retry logic  
@@ -49,9 +63,8 @@ This section describes the purpose of each file located at the root of the repos
 | `pytest.ini`             | Pytest configuration for test discovery and behavior                    |
 | `requirements.txt`       | Runtime dependencies for production use                                 |
 | `requirements-dev.txt`   | Development and testing dependencies                                    |
-| `requirements.lock.test` | Locked test environment for reproducibility                             |
+| `requirements.lock.txt`  | Locked test environment for reproducibility                             |
 | `setup.py`               | Packaging and distribution metadata                                     |
-| `main_cli.py`            | CLI entry point for orchestrating extractors and transcription workflows |
 ```
 
 ---
@@ -65,6 +78,8 @@ This folder contains all architectural, operational, and milestone-related docum
 | `README.md`            | Full project overview, key features, milestones, and licensing terms     |
 | `architecture.md`      | High-level system design, agent orchestration, and milestone alignment  |
 | `project_structure.md` | Explains folder layout and rationale (this file)                        |
+| `cli-commands.md`      | CLI reference and development guide                                     |
+| `installation-guide.md`| Setup and dependency installation guide                                 |
 | `metadata_schema.md`   | Canonical schema contract and field definitions                         |
 | `transcript_schema.md` | Transcript normalization model (`TranscriptV1`) and field specifications |
 | `test_strategy.md`     | How unit and integration tests are structured and validated             |

@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-01-26
+
+### Added
+- Modular CLI architecture with `cli/` package structure for improved maintainability
+- Dual CLI entry points: `python -m cli` and `content-pipeline` console script
+- Comprehensive property-based testing with 84 tests validating 12 correctness properties
+- CLI documentation in `docs/cli-commands.md` and installation guide in `docs/installation-guide.md`
+
+### Changed
+- Refactored monolithic `main_cli.py` into modular subcommand architecture
+- Updated `setup.py` entry point to use new CLI structure
+- Enhanced CLI help system with detailed usage examples and consistent option flags
+- Consolidated contributing documentation into main CLI guide
+
+### Removed
+- `main_cli.py` - replaced with modular CLI architecture
+- `docs/contributing/` folder - consolidated into CLI documentation
+
+### Notes
+- No new functionality added to existing `extract` and `transcribe` commands
+- All command behavior remains identical to v0.5.0
+- Modular architecture establishes foundation for future command development
+
 ## [0.5.0] - 2025-11-11
 
 ### Added
