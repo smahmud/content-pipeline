@@ -10,8 +10,9 @@ Enhanced in v0.6.5 to support:
 - Cost estimation for cloud services
 - Standardized error handling
 """
-from typing import Protocol, Optional, List, Tuple
+from typing import Protocol, Optional, List, Tuple, runtime_checkable
 
+@runtime_checkable
 class TranscriberAdapter(Protocol):
     """
     Enhanced protocol for transcription adapters.
