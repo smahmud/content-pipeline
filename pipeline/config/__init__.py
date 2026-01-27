@@ -1,0 +1,1 @@
+# Configuration management package for content-pipeline v0.6.5
