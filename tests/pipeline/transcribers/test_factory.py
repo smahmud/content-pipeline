@@ -14,7 +14,8 @@ from unittest.mock import Mock, patch, MagicMock
 from pipeline.transcribers.factory import EngineFactory
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
-from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig
+from pipeline.transcribers.adapters.whisper_api import WhisperAPIAdapter
+from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, WhisperAPIConfig
 
 
 class MockAdapter:
@@ -49,7 +50,8 @@ class TestEngineFactory:
         
         available_engines = factory.get_available_engines()
         assert 'whisper-local' in available_engines
-        assert len(available_engines) >= 1
+        assert 'whisper-api' in available_engines
+        assert len(available_engines) >= 2
     
     def test_create_whisper_local_engine(self):
         """Test creating a local Whisper engine."""
@@ -181,6 +183,29 @@ class TestEngineFactory:
         with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
             adapter = factory.create_engine('whisper-local', config)
             assert adapter.model_name == 'large'
+
+    def test_create_whisper_api_engine(self):
+        """Test creating a Whisper API engine with configuration."""
+        factory = EngineFactory()
+        
+        config = TranscriptionConfig(
+            engine='whisper-api',
+            whisper_api=WhisperAPIConfig(
+                api_key='sk-test123',
+                model='gpt-4o-transcribe',
+                temperature=0.1,
+                response_format='verbose_json'
+            )
+        )
+        
+        with patch.object(WhisperAPIAdapter, 'validate_requirements', return_value=[]):
+            adapter = factory.create_engine('whisper-api', config)
+            
+            assert isinstance(adapter, WhisperAPIAdapter)
+            assert adapter.api_key == 'sk-test123'
+            assert adapter.model == 'gpt-4o-transcribe'
+            assert adapter.temperature == 0.1
+            assert adapter.response_format == 'verbose_json'
     
     def test_get_api_key_from_env(self):
         """Test getting API key from environment variables."""
