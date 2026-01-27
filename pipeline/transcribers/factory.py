@@ -30,10 +30,10 @@ class EngineFactory:
     def _register_default_adapters(self) -> None:
         """Register the default engine adapters."""
         # Import here to avoid circular imports
-        from pipeline.transcribers.adapters.whisper import WhisperAdapter
+        from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
         
         # Register the local Whisper adapter
-        self._adapters['whisper-local'] = WhisperAdapter
+        self._adapters['whisper-local'] = WhisperLocalAdapter
     
     def create_engine(self, engine_type: str, config: TranscriptionConfig) -> TranscriberAdapter:
         """
@@ -81,7 +81,10 @@ class EngineFactory:
             Configured adapter instance
         """
         if engine_type == 'whisper-local':
-            return adapter_class(model_name=config.whisper_local.model)
+            return adapter_class(
+                model_name=config.whisper_local.model,
+                device=config.whisper_local.device
+            )
         elif engine_type == 'whisper-api':
             # This will be implemented when we create the WhisperAPIAdapter
             api_key = config.whisper_api.api_key or self._get_api_key_from_env()

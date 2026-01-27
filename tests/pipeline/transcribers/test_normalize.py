@@ -10,12 +10,12 @@ Covers:
 """
 import pytest
 from pipeline.transcribers.normalize import normalize_transcript_v1
-from pipeline.transcribers.adapters.whisper import WhisperAdapter
+from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
 from pipeline.transcribers.schemas.transcript_v1 import TranscriptV1
 
 @pytest.fixture
 def adapter():
-    return WhisperAdapter(model_name="base")
+    return WhisperLocalAdapter(model_name="base")
 
 @pytest.fixture
 def raw_basic():

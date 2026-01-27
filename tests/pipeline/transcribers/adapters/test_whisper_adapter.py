@@ -28,7 +28,7 @@ def test_whisper_invalid_audio_path():
     adapter = WhisperAdapter(model_name="base")
     invalid_path = "tests/assets/does_not_exist.mp3"
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(FileNotFoundError):
         adapter.transcribe(invalid_path)
 
 @pytest.mark.skipif(not os.path.exists(TEST_AUDIO_PATH), reason="Test audio file not found")
@@ -94,7 +94,7 @@ def test_whisper_transcript_normalization():
 
     assert isinstance(transcript, TranscriptV1)
     assert len(transcript.transcript) > 0
-    assert transcript.metadata.engine == "whisper"
+    assert transcript.metadata.engine == "whisper-local"
     assert transcript.metadata.language is not None
 
 def format_timestamp(seconds: float) -> str:

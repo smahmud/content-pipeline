@@ -13,7 +13,7 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pipeline.transcribers.factory import EngineFactory
 from pipeline.transcribers.adapters.base import TranscriberAdapter
-from pipeline.transcribers.adapters.whisper import WhisperAdapter
+from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
 from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig
 
 
@@ -59,10 +59,10 @@ class TestEngineFactory:
             whisper_local=WhisperLocalConfig(model='base')
         )
         
-        with patch.object(WhisperAdapter, 'validate_requirements', return_value=[]):
+        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
             adapter = factory.create_engine('whisper-local', config)
             
-            assert isinstance(adapter, WhisperAdapter)
+            assert isinstance(adapter, WhisperLocalAdapter)
             assert adapter.model_name == 'base'
     
     def test_create_engine_with_requirements_failure(self):
@@ -71,7 +71,7 @@ class TestEngineFactory:
         config = TranscriptionConfig(engine='whisper-local')
         
         # Mock requirements validation to return errors
-        with patch.object(WhisperAdapter, 'validate_requirements', 
+        with patch.object(WhisperLocalAdapter, 'validate_requirements', 
                          return_value=['Whisper not installed', 'Model not found']):
             with pytest.raises(RuntimeError, match="Engine 'whisper-local' requirements not met"):
                 factory.create_engine('whisper-local', config)
@@ -112,7 +112,7 @@ class TestEngineFactory:
         factory = EngineFactory()
         config = TranscriptionConfig(engine='whisper-local')
         
-        with patch.object(WhisperAdapter, 'validate_requirements', return_value=[]):
+        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
             errors = factory.validate_engine_requirements('whisper-local', config)
             
             assert errors == []
@@ -123,7 +123,7 @@ class TestEngineFactory:
         config = TranscriptionConfig(engine='whisper-local')
         
         expected_errors = ['Whisper not installed', 'Model not available']
-        with patch.object(WhisperAdapter, 'validate_requirements', return_value=expected_errors):
+        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=expected_errors):
             errors = factory.validate_engine_requirements('whisper-local', config)
             
             assert errors == expected_errors
@@ -157,8 +157,8 @@ class TestEngineFactory:
         info = factory.get_engine_info('whisper-local')
         
         assert info['engine_type'] == 'whisper-local'
-        assert info['adapter_class'] == 'WhisperAdapter'
-        assert 'pipeline.transcribers.adapters.whisper' in info['module']
+        assert info['adapter_class'] == 'WhisperLocalAdapter'
+        assert 'pipeline.transcribers.adapters.whisper_local' in info['module']
         assert info['is_available'] is True
     
     def test_get_engine_info_unsupported(self):
@@ -178,7 +178,7 @@ class TestEngineFactory:
             whisper_local=WhisperLocalConfig(model='large')
         )
         
-        with patch.object(WhisperAdapter, 'validate_requirements', return_value=[]):
+        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
             adapter = factory.create_engine('whisper-local', config)
             assert adapter.model_name == 'large'
     

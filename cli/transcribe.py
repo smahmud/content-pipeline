@@ -10,7 +10,7 @@ import os
 import sys
 import logging
 import click
-from pipeline.transcribers.adapters.whisper import WhisperAdapter
+from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
 from pipeline.transcribers.normalize import normalize_transcript_v1
 from pipeline.transcribers.persistence import LocalFilePersistence
 from .shared_options import input_option, output_option, language_option
@@ -39,7 +39,7 @@ def transcribe(source, output, language):
     output_path = os.path.join("output", output)
 
     # Run transcription
-    adapter = WhisperAdapter(model_name="base")  # You can make model configurable later
+    adapter = WhisperLocalAdapter(model_name="base")  # You can make model configurable later
     raw_transcript = adapter.transcribe(source, language=language)
     transcript = normalize_transcript_v1(raw_transcript, adapter)
 
