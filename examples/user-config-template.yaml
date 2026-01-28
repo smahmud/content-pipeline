@@ -1,0 +1,132 @@
+# Content Pipeline User Configuration Template
+# Save this file as ~/.content-pipeline/config.yaml for user-wide defaults
+#
+# This configuration applies to all projects unless overridden by:
+# - Project-specific config (./.content-pipeline/config.yaml)
+# - Environment variables (CONTENT_PIPELINE_*, OPENAI_API_KEY)
+# - CLI flags (--engine, --output-dir, etc.)
+
+# =============================================================================
+# USER PREFERENCES
+# =============================================================================
+
+# Your preferred default transcription engine
+# This will be used across all projects unless overridden
+engine: auto
+
+# Default output directory (can use environment variables)
+# Examples:
+#   output_dir: ~/Documents/Transcripts
+#   output_dir: ${HOME}/transcripts
+#   output_dir: /Users/username/transcripts
+output_dir: ~/Documents/Transcripts
+
+# Preferred logging level for your workflow
+log_level: info
+
+# Your default language (if you primarily work with one language)
+# language: en  # Uncomment and set if needed
+
+# =============================================================================
+# PERSONAL ENGINE PREFERENCES
+# =============================================================================
+
+# Local Whisper settings optimized for your hardware
+whisper_local:
+  # Choose model based on your hardware and accuracy needs
+  # Recommended: 'base' for most users, 'small' or 'medium' for better accuracy
+  model: base
+  
+  # Set device based on your hardware
+  # Use 'cuda' if you have a compatible NVIDIA GPU, otherwise 'cpu' or 'auto'
+  device: auto
+
+# OpenAI API settings (if you use the API)
+whisper_api:
+  # IMPORTANT: Set your API key as an environment variable
+  # export OPENAI_API_KEY="your-api-key-here"
+  # DO NOT put your API key directly in this file
+  api_key: ${OPENAI_API_KEY}
+  
+  # API preferences
+  temperature: 0.0
+  timeout: 60
+
+# Auto-selection preferences
+auto_prefer_local: true      # Prefer privacy (local processing)
+auto_fallback_enabled: true  # Allow fallback if preferred engine fails
+
+# =============================================================================
+# WORKFLOW OPTIMIZATIONS
+# =============================================================================
+
+# File handling preferences
+file_handling:
+  # Add any additional formats you commonly work with
+  supported_formats:
+    - mp3
+    - wav
+    - m4a
+    - flac
+    - ogg
+    - webm
+    - mp4
+
+# Output preferences
+output:
+  format: json
+  include_metadata: true
+  include_timestamps: true
+  filename_pattern: "{basename}_transcript.json"
+
+# Logging preferences for your workflow
+logging:
+  # Enable file logging if you want to keep logs
+  enable_file_logging: false
+  
+  # Customize log location if enabled
+  # log_file: ~/logs/content-pipeline.log
+  
+  include_timestamps: true
+
+# =============================================================================
+# COMMON USER SCENARIOS
+# =============================================================================
+
+# Scenario 1: Privacy-focused user (local processing only)
+# Uncomment these settings if you want to ensure audio never leaves your machine:
+#
+# engine: whisper-local
+# whisper_local:
+#   model: medium  # Good balance of accuracy and speed
+#   device: auto
+# auto_prefer_local: true
+# auto_fallback_enabled: false  # Never fall back to cloud services
+
+# Scenario 2: Quality-focused user (prefer cloud services)
+# Uncomment these settings if you prioritize transcription quality:
+#
+# engine: whisper-api
+# auto_prefer_local: false
+# whisper_api:
+#   temperature: 0.0  # Most deterministic output
+
+# Scenario 3: Developer/researcher (detailed logging)
+# Uncomment these settings for development or debugging:
+#
+# log_level: debug
+# logging:
+#   enable_file_logging: true
+#   log_file: ~/logs/content-pipeline-debug.log
+#   include_module_names: true
+
+# Scenario 4: Batch processing user (optimized for speed)
+# Uncomment these settings for processing many files quickly:
+#
+# engine: whisper-local
+# whisper_local:
+#   model: tiny  # Fastest model
+#   device: cuda  # Use GPU if available
+# output:
+#   format: txt  # Simple text output
+#   include_metadata: false

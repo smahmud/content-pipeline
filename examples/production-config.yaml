@@ -1,0 +1,197 @@
+# Production Configuration Example
+# Optimized for enterprise/production deployment
+#
+# This configuration prioritizes:
+# - Reliability and error handling
+# - Comprehensive logging
+# - Security best practices
+# - Performance monitoring
+
+# =============================================================================
+# PRODUCTION SETTINGS
+# =============================================================================
+
+# Use auto-selection with fallback for reliability
+engine: auto
+
+# Production output directory with environment variable
+output_dir: ${CONTENT_PIPELINE_OUTPUT_DIR:-/var/transcripts}
+
+# Warning level logging for production (reduces noise)
+log_level: ${CONTENT_PIPELINE_LOG_LEVEL:-warning}
+
+# No default language (let engine auto-detect)
+language: null
+
+# =============================================================================
+# RELIABLE ENGINE CONFIGURATION
+# =============================================================================
+
+# Local Whisper optimized for server deployment
+whisper_local:
+  # Use base model for good balance of speed/accuracy in production
+  model: base
+  
+  # Auto-detect device (will use GPU if available)
+  device: auto
+  
+  # Longer timeout for production reliability
+  timeout: 600
+  
+  # More retry attempts for production
+  retry_attempts: 5
+  
+  # Longer delay between retries
+  retry_delay: 3.0
+
+# OpenAI API with production settings
+whisper_api:
+  # API key from environment (never hardcode in production)
+  api_key: ${OPENAI_API_KEY}
+  
+  # Use deterministic temperature for consistent results
+  temperature: 0.0
+  
+  # Longer timeout for production
+  timeout: 120
+  
+  # More retry attempts for API reliability
+  retry_attempts: 5
+  
+  # Exponential backoff delay
+  retry_delay: 5.0
+
+# AWS Transcribe for enterprise deployments
+aws_transcribe:
+  region: ${AWS_DEFAULT_REGION:-us-east-1}
+  s3_bucket: ${AWS_TRANSCRIBE_BUCKET}
+  language_code: en-US
+  timeout: 900  # 15 minutes for large files
+  retry_attempts: 3
+
+# =============================================================================
+# PRODUCTION AUTO-SELECTION
+# =============================================================================
+
+# Prefer local for cost control, but allow fallback
+auto_prefer_local: true
+auto_fallback_enabled: true
+
+# Custom priority order for production
+auto_priority_order:
+  - whisper-local  # Try local first (cost-effective)
+  - whisper-api    # Fallback to API if local fails
+  - aws-transcribe # Enterprise fallback
+
+# =============================================================================
+# PRODUCTION FILE HANDLING
+# =============================================================================
+
+file_handling:
+  # Comprehensive format support
+  supported_formats:
+    - mp3
+    - wav
+    - m4a
+    - flac
+    - ogg
+    - webm
+    - mp4
+    - aac
+  
+  # Limit file size for production (100MB)
+  max_file_size: 100
+  
+  # Use system temp directory
+  temp_dir: ${TMPDIR:-/tmp}
+
+# =============================================================================
+# PRODUCTION OUTPUT SETTINGS
+# =============================================================================
+
+output:
+  # JSON format for structured data
+  format: json
+  
+  # Include full metadata for audit trails
+  include_metadata: true
+  
+  # Include timestamps for analysis
+  include_timestamps: true
+  
+  # Production filename pattern with timestamp
+  filename_pattern: "{basename}_{engine}_{timestamp}_transcript.json"
+
+# =============================================================================
+# PRODUCTION LOGGING
+# =============================================================================
+
+logging:
+  # Enable file logging for production
+  enable_file_logging: true
+  
+  # Production log file location
+  log_file: ${CONTENT_PIPELINE_LOG_FILE:-/var/log/content-pipeline/app.log}
+  
+  # Larger log files for production
+  max_log_size: 50
+  
+  # Keep more backup files
+  backup_count: 10
+  
+  # Include timestamps for production logs
+  include_timestamps: true
+  
+  # Include module names for debugging
+  include_module_names: true
+
+# =============================================================================
+# MONITORING AND ALERTING
+# =============================================================================
+
+# Performance monitoring settings
+monitoring:
+  # Enable performance metrics collection
+  enable_metrics: true
+  
+  # Metrics output file
+  metrics_file: ${CONTENT_PIPELINE_METRICS_FILE:-/var/log/content-pipeline/metrics.json}
+  
+  # Alert thresholds
+  alert_thresholds:
+    # Alert if transcription takes longer than 10 minutes
+    max_transcription_time: 600
+    
+    # Alert if error rate exceeds 5%
+    max_error_rate: 0.05
+    
+    # Alert if API costs exceed threshold per hour
+    max_hourly_cost: 10.0
+
+# Health check settings
+health_check:
+  # Enable health check endpoint
+  enabled: true
+  
+  # Health check interval in seconds
+  interval: 60
+  
+  # Health check timeout
+  timeout: 30
+
+# Security settings
+security:
+  # Sanitize file paths
+  sanitize_paths: true
+  
+  # Maximum path length
+  max_path_length: 255
+  
+  # Allowed characters in filenames
+  allowed_filename_chars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
+  
+  # Enable audit logging
+  audit_logging: true
+  
+  # Audit log file
+  audit_log_file: ${CONTENT_PIPELINE_AUDIT_LOG:-/var/log/content-pipeline/audit.log}

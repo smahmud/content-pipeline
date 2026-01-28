@@ -1,0 +1,244 @@
+# Content Pipeline Configuration v0.6.5
+# This file configures transcription engines and output settings for your project
+#
+# Configuration Precedence (highest to lowest):
+# 1. CLI flags (--engine, --output-dir, etc.)
+# 2. Environment variables (CONTENT_PIPELINE_*, OPENAI_API_KEY)
+# 3. Project config (./.content-pipeline/config.yaml) - THIS FILE
+# 4. User config (~/.content-pipeline/config.yaml)
+# 5. System defaults
+
+# =============================================================================
+# CORE SETTINGS
+# =============================================================================
+
+# Default transcription engine to use
+# Options: whisper-local, whisper-api, auto
+# - whisper-local: Process audio locally (privacy-focused, requires installation)
+# - whisper-api: Use OpenAI Whisper API (highest quality, requires API key)
+# - auto: Automatically select best available engine
+engine: auto
+
+# Default output directory for transcripts
+# Supports environment variable substitution: ${VAR_NAME:-default_value}
+# Examples:
+#   output_dir: ./transcripts                    # Relative to current directory
+#   output_dir: /home/user/transcripts          # Absolute path
+#   output_dir: ${HOME}/Documents/transcripts   # Using environment variable
+output_dir: ${CONTENT_PIPELINE_OUTPUT_DIR:-./transcripts}
+
+# Default logging level
+# Options: debug, info, warning, error
+# - debug: Detailed execution information (useful for troubleshooting)
+# - info: Standard progress information (recommended for normal use)
+# - warning: Only warnings and errors
+# - error: Only error messages
+log_level: ${CONTENT_PIPELINE_LOG_LEVEL:-info}
+
+# Default language hint for transcription (optional)
+# Use ISO 639-1 language codes (e.g., 'en', 'es', 'fr', 'de')
+# Set to null to let the engine auto-detect language
+language: null
+
+# =============================================================================
+# ENGINE-SPECIFIC CONFIGURATIONS
+# =============================================================================
+
+# Local Whisper Engine Configuration
+whisper_local:
+  # Whisper model size to use
+  # Options: tiny, base, small, medium, large
+  # - tiny: Fastest, least accurate (~39 MB)
+  # - base: Good balance of speed and accuracy (~74 MB)
+  # - small: Better accuracy, slower (~244 MB)
+  # - medium: High accuracy (~769 MB)
+  # - large: Best accuracy, slowest (~1550 MB)
+  model: ${WHISPER_LOCAL_MODEL:-base}
+  
+  # Device to use for processing
+  # Options: cpu, cuda, auto
+  # - cpu: Use CPU only (slower but works everywhere)
+  # - cuda: Use GPU acceleration (faster, requires NVIDIA GPU)
+  # - auto: Automatically detect best available device
+  device: auto
+  
+  # Compute type for faster-whisper (if available)
+  # Options: default, int8, int8_float16, int16, float16, float32
+  compute_type: default
+  
+  # Operation timeout in seconds
+  timeout: 300
+  
+  # Number of retry attempts on failure
+  retry_attempts: 3
+  
+  # Delay between retry attempts in seconds
+  retry_delay: 1.0
+
+# OpenAI Whisper API Configuration
+whisper_api:
+  # OpenAI API key (required for whisper-api engine)
+  # SECURITY: Use environment variable instead of hardcoding
+  # Get your API key at: https://platform.openai.com/api-keys
+  api_key: ${OPENAI_API_KEY}
+  
+  # OpenAI model to use
+  # Currently only 'whisper-1' is available
+  model: whisper-1
+  
+  # Temperature for transcription (0.0 to 1.0)
+  # Lower values make output more focused and deterministic
+  temperature: 0.0
+  
+  # Response format
+  # Options: json, text, srt, verbose_json, vtt
+  response_format: json
+  
+  # API request timeout in seconds
+  timeout: 60
+  
+  # Number of retry attempts on API failure
+  retry_attempts: 3
+  
+  # Delay between retry attempts in seconds
+  retry_delay: 2.0
+
+# AWS Transcribe Configuration (if using aws-transcribe engine)
+aws_transcribe:
+  # AWS region to use
+  region: ${AWS_DEFAULT_REGION:-us-east-1}
+  
+  # S3 bucket for temporary audio file storage
+  # Required for AWS Transcribe (audio must be in S3)
+  s3_bucket: ${AWS_TRANSCRIBE_BUCKET}
+  
+  # Language code for transcription
+  # Use AWS language codes (e.g., 'en-US', 'es-ES', 'fr-FR')
+  language_code: en-US
+  
+  # Media format
+  # Options: mp3, mp4, wav, flac, ogg, amr, webm
+  media_format: auto
+  
+  # Operation timeout in seconds
+  timeout: 600
+  
+  # Number of retry attempts
+  retry_attempts: 3
+
+# =============================================================================
+# AUTO-SELECTION PREFERENCES
+# =============================================================================
+
+# Auto-selection engine preferences
+# These settings control how the 'auto' engine chooses between available engines
+
+# Prefer local processing when available
+# Set to false to prefer cloud services for potentially better quality
+auto_prefer_local: true
+
+# Enable fallback to other engines if preferred engine fails
+# Set to false to fail immediately if preferred engine is unavailable
+auto_fallback_enabled: true
+
+# Priority order for auto-selection (first available engine is chosen)
+# Uncomment and modify to customize selection priority
+# auto_priority_order:
+#   - whisper-local
+#   - whisper-api
+#   - aws-transcribe
+
+# =============================================================================
+# ADVANCED SETTINGS
+# =============================================================================
+
+# File handling settings
+file_handling:
+  # Supported audio formats
+  # The system will validate input files against these formats
+  supported_formats:
+    - mp3
+    - wav
+    - m4a
+    - flac
+    - ogg
+    - webm
+    - mp4
+  
+  # Maximum file size in MB (0 = no limit)
+  max_file_size: 0
+  
+  # Temporary directory for processing
+  temp_dir: ${TMPDIR:-/tmp}
+
+# Output formatting settings
+output:
+  # Default output format
+  # Options: json, txt, srt, vtt
+  format: json
+  
+  # Include metadata in output
+  include_metadata: true
+  
+  # Include timing information
+  include_timestamps: true
+  
+  # File naming pattern for auto-generated names
+  # Available variables: {basename}, {engine}, {model}, {timestamp}
+  filename_pattern: "{basename}_{engine}_transcript.json"
+
+# Logging settings
+logging:
+  # Enable file logging
+  enable_file_logging: false
+  
+  # Log file path (only used if enable_file_logging is true)
+  log_file: ${CONTENT_PIPELINE_LOG_FILE:-./logs/content-pipeline.log}
+  
+  # Maximum log file size in MB before rotation
+  max_log_size: 10
+  
+  # Number of backup log files to keep
+  backup_count: 5
+  
+  # Include timestamps in console output
+  include_timestamps: true
+  
+  # Include module names in debug output
+  include_module_names: true
+
+# =============================================================================
+# EXAMPLES AND COMMON CONFIGURATIONS
+# =============================================================================
+
+# Example configurations for different use cases:
+
+# Privacy-focused (local only):
+# engine: whisper-local
+# whisper_local:
+#   model: medium
+#   device: auto
+# auto_prefer_local: true
+# auto_fallback_enabled: false
+
+# Quality-focused (cloud services):
+# engine: whisper-api
+# whisper_api:
+#   temperature: 0.0
+# auto_prefer_local: false
+
+# Development/testing:
+# engine: auto
+# log_level: debug
+# whisper_local:
+#   model: tiny  # Fastest for testing
+# logging:
+#   enable_file_logging: true
+
+# Production deployment:
+# engine: auto
+# log_level: warning
+# output_dir: /var/transcripts
+# logging:
+#   enable_file_logging: true
+#   log_file: /var/log/content-pipeline.log
