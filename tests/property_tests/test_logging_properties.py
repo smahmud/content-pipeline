@@ -192,10 +192,10 @@ class TestLoggingConfiguration:
                         assert masked_found, f"Should mask sensitive value for {key}"
     
     @given(
-        engine_names=st.sampled_from(['whisper-local', 'whisper-api', 'aws-transcribe', 'auto']),
+        engine_names=st.sampled_from(['local-whisper', 'openai-whisper', 'aws-transcribe', 'auto']),
         reasons=st.text(min_size=5, max_size=200, alphabet=st.characters(min_codepoint=32, max_codepoint=126)),
         available_engines=st.lists(
-            st.sampled_from(['whisper-local', 'whisper-api', 'aws-transcribe']),
+            st.sampled_from(['local-whisper', 'openai-whisper', 'aws-transcribe']),
             min_size=1,
             max_size=3,
             unique=True

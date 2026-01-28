@@ -6,7 +6,7 @@
 
 # Project-specific engine preference
 # Override this if your project has specific requirements
-engine: whisper-local
+engine: local-whisper
 
 # Project output directory
 # Relative to project root

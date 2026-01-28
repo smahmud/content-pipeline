@@ -50,7 +50,7 @@ def engine_option(help=None):
         return click.option(
             '--engine', '-e',
             required=True,
-            type=click.Choice(['whisper-local', 'whisper-api', 'aws-transcribe', 'auto'], case_sensitive=False),
+            type=click.Choice(['local-whisper', 'openai-whisper', 'aws-transcribe', 'auto'], case_sensitive=False),
             help=help or 'Transcription engine to use'
         )(f)
     return decorator

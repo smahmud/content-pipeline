@@ -30,15 +30,15 @@ class EngineFactory:
     def _register_default_adapters(self) -> None:
         """Register the default engine adapters."""
         # Import here to avoid circular imports
-        from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
-        from pipeline.transcribers.adapters.whisper_api import WhisperAPIAdapter
+        from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
+        from pipeline.transcribers.adapters.openai_whisper import OpenAIWhisperAdapter
         from pipeline.transcribers.adapters.aws_transcribe import AWSTranscribeAdapter
         
         # Register the local Whisper adapter
-        self._adapters['whisper-local'] = WhisperLocalAdapter
+        self._adapters['local-whisper'] = LocalWhisperAdapter
         
         # Register the OpenAI Whisper API adapter
-        self._adapters['whisper-api'] = WhisperAPIAdapter
+        self._adapters['openai-whisper'] = OpenAIWhisperAdapter
         
         # Register the AWS Transcribe adapter
         self._adapters['aws-transcribe'] = AWSTranscribeAdapter
@@ -48,7 +48,7 @@ class EngineFactory:
         Create and configure the specified engine adapter.
         
         Args:
-            engine_type: Type of engine to create (e.g., 'whisper-local', 'whisper-api')
+            engine_type: Type of engine to create (e.g., 'local-whisper', 'openai-whisper')
             config: Complete transcription configuration
             
         Returns:
@@ -88,13 +88,13 @@ class EngineFactory:
         Returns:
             Configured adapter instance
         """
-        if engine_type == 'whisper-local':
+        if engine_type == 'local-whisper':
             return adapter_class(
                 model_name=config.whisper_local.model,
                 device=config.whisper_local.device
             )
-        elif engine_type == 'whisper-api':
-            # Create WhisperAPIAdapter with configuration
+        elif engine_type == 'openai-whisper':
+            # Create OpenAIWhisperAdapter with configuration
             api_key = config.whisper_api.api_key or self._get_api_key_from_env()
             return adapter_class(
                 api_key=api_key,

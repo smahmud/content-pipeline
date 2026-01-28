@@ -49,7 +49,7 @@ Suggestions:
   • Validate YAML syntax online: https://yamlchecker.com/
   
 Example valid configuration:
-  engine: whisper-local
+  engine: local-whisper
   output_dir: ./transcripts
   whisper_local:
     model: base
@@ -190,11 +190,11 @@ Suggestions:
   • Check your usage dashboard: {dashboard_url}
   • Upgrade your plan if needed
   • Wait for quota reset (usually monthly)
-  • Consider using local alternatives: --engine whisper-local
+  • Consider using local alternatives: --engine local-whisper
   
 Alternative:
   # Use local processing instead
-  --engine whisper-local --model base
+  --engine local-whisper --model base
 """
     }
     
@@ -277,7 +277,7 @@ Retry Strategies:
   • Consider using offline alternatives
   
 Offline Alternative:
-  --engine whisper-local  # Process locally without internet
+  --engine local-whisper  # Process locally without internet
 """,
         
         "connection_failed": """
@@ -309,7 +309,7 @@ Suggestions:
   • Use local processing to avoid rate limits
   
 Alternative:
-  --engine whisper-local  # Avoid rate limits entirely
+  --engine local-whisper  # Avoid rate limits entirely
 """
     }
     

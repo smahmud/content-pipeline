@@ -1,20 +1,20 @@
 """
 File: whisper.py
 
-DEPRECATED: This module is deprecated in v0.6.5. Use whisper_local.py instead.
+DEPRECATED: This module is deprecated in v0.6.5. Use local_whisper.py instead.
 
 Implements the WhisperAdapter using OpenAI's Whisper model.
 Conforms to the enhanced TranscriberAdapter protocol.
 """
 import warnings
-from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
+from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
 
 # Deprecation warning
 warnings.warn(
-    "WhisperAdapter is deprecated in v0.6.5. Use WhisperLocalAdapter from whisper_local module instead.",
+    "WhisperAdapter is deprecated in v0.6.5. Use LocalWhisperAdapter from local_whisper module instead.",
     DeprecationWarning,
     stacklevel=2
 )
 
 # Backward compatibility alias
-WhisperAdapter = WhisperLocalAdapter
+WhisperAdapter = LocalWhisperAdapter

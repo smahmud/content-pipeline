@@ -61,7 +61,7 @@ class TestEnvironmentVariables:
         assert any('Invalid WHISPER_LOCAL_MODEL' in error for error in errors)
     
     @patch.dict(os.environ, {
-        'CONTENT_PIPELINE_DEFAULT_ENGINE': 'whisper-api'
+        'CONTENT_PIPELINE_DEFAULT_ENGINE': 'openai-whisper'
     }, clear=True)
     def test_validate_environment_setup_with_warnings(self):
         """Test validation with missing API keys for selected engine."""
@@ -107,20 +107,20 @@ class TestEnvironmentVariables:
         assert 'AWS_ACCESS_KEY_ID' in instructions
     
     def test_check_required_for_whisper_local(self):
-        """Test that whisper-local requires no environment variables."""
-        missing = EnvironmentVariables.check_required_for_engine('whisper-local')
+        """Test that local-whisper requires no environment variables."""
+        missing = EnvironmentVariables.check_required_for_engine('local-whisper')
         assert missing == []
     
     @patch.dict(os.environ, {}, clear=True)
     def test_check_required_for_whisper_api_missing(self):
-        """Test that whisper-api requires OPENAI_API_KEY."""
-        missing = EnvironmentVariables.check_required_for_engine('whisper-api')
+        """Test that openai-whisper requires OPENAI_API_KEY."""
+        missing = EnvironmentVariables.check_required_for_engine('openai-whisper')
         assert missing == ['OPENAI_API_KEY']
     
     @patch.dict(os.environ, {'OPENAI_API_KEY': 'sk-test-key'})
     def test_check_required_for_whisper_api_present(self):
-        """Test that whisper-api is satisfied when API key is present."""
-        missing = EnvironmentVariables.check_required_for_engine('whisper-api')
+        """Test that openai-whisper is satisfied when API key is present."""
+        missing = EnvironmentVariables.check_required_for_engine('openai-whisper')
         assert missing == []
     
     @patch.dict(os.environ, {}, clear=True)

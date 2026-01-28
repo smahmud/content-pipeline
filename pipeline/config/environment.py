@@ -50,7 +50,7 @@ class EnvironmentVariables:
     def get_variable_documentation(cls) -> Dict[str, str]:
         """Get documentation for all environment variables."""
         return {
-            cls.DEFAULT_ENGINE: "Default transcription engine (whisper-local, whisper-api, aws-transcribe, auto)",
+            cls.DEFAULT_ENGINE: "Default transcription engine (local-whisper, openai-whisper, aws-transcribe, auto)",
             cls.OUTPUT_DIR: "Default output directory for transcripts",
             cls.LOG_LEVEL: "Default logging level (debug, info, warning, error)",
             cls.WHISPER_LOCAL_MODEL: "Default Whisper model size (tiny, base, small, medium, large)",
@@ -75,9 +75,9 @@ class EnvironmentVariables:
         # Check for engine-specific requirements
         default_engine = os.environ.get(cls.DEFAULT_ENGINE)
         if default_engine:
-            if default_engine not in ['whisper-local', 'whisper-api', 'aws-transcribe', 'auto']:
+            if default_engine not in ['local-whisper', 'openai-whisper', 'aws-transcribe', 'auto']:
                 errors.append(f"Invalid {cls.DEFAULT_ENGINE}: '{default_engine}'. "
-                            f"Valid options: whisper-local, whisper-api, aws-transcribe, auto")
+                            f"Valid options: local-whisper, openai-whisper, aws-transcribe, auto")
         
         # Check log level if set
         log_level = os.environ.get(cls.LOG_LEVEL)
@@ -94,9 +94,9 @@ class EnvironmentVariables:
                             f"Valid options: tiny, base, small, medium, large")
         
         # Check for API key availability based on default engine
-        if default_engine == 'whisper-api':
+        if default_engine == 'openai-whisper':
             if not os.environ.get(cls.OPENAI_API_KEY):
-                warnings.append(f"Default engine is 'whisper-api' but {cls.OPENAI_API_KEY} is not set")
+                warnings.append(f"Default engine is 'openai-whisper' but {cls.OPENAI_API_KEY} is not set")
         
         if default_engine == 'aws-transcribe':
             if not os.environ.get(cls.AWS_ACCESS_KEY_ID):
@@ -138,14 +138,14 @@ For persistent setup, add these to your shell profile (~/.bashrc, ~/.zshrc, etc.
         Check if required environment variables are set for specific engine.
         
         Args:
-            engine_type: Engine type to check (whisper-local, whisper-api, aws-transcribe)
+            engine_type: Engine type to check (local-whisper, openai-whisper, aws-transcribe)
             
         Returns:
             List of missing required environment variables
         """
         missing = []
         
-        if engine_type == 'whisper-api':
+        if engine_type == 'openai-whisper':
             if not os.environ.get(cls.OPENAI_API_KEY):
                 missing.append(cls.OPENAI_API_KEY)
         

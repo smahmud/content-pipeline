@@ -1,7 +1,7 @@
 """
 File: test_whisper_api_adapter.py
 
-Unit tests for WhisperAPIAdapter behavior and error handling.
+Unit tests for OpenAIWhisperAdapter behavior and error handling.
 
 Covers:
 - OpenAI Whisper API transcription functionality
@@ -13,16 +13,16 @@ Covers:
 import os
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from pipeline.transcribers.adapters.whisper_api import WhisperAPIAdapter
+from pipeline.transcribers.adapters.openai_whisper import OpenAIWhisperAdapter
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 
 
-class TestWhisperAPIAdapter:
-    """Test the WhisperAPIAdapter class."""
+class TestOpenAIWhisperAdapter:
+    """Test the OpenAIWhisperAdapter class."""
 
     def test_adapter_implements_enhanced_protocol(self):
-        """Test that WhisperAPIAdapter implements all enhanced protocol methods."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        """Test that OpenAIWhisperAdapter implements all enhanced protocol methods."""
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Check that all protocol methods exist
         assert hasattr(adapter, 'transcribe')
@@ -39,17 +39,17 @@ class TestWhisperAPIAdapter:
         assert callable(adapter.estimate_cost)
 
     def test_adapter_complies_with_protocol(self):
-        """Test that WhisperAPIAdapter is recognized as a TranscriberAdapter."""
-        adapter: TranscriberAdapter = WhisperAPIAdapter(api_key="sk-test123")
+        """Test that OpenAIWhisperAdapter is recognized as a TranscriberAdapter."""
+        adapter: TranscriberAdapter = OpenAIWhisperAdapter(api_key="sk-test123")
         engine, version = adapter.get_engine_info()
         assert isinstance(engine, str)
         assert isinstance(version, str)
-        assert engine == "whisper-api"
+        assert engine == "openai-whisper"
 
     def test_initialization_with_default_parameters(self):
         """Test adapter initialization with default parameters."""
         with patch.dict(os.environ, {'OPENAI_API_KEY': 'sk-test123'}):
-            adapter = WhisperAPIAdapter()
+            adapter = OpenAIWhisperAdapter()
             
             assert adapter.api_key == "sk-test123"
             assert adapter.model == "whisper-1"
@@ -59,7 +59,7 @@ class TestWhisperAPIAdapter:
 
     def test_initialization_with_custom_parameters(self):
         """Test adapter initialization with custom parameters."""
-        adapter = WhisperAPIAdapter(
+        adapter = OpenAIWhisperAdapter(
             api_key="sk-custom123",
             model="gpt-4o-transcribe",
             temperature=0.2,
@@ -76,22 +76,22 @@ class TestWhisperAPIAdapter:
         """Test API key retrieval from environment variables."""
         # Test OPENAI_API_KEY
         with patch.dict(os.environ, {'OPENAI_API_KEY': 'sk-env123'}):
-            adapter = WhisperAPIAdapter()
+            adapter = OpenAIWhisperAdapter()
             assert adapter.api_key == "sk-env123"
         
         # Test CONTENT_PIPELINE_OPENAI_API_KEY
         with patch.dict(os.environ, {'CONTENT_PIPELINE_OPENAI_API_KEY': 'sk-pipeline123'}, clear=True):
-            adapter = WhisperAPIAdapter()
+            adapter = OpenAIWhisperAdapter()
             assert adapter.api_key == "sk-pipeline123"
         
         # Test no environment variable
         with patch.dict(os.environ, {}, clear=True):
-            adapter = WhisperAPIAdapter()
+            adapter = OpenAIWhisperAdapter()
             assert adapter.api_key is None
 
     def test_get_supported_formats_returns_list(self):
         """Test that get_supported_formats returns a list of strings."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         formats = adapter.get_supported_formats()
         
         assert isinstance(formats, list)
@@ -105,7 +105,7 @@ class TestWhisperAPIAdapter:
 
     def test_estimate_cost_calculation(self):
         """Test cost estimation calculation."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Test 1 minute of audio
         cost = adapter.estimate_cost(60.0)
@@ -129,17 +129,17 @@ class TestWhisperAPIAdapter:
 
     def test_get_engine_info_returns_correct_info(self):
         """Test that get_engine_info returns correct engine information."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123", model="gpt-4o-transcribe")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123", model="gpt-4o-transcribe")
         engine_info = adapter.get_engine_info()
         
         assert isinstance(engine_info, tuple)
         assert len(engine_info) == 2
-        assert engine_info[0] == "whisper-api"
+        assert engine_info[0] == "openai-whisper"
         assert engine_info[1] == "gpt-4o-transcribe"
 
     def test_get_model_info(self):
         """Test that get_model_info returns model information."""
-        adapter = WhisperAPIAdapter(
+        adapter = OpenAIWhisperAdapter(
             api_key="sk-test123",
             model="whisper-1",
             temperature=0.1,
@@ -157,7 +157,7 @@ class TestWhisperAPIAdapter:
 
     def test_get_file_size_limit(self):
         """Test file size limit retrieval."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         limit = adapter.get_file_size_limit()
         
         assert limit == 25 * 1024 * 1024  # 25 MB in bytes
@@ -169,7 +169,7 @@ class TestWhisperAPIAdapter:
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -177,7 +177,7 @@ class TestWhisperAPIAdapter:
 
     def test_validate_requirements_missing_openai_package(self):
         """Test validate_requirements when openai package is not installed."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Mock import error for openai package
         with patch('builtins.__import__', side_effect=ImportError("No module named 'openai'")):
@@ -189,7 +189,7 @@ class TestWhisperAPIAdapter:
 
     def test_validate_requirements_missing_api_key(self):
         """Test validate_requirements when API key is missing."""
-        adapter = WhisperAPIAdapter(api_key=None)
+        adapter = OpenAIWhisperAdapter(api_key=None)
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -198,7 +198,7 @@ class TestWhisperAPIAdapter:
 
     def test_validate_requirements_invalid_api_key_format(self):
         """Test validate_requirements with invalid API key format."""
-        adapter = WhisperAPIAdapter(api_key="invalid-key-format")
+        adapter = OpenAIWhisperAdapter(api_key="invalid-key-format")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -210,7 +210,7 @@ class TestWhisperAPIAdapter:
         """Test validate_requirements when client initialization fails."""
         mock_openai.side_effect = Exception("API connection failed")
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -219,14 +219,14 @@ class TestWhisperAPIAdapter:
 
     def test_transcribe_validates_file_existence(self):
         """Test that transcribe method validates file existence."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         with pytest.raises(FileNotFoundError, match="Audio file not found"):
             adapter.transcribe("nonexistent_file.mp3")
 
     def test_transcribe_validates_file_format(self):
         """Test that transcribe method validates file format."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Create a temporary file with unsupported extension
         import tempfile
@@ -243,7 +243,7 @@ class TestWhisperAPIAdapter:
 
     def test_transcribe_validates_file_size(self):
         """Test that transcribe method validates file size."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Create a temporary file that's too large
         import tempfile
@@ -274,7 +274,7 @@ class TestWhisperAPIAdapter:
         
         mock_client.audio.transcriptions.create.return_value = mock_response
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123", response_format="json")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123", response_format="json")
         
         # Create a temporary valid audio file
         import tempfile
@@ -316,7 +316,7 @@ class TestWhisperAPIAdapter:
         
         mock_client.audio.transcriptions.create.return_value = mock_response
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123", response_format="verbose_json")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123", response_format="verbose_json")
         
         # Create a temporary valid audio file
         import tempfile
@@ -346,7 +346,7 @@ class TestWhisperAPIAdapter:
         
         mock_client.audio.transcriptions.create.return_value = "Hello world"
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123", response_format="text")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123", response_format="text")
         
         # Create a temporary valid audio file
         import tempfile
@@ -378,7 +378,7 @@ class TestWhisperAPIAdapter:
         
         mock_client.audio.transcriptions.create.return_value = mock_response
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Create a temporary valid audio file
         import tempfile
@@ -408,7 +408,7 @@ class TestWhisperAPIAdapter:
         mock_openai.return_value = mock_client
         mock_client.audio.transcriptions.create.side_effect = Exception("API rate limit exceeded")
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Create a temporary valid audio file
         import tempfile
@@ -425,7 +425,7 @@ class TestWhisperAPIAdapter:
 
     def test_supported_formats_immutability(self):
         """Test that supported formats list cannot be modified externally."""
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         formats1 = adapter.get_supported_formats()
         formats2 = adapter.get_supported_formats()
         
@@ -445,7 +445,7 @@ class TestWhisperAPIAdapter:
             'custom_param': 'test_value'
         }
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123", **config_kwargs)
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123", **config_kwargs)
         
         assert adapter.config == config_kwargs
         assert adapter.config['timeout'] == 300
@@ -453,8 +453,8 @@ class TestWhisperAPIAdapter:
         assert adapter.config['custom_param'] == 'test_value'
 
 
-class TestWhisperAPIAdapterIntegration:
-    """Integration tests for WhisperAPIAdapter."""
+class TestOpenAIWhisperAdapterIntegration:
+    """Integration tests for OpenAIWhisperAdapter."""
 
     @patch('openai.OpenAI')
     def test_full_adapter_lifecycle(self, mock_openai):
@@ -469,7 +469,7 @@ class TestWhisperAPIAdapterIntegration:
         mock_client.audio.transcriptions.create.return_value = mock_response
         mock_openai.return_value = mock_client
         
-        adapter = WhisperAPIAdapter(api_key="sk-test123")
+        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
         
         # Validate requirements
         errors = adapter.validate_requirements()
@@ -477,7 +477,7 @@ class TestWhisperAPIAdapterIntegration:
         
         # Get engine info
         engine, version = adapter.get_engine_info()
-        assert engine == "whisper-api"
+        assert engine == "openai-whisper"
         assert version == "whisper-1"
         
         # Get supported formats
@@ -508,14 +508,14 @@ class TestWhisperAPIAdapterIntegration:
         models = ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe']
         
         for model in models:
-            adapter = WhisperAPIAdapter(api_key="sk-test123", model=model)
+            adapter = OpenAIWhisperAdapter(api_key="sk-test123", model=model)
             
             # Check that model is set correctly
             assert adapter.model == model
             
             # Check engine info
             engine, version = adapter.get_engine_info()
-            assert engine == "whisper-api"
+            assert engine == "openai-whisper"
             assert version == model
             
             # Check model info
@@ -527,7 +527,7 @@ class TestWhisperAPIAdapterIntegration:
         formats = ['json', 'text', 'srt', 'verbose_json', 'vtt']
         
         for response_format in formats:
-            adapter = WhisperAPIAdapter(api_key="sk-test123", response_format=response_format)
+            adapter = OpenAIWhisperAdapter(api_key="sk-test123", response_format=response_format)
             
             # Check that format is set correctly
             assert adapter.response_format == response_format

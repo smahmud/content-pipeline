@@ -39,7 +39,7 @@ class TestErrorRecoveryIntegration:
         output_lower = result.output.lower()
         migration_keywords = [
             'engine', 'required', 'breaking', 'v0.6.5',
-            'whisper-local', 'whisper-api', 'auto', 'example'
+            'local-whisper', 'openai-whisper', 'auto', 'example'
         ]
         assert any(keyword in output_lower for keyword in migration_keywords)
         
@@ -59,7 +59,7 @@ class TestErrorRecoveryIntegration:
         
         # Should list valid engines
         output_lower = result.output.lower()
-        valid_engines = ['whisper-local', 'whisper-api', 'auto']
+        valid_engines = ['local-whisper', 'openai-whisper', 'auto']
         assert any(engine in output_lower for engine in valid_engines)
 
     def test_missing_source_file_error_recovery(self, tmp_path):
@@ -68,7 +68,7 @@ class TestErrorRecoveryIntegration:
         
         result = self.runner.invoke(transcribe, [
             '--source', nonexistent_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--output-dir', str(tmp_path / 'output')
         ])
         
@@ -85,7 +85,7 @@ class TestErrorRecoveryIntegration:
         # Create invalid YAML configuration
         invalid_config = tmp_path / "invalid_config.yaml"
         invalid_config.write_text("""
-engine: whisper-local
+engine: local-whisper
 output_dir: ./transcripts
 whisper_local:
   model: base
@@ -94,7 +94,7 @@ whisper_local:
         
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--config', str(invalid_config),
             '--output-dir', str(tmp_path / 'output')
         ])
@@ -112,7 +112,7 @@ whisper_local:
         # Test 1: Missing API key
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-api',
+            '--engine', 'openai-whisper',
             '--output-dir', str(tmp_path / 'output')
         ])
         
@@ -129,7 +129,7 @@ whisper_local:
         
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-api',
+            '--engine', 'openai-whisper',
             '--api-key', 'invalid-key',
             '--output-dir', str(tmp_path / 'output')
         ])
@@ -152,7 +152,7 @@ whisper_local:
             
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--model', 'tiny',
                 '--output-dir', str(restricted_dir)
             ])
@@ -179,7 +179,7 @@ whisper_local:
             
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--output-dir', str(tmp_path / 'output')
             ])
             
@@ -215,7 +215,7 @@ whisper_local:
                         # Should succeed with fallback
                         assert result.exit_code == 0
                         assert "Auto-selected engine:" in result.output
-                        assert "whisper-api" in result.output.lower()
+                        assert "openai-whisper" in result.output.lower()
 
     def test_comprehensive_error_message_formatting(self, tmp_path):
         """Test that error messages are properly formatted and helpful."""
@@ -235,7 +235,7 @@ whisper_local:
         # Test 2: File error formatting
         result = self.runner.invoke(transcribe, [
             '--source', 'nonexistent.mp3',
-            '--engine', 'whisper-local'
+            '--engine', 'local-whisper'
         ])
         
         assert result.exit_code != 0

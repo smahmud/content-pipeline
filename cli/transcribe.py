@@ -3,7 +3,7 @@ Transcribe Subcommand Module
 
 This module implements the transcribe subcommand for the Content Pipeline CLI.
 Enhanced in v0.6.5 to support:
-- Multiple transcription engines (whisper-local, whisper-api, aws-transcribe, auto)
+- Multiple transcription engines (local-whisper, openai-whisper, aws-transcribe, auto)
 - Configuration management with YAML files and environment variables
 - Flexible output path management
 - Breaking changes with clear migration guidance
@@ -227,7 +227,7 @@ def transcribe(source, output, language, engine, model, api_key, output_dir, con
                 engine_name=engine,
                 specific_reason=error_message,
                 installation_command="pip install openai-whisper",
-                available_engines="whisper-local, whisper-api, auto"
+                available_engines="local-whisper, openai-whisper, auto"
             )
             click.echo(error_msg, err=True)
             sys.exit(ExitCodes.ENGINE_NOT_AVAILABLE)
@@ -323,7 +323,7 @@ def _select_and_validate_engine(
         selected_engine, reason = auto_selector.select_engine()
         
         # Log engine selection details
-        available_engines = factory.get_available_engines() if hasattr(factory, 'get_available_engines') else ['whisper-local', 'whisper-api']
+        available_engines = factory.get_available_engines() if hasattr(factory, 'get_available_engines') else ['local-whisper', 'openai-whisper']
         logging_config.log_engine_selection(selected_engine, reason, available_engines)
         
         click.echo(f"Auto-selected engine: {selected_engine}")
@@ -347,8 +347,8 @@ def _select_and_validate_engine(
                 "engine_not_available",
                 engine_name=engine,
                 specific_reason="\n".join(errors),
-                installation_command="pip install openai-whisper" if engine == "whisper-local" else "Set API credentials",
-                available_engines="whisper-local, whisper-api, auto"
+                installation_command="pip install openai-whisper" if engine == "local-whisper" else "Set API credentials",
+                available_engines="local-whisper, openai-whisper, auto"
             )
             click.echo(formatted_error, err=True)
             
@@ -359,14 +359,14 @@ def _select_and_validate_engine(
                 # Suggest alternatives
                 click.echo("\nTry one of these alternatives:")
                 click.echo("  • --engine auto (automatically select best available)")
-                click.echo("  • --engine whisper-local (if you have Whisper installed)")
+                click.echo("  • --engine local-whisper (if you have Whisper installed)")
                 click.echo("  • Check configuration and credentials")
                 sys.exit(ExitCodes.ENGINE_NOT_AVAILABLE)
         
         logger.info(f"Engine {engine} validated successfully")
         
         # Log successful engine selection
-        available_engines = factory.get_available_engines() if hasattr(factory, 'get_available_engines') else ['whisper-local', 'whisper-api']
+        available_engines = factory.get_available_engines() if hasattr(factory, 'get_available_engines') else ['local-whisper', 'openai-whisper']
         logging_config.log_engine_selection(engine, "User specified", available_engines)
         
         return engine_type

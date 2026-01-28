@@ -167,38 +167,38 @@ class TestErrorHandlingConsistency:
                 ErrorCategory.CONFIGURATION,
                 "missing_required_field",
                 field_name="engine",
-                example_value="whisper-local"
+                example_value="local-whisper"
             )
             
             # Property: Should mention the specific missing field
             assert "engine" in error_msg, "Error should mention the specific missing field"
             
             # Property: Should provide example value
-            assert "whisper-local" in error_msg, "Error should provide example value"
+            assert "local-whisper" in error_msg, "Error should provide example value"
             
             # Property: Should contain suggestions (removed emoji check for Windows compatibility)
             assert len(error_msg) > 20, "Error should contain meaningful suggestions"
         
         # Test invalid field value error
-        if 'engine' in config_data and config_data['engine'] not in [None, 'whisper-local', 'whisper-api', 'auto']:
+        if 'engine' in config_data and config_data['engine'] not in [None, 'local-whisper', 'openai-whisper', 'auto']:
             error_msg = ErrorMessages.format_error(
                 ErrorCategory.CONFIGURATION,
                 "invalid_field_value",
                 field_name="engine",
                 current_value=str(config_data['engine']),
-                expected_values="whisper-local, whisper-api, auto",
-                example_value="whisper-local"
+                expected_values="local-whisper, openai-whisper, auto",
+                example_value="local-whisper"
             )
             
             # Property: Should mention current invalid value
             assert str(config_data['engine']) in error_msg, "Error should mention current invalid value"
             
             # Property: Should list valid options
-            assert "whisper-local" in error_msg, "Error should list valid options"
-            assert "whisper-api" in error_msg, "Error should list valid options"
+            assert "local-whisper" in error_msg, "Error should list valid options"
+            assert "openai-whisper" in error_msg, "Error should list valid options"
     
     @given(
-        engine_name=st.sampled_from(['whisper-local', 'whisper-api', 'aws-transcribe', 'invalid-engine']),
+        engine_name=st.sampled_from(['local-whisper', 'openai-whisper', 'aws-transcribe', 'invalid-engine']),
         error_reasons=st.lists(
             st.text(min_size=5, max_size=100),
             min_size=1,
@@ -221,7 +221,7 @@ class TestErrorHandlingConsistency:
             engine_name=engine_name,
             specific_reason="\n".join(error_reasons),
             installation_command=f"pip install {engine_name}-package",
-            available_engines="whisper-local, whisper-api, auto"
+            available_engines="local-whisper, openai-whisper, auto"
         )
         
         # Property: Should mention the specific engine
@@ -233,7 +233,7 @@ class TestErrorHandlingConsistency:
                 assert reason in error_msg, f"Error should include specific reason: {reason}"
         
         # Property: Should suggest alternatives
-        assert "whisper-local" in error_msg or "whisper-api" in error_msg, "Error should suggest alternative engines"
+        assert "local-whisper" in error_msg or "openai-whisper" in error_msg, "Error should suggest alternative engines"
         
         # Property: Should contain installation guidance
         assert "install" in error_msg.lower() or "pip" in error_msg.lower(), "Error should contain installation guidance"

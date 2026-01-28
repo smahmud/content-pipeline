@@ -36,7 +36,7 @@ class TestAutoSelector:
     def test_get_selection_priority_default_order(self):
         """Test default priority order when none configured."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api', 'aws-transcribe']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper', 'aws-transcribe']
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig()  # Default priority order
@@ -45,47 +45,47 @@ class TestAutoSelector:
         priority = selector.get_selection_priority()
         
         # Should use default order and filter by available engines
-        expected = ['whisper-local', 'aws-transcribe', 'whisper-api']
+        expected = ['local-whisper', 'aws-transcribe', 'openai-whisper']
         assert priority == expected
 
     def test_get_selection_priority_custom_order(self):
         """Test custom priority order from configuration."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api', 'aws-transcribe']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper', 'aws-transcribe']
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig(
-            priority_order=['whisper-api', 'whisper-local', 'aws-transcribe']
+            priority_order=['openai-whisper', 'local-whisper', 'aws-transcribe']
         )
         
         selector = AutoSelector(factory, config)
         priority = selector.get_selection_priority()
         
         # Should use custom order
-        expected = ['whisper-api', 'whisper-local', 'aws-transcribe']
+        expected = ['openai-whisper', 'local-whisper', 'aws-transcribe']
         assert priority == expected
 
     def test_get_selection_priority_filters_unavailable_engines(self):
         """Test that priority order filters out unavailable engines."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']  # No AWS
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']  # No AWS
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig(
-            priority_order=['whisper-local', 'aws-transcribe', 'whisper-api']
+            priority_order=['local-whisper', 'aws-transcribe', 'openai-whisper']
         )
         
         selector = AutoSelector(factory, config)
         priority = selector.get_selection_priority()
         
         # Should filter out aws-transcribe since it's not available
-        expected = ['whisper-local', 'whisper-api']
+        expected = ['local-whisper', 'openai-whisper']
         assert priority == expected
 
     def test_select_engine_first_available(self):
         """Test selecting the first available engine in priority order."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         factory.is_engine_available.return_value = True
         factory.validate_engine_requirements.return_value = []  # No errors
         
@@ -94,18 +94,18 @@ class TestAutoSelector:
         
         engine_type, reason = selector.select_engine()
         
-        assert engine_type == 'whisper-local'
+        assert engine_type == 'local-whisper'
         assert 'highest priority' in reason
         assert 'local processing preferred' in reason
 
     def test_select_engine_fallback_to_second_choice(self):
         """Test falling back to second choice when first is unavailable."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         
         # Mock first engine unavailable, second available
         def mock_validate_requirements(engine_type, config):
-            if engine_type == 'whisper-local':
+            if engine_type == 'local-whisper':
                 return ['Whisper not installed']  # Has errors
             return []  # No errors for other engines
         
@@ -117,14 +117,14 @@ class TestAutoSelector:
         
         engine_type, reason = selector.select_engine()
         
-        assert engine_type == 'whisper-api'
+        assert engine_type == 'openai-whisper'
         assert 'priority 2' in reason
         assert 'OpenAI API key configured' in reason
 
     def test_select_engine_no_engines_available(self):
         """Test error when no engines are available."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         factory.is_engine_available.return_value = True
         factory.validate_engine_requirements.return_value = ['Requirements not met']  # All have errors
         
@@ -144,7 +144,7 @@ class TestAutoSelector:
         selector = AutoSelector(factory, config)
         
         assert selector.check_local_whisper_availability() is True
-        factory.is_engine_available.assert_called_with('whisper-local')
+        factory.is_engine_available.assert_called_with('local-whisper')
 
     def test_check_local_whisper_availability_false(self):
         """Test checking local Whisper availability when unavailable."""
@@ -167,7 +167,7 @@ class TestAutoSelector:
         selector = AutoSelector(factory, config)
         
         assert selector.check_api_key_availability() is True
-        factory.is_engine_available.assert_called_with('whisper-api')
+        factory.is_engine_available.assert_called_with('openai-whisper')
 
     def test_check_api_key_availability_false(self):
         """Test checking API key availability when unavailable."""
@@ -212,19 +212,19 @@ class TestAutoSelector:
         mock_adapter = Mock()
         mock_adapter.get_supported_formats.return_value = ['mp3', 'wav']
         mock_adapter.estimate_cost.return_value = 0.006
-        mock_adapter.get_engine_info.return_value = ('whisper-api', 'whisper-1')
+        mock_adapter.get_engine_info.return_value = ('openai-whisper', 'whisper-1')
         
         factory.create_engine.return_value = mock_adapter
         
         config = TranscriptionConfig()
         selector = AutoSelector(factory, config)
         
-        capabilities = selector.get_engine_capabilities('whisper-api')
+        capabilities = selector.get_engine_capabilities('openai-whisper')
         
         assert capabilities['available'] is True
         assert capabilities['supported_formats'] == ['mp3', 'wav']
         assert capabilities['cost_per_minute'] == 0.006
-        assert capabilities['engine_info'] == ('whisper-api', 'whisper-1')
+        assert capabilities['engine_info'] == ('openai-whisper', 'whisper-1')
         assert capabilities['is_free'] is False
 
     def test_get_engine_capabilities_free_engine(self):
@@ -236,14 +236,14 @@ class TestAutoSelector:
         mock_adapter = Mock()
         mock_adapter.get_supported_formats.return_value = ['mp3', 'wav']
         mock_adapter.estimate_cost.return_value = None  # Free engine
-        mock_adapter.get_engine_info.return_value = ('whisper-local', 'base')
+        mock_adapter.get_engine_info.return_value = ('local-whisper', 'base')
         
         factory.create_engine.return_value = mock_adapter
         
         config = TranscriptionConfig()
         selector = AutoSelector(factory, config)
         
-        capabilities = selector.get_engine_capabilities('whisper-local')
+        capabilities = selector.get_engine_capabilities('local-whisper')
         
         assert capabilities['available'] is True
         assert capabilities['is_free'] is True
@@ -271,7 +271,7 @@ class TestAutoSelector:
         config = TranscriptionConfig()
         selector = AutoSelector(factory, config)
         
-        capabilities = selector.get_engine_capabilities('whisper-local')
+        capabilities = selector.get_engine_capabilities('local-whisper')
         
         assert capabilities['available'] is False
         assert 'Engine requirements not met' in capabilities['error']
@@ -280,7 +280,7 @@ class TestAutoSelector:
     def test_get_selection_summary(self):
         """Test getting a complete selection summary."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         factory.is_engine_available.return_value = True
         factory.validate_engine_requirements.return_value = []
         
@@ -288,7 +288,7 @@ class TestAutoSelector:
         mock_adapter = Mock()
         mock_adapter.get_supported_formats.return_value = ['mp3', 'wav']
         mock_adapter.estimate_cost.return_value = None
-        mock_adapter.get_engine_info.return_value = ('whisper-local', 'base')
+        mock_adapter.get_engine_info.return_value = ('local-whisper', 'base')
         factory.create_engine.return_value = mock_adapter
         
         config = TranscriptionConfig()
@@ -301,13 +301,13 @@ class TestAutoSelector:
         assert 'recommended_engine' in summary
         assert 'selection_reason' in summary
         
-        assert summary['recommended_engine'] == 'whisper-local'
+        assert summary['recommended_engine'] == 'local-whisper'
         assert len(summary['engines']) == 2
 
     def test_get_selection_summary_no_engines_available(self):
         """Test selection summary when no engines are available."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local']
+        factory.get_available_engines.return_value = ['local-whisper']
         factory.is_engine_available.return_value = True
         factory.validate_engine_requirements.return_value = ['Requirements not met']
         
@@ -322,11 +322,11 @@ class TestAutoSelector:
     def test_validate_selection_preferences_valid(self):
         """Test validating valid selection preferences."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api', 'aws-transcribe']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper', 'aws-transcribe']
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig(
-            priority_order=['whisper-local', 'whisper-api']
+            priority_order=['local-whisper', 'openai-whisper']
         )
         
         selector = AutoSelector(factory, config)
@@ -337,11 +337,11 @@ class TestAutoSelector:
     def test_validate_selection_preferences_invalid_engine(self):
         """Test validating preferences with invalid engine."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig(
-            priority_order=['whisper-local', 'nonexistent-engine']
+            priority_order=['local-whisper', 'nonexistent-engine']
         )
         
         selector = AutoSelector(factory, config)
@@ -354,7 +354,7 @@ class TestAutoSelector:
     def test_validate_selection_preferences_no_available_engines(self):
         """Test validating preferences when no engines in priority are available."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local']
+        factory.get_available_engines.return_value = ['local-whisper']
         
         config = TranscriptionConfig()
         config.auto_selection = AutoSelectionConfig(
@@ -372,7 +372,7 @@ class TestAutoSelector:
     def test_logging_during_selection(self, mock_logger):
         """Test that appropriate logging occurs during selection."""
         factory = Mock(spec=EngineFactory)
-        factory.get_available_engines.return_value = ['whisper-local', 'whisper-api']
+        factory.get_available_engines.return_value = ['local-whisper', 'openai-whisper']
         factory.is_engine_available.return_value = True
         factory.validate_engine_requirements.return_value = []
         
@@ -396,15 +396,15 @@ class TestAutoSelector:
         """Test comprehensive error message generation."""
         factory = Mock(spec=EngineFactory)
         factory.validate_engine_requirements.side_effect = lambda engine, config: {
-            'whisper-local': ['Whisper package not installed'],
-            'whisper-api': ['OpenAI API key not found'],
+            'local-whisper': ['Whisper package not installed'],
+            'openai-whisper': ['OpenAI API key not found'],
             'aws-transcribe': ['AWS credentials not configured']
         }.get(engine, [])
         
         config = TranscriptionConfig()
         selector = AutoSelector(factory, config)
         
-        attempted_engines = ['whisper-local', 'whisper-api', 'aws-transcribe']
+        attempted_engines = ['local-whisper', 'openai-whisper', 'aws-transcribe']
         error_msg = selector._generate_no_engines_error(attempted_engines)
         
         assert 'No transcription engines are available' in error_msg
@@ -422,15 +422,15 @@ class TestAutoSelector:
         config = TranscriptionConfig()
         selector = AutoSelector(factory, config)
         
-        priority_order = ['whisper-local', 'whisper-api', 'aws-transcribe']
+        priority_order = ['local-whisper', 'openai-whisper', 'aws-transcribe']
         
         # Test first priority
-        reason = selector._get_selection_reason('whisper-local', priority_order)
+        reason = selector._get_selection_reason('local-whisper', priority_order)
         assert 'highest priority' in reason
         assert 'local processing preferred' in reason
         
         # Test second priority
-        reason = selector._get_selection_reason('whisper-api', priority_order)
+        reason = selector._get_selection_reason('openai-whisper', priority_order)
         assert 'priority 2/3' in reason
         assert 'OpenAI API key configured' in reason
         
@@ -481,11 +481,11 @@ class TestAutoSelectorIntegration:
         
         # Mock first engine as available
         def mock_validate(engine_type, config):
-            if engine_type == 'whisper-local':
+            if engine_type == 'local-whisper':
                 return []  # No errors
             return ['Mocked error']
         
         with patch.object(factory, 'validate_engine_requirements', side_effect=mock_validate):
             engine_type, reason = selector.select_engine()
-            assert engine_type == 'whisper-local'
+            assert engine_type == 'local-whisper'
             assert isinstance(reason, str)

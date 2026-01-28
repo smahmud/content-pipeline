@@ -35,11 +35,11 @@ class TestEnhancedTranscriptionWorkflows:
         self.test_audio_file = "tests/assets/sample_audio.mp3"
         
     def test_complete_whisper_local_workflow(self, tmp_path):
-        """Test complete workflow with whisper-local engine."""
+        """Test complete workflow with local-whisper engine."""
         # Create test configuration
         config_file = tmp_path / "config.yaml"
         config_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./test_output
 whisper_local:
   model: tiny
@@ -50,7 +50,7 @@ whisper_local:
         # Run transcription command
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--config', str(config_file),
             '--output-dir', str(tmp_path / 'output')
@@ -72,7 +72,7 @@ whisper_local:
             assert transcript_data['metadata']['engine'] == 'whisper'
     @patch('pipeline.transcribers.adapters.whisper_api.openai')
     def test_complete_whisper_api_workflow(self, mock_openai, tmp_path):
-        """Test complete workflow with whisper-api engine."""
+        """Test complete workflow with openai-whisper engine."""
         # Mock OpenAI API response
         mock_response = MagicMock()
         mock_response.text = "This is a test transcription."
@@ -82,7 +82,7 @@ whisper_local:
         with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-api-key'}):
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
-                '--engine', 'whisper-api',
+                '--engine', 'openai-whisper',
                 '--output-dir', str(tmp_path / 'output')
             ])
         
@@ -126,7 +126,7 @@ whisper_local:
         # Create user config
         user_config = tmp_path / "user_config.yaml"
         user_config.write_text("""
-engine: whisper-local
+engine: local-whisper
 output_dir: ./user_output
 whisper_local:
   model: base
@@ -145,7 +145,7 @@ whisper_local:
         with patch.dict(os.environ, {'CONTENT_PIPELINE_OUTPUT_DIR': str(tmp_path / 'env_output')}):
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
-                '--engine', 'whisper-local',  # CLI override
+                '--engine', 'local-whisper',  # CLI override
                 '--model', 'tiny',  # CLI override
                 '--config', str(project_config),
                 '--output-dir', str(tmp_path / 'cli_output')  # CLI override
@@ -162,7 +162,7 @@ whisper_local:
         # Create config with environment variable substitution
         config_file = tmp_path / "config.yaml"
         config_content = f"""
-engine: whisper-local
+engine: local-whisper
 output_dir: ${{TEST_OUTPUT_DIR:-./default_output}}
 log_level: ${{TEST_LOG_LEVEL:-info}}
 whisper_local:
@@ -180,7 +180,7 @@ whisper_local:
         with patch.dict(os.environ, env_vars):
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--config', str(config_file)
             ])
         
@@ -195,7 +195,7 @@ whisper_local:
         absolute_output = tmp_path / "absolute_transcript.json"
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--output', str(absolute_output)
         ])
@@ -206,7 +206,7 @@ whisper_local:
         # Test 2: Relative output path with output directory
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--output-dir', str(tmp_path / 'relative_dir')
         ])
@@ -219,7 +219,7 @@ whisper_local:
         deep_dir = tmp_path / 'deep' / 'nested' / 'directory'
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--output-dir', str(deep_dir)
         ])
@@ -251,7 +251,7 @@ whisper_local:
         # Test 3: Missing source file
         result = self.runner.invoke(transcribe, [
             '--source', 'nonexistent_file.mp3',
-            '--engine', 'whisper-local'
+            '--engine', 'local-whisper'
         ])
         
         assert result.exit_code != 0
@@ -261,7 +261,7 @@ whisper_local:
         # Test debug logging
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--log-level', 'debug',
             '--output-dir', str(tmp_path / 'debug_output')
@@ -274,7 +274,7 @@ whisper_local:
         # Test info logging (default)
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-local',
+            '--engine', 'local-whisper',
             '--model', 'tiny',
             '--log-level', 'info',
             '--output-dir', str(tmp_path / 'info_output')
@@ -296,7 +296,7 @@ whisper_local:
         # Should provide migration guidance
         migration_indicators = [
             "breaking change", "v0.6.5", "required", "engine",
-            "whisper-local", "whisper-api", "auto", "example"
+            "local-whisper", "openai-whisper", "auto", "example"
         ]
         output_lower = result.output.lower()
         assert any(indicator in output_lower for indicator in migration_indicators)
@@ -307,7 +307,7 @@ whisper_local:
         # Test 1: Missing API key
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-api',
+            '--engine', 'openai-whisper',
             '--output-dir', str(tmp_path / 'output')
         ])
         
@@ -322,7 +322,7 @@ whisper_local:
         
         result = self.runner.invoke(transcribe, [
             '--source', self.test_audio_file,
-            '--engine', 'whisper-api',
+            '--engine', 'openai-whisper',
             '--api-key', 'test-key',
             '--output-dir', str(tmp_path / 'output')
         ])

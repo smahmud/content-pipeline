@@ -41,7 +41,7 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 - Modular CLI architecture with `cli/` package, shared options, extensible subcommands, and comprehensive testing
 
 ### 🧭 Upcoming
-- Enhanced Transcription & Configuration: Explicit engine selection (whisper-local, whisper-api, auto), YAML configuration management, environment variable support, and user-controlled output paths
+- Enhanced Transcription & Configuration: Explicit engine selection (local-whisper, openai-whisper, auto), YAML configuration management, environment variable support, and user-controlled output paths
 - 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata
 - 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
 - 📦 Archive and index enriched content in a searchable store

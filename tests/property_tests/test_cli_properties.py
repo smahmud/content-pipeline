@@ -678,7 +678,7 @@ class TestErrorMessageConsistency:
         assert any(phrase in result.output.lower() for phrase in ['not found', 'does not exist', 'no such file', 'input file'])
         
         # Test transcribe with non-existent file - now requires --engine flag
-        result = runner.invoke(main, ['transcribe', '--source', 'nonexistent.mp3', '--engine', 'whisper-local'])
+        result = runner.invoke(main, ['transcribe', '--source', 'nonexistent.mp3', '--engine', 'local-whisper'])
         assert result.exit_code != 0
         # Should contain some indication that the file was not found or engine error
         assert any(phrase in result.output.lower() for phrase in ['not found', 'does not exist', 'no such file', 'audio file', 'engine'])
@@ -1364,7 +1364,7 @@ class TestMigrationValidation:
         assert 'Missing option' in result.output or 'required' in result.output.lower()
         
         # Test option parsing with language - now requires --engine flag
-        result = runner.invoke(main, ['transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'whisper-local'])
+        result = runner.invoke(main, ['transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'local-whisper'])
         # Should fail due to missing file, but options should be parsed correctly
         assert result.exit_code != 0
         assert 'Audio file does not exist' in result.output or 'not found' in result.output.lower()
@@ -1567,7 +1567,7 @@ class TestMigrationValidation:
         assert 'Input file does not exist' in result.output or 'not found' in result.output.lower()
         
         # Test transcribe command - now requires --engine flag
-        result = runner.invoke(main, ['transcribe', source_option, 'test.mp3', '--engine', 'whisper-local'])
+        result = runner.invoke(main, ['transcribe', source_option, 'test.mp3', '--engine', 'local-whisper'])
         assert result.exit_code != 0  # Will fail due to missing file or missing engine
         # Accept either file not found or missing engine error
         assert ('Audio file does not exist' in result.output or 'not found' in result.output.lower() or 
@@ -1730,8 +1730,8 @@ class TestEntryPointEquivalence:
         assert 'Input file does not exist' in subprocess_extract.stdout or 'not found' in subprocess_extract.stdout.lower()
         
         # Test transcribe with language option - now requires --engine flag
-        module_transcribe = runner.invoke(main, ['transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'whisper-local'])
-        subprocess_transcribe = subprocess.run([sys.executable, '-m', 'cli', 'transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'whisper-local'], 
+        module_transcribe = runner.invoke(main, ['transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'local-whisper'])
+        subprocess_transcribe = subprocess.run([sys.executable, '-m', 'cli', 'transcribe', '--source', 'test.mp3', '--language', 'en', '--engine', 'local-whisper'], 
                                              capture_output=True, text=True)
         
         # Both should fail with same error (file not found or engine not available)
@@ -1958,7 +1958,7 @@ class TestComprehensiveErrorHandling:
         assert any(indicator in extract_result.output.lower() for indicator in error_indicators)
         
         # Test transcribe with non-existent file - now requires --engine flag
-        transcribe_result = runner.invoke(main, ['transcribe', '--source', 'nonexistent.mp3', '--engine', 'whisper-local'])
+        transcribe_result = runner.invoke(main, ['transcribe', '--source', 'nonexistent.mp3', '--engine', 'local-whisper'])
         assert transcribe_result.exit_code != 0
         
         # Should contain user-friendly error message (file not found or engine error)

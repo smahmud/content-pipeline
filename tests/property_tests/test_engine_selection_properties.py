@@ -14,7 +14,7 @@ from pipeline.transcribers.factory import EngineFactory
 from pipeline.config.schema import TranscriptionConfig, EngineType
 
 
-@given(engine_type=st.sampled_from(['whisper-local', 'whisper-api', 'aws-transcribe', 'auto']))
+@given(engine_type=st.sampled_from(['local-whisper', 'openai-whisper', 'aws-transcribe', 'auto']))
 @settings(max_examples=10, deadline=None)
 def test_valid_engine_types_accepted(engine_type):
     """
@@ -95,7 +95,7 @@ def test_explicit_engine_requirement_property():
     
     assert engine_param is not None
     assert engine_param.required is True
-    assert 'whisper-local' in engine_param.type.choices
-    assert 'whisper-api' in engine_param.type.choices
+    assert 'local-whisper' in engine_param.type.choices
+    assert 'openai-whisper' in engine_param.type.choices
     assert 'aws-transcribe' in engine_param.type.choices
     assert 'auto' in engine_param.type.choices

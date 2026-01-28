@@ -79,8 +79,8 @@ auto_fallback_enabled: true
 
 # Custom priority order for production
 auto_priority_order:
-  - whisper-local  # Try local first (cost-effective)
-  - whisper-api    # Fallback to API if local fails
+  - local-whisper  # Try local first (cost-effective)
+  - openai-whisper    # Fallback to API if local fails
   - aws-transcribe # Enterprise fallback
 
 # =============================================================================

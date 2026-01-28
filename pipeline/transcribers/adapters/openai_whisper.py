@@ -1,7 +1,7 @@
 """
-File: whisper_api.py
+File: openai_whisper.py
 
-Implements the WhisperAPIAdapter using OpenAI's Whisper API.
+Implements the OpenAIWhisperAdapter using OpenAI's Whisper API.
 Conforms to the enhanced TranscriberAdapter protocol.
 
 This adapter processes audio using OpenAI's cloud-based Whisper API for high-quality transcription.
@@ -13,7 +13,7 @@ from pipeline.utils.retry import retry
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 
 
-class WhisperAPIAdapter(TranscriberAdapter):
+class OpenAIWhisperAdapter(TranscriberAdapter):
     """
     Transcribes audio using OpenAI's Whisper API.
     
@@ -152,7 +152,7 @@ class WhisperAPIAdapter(TranscriberAdapter):
         Returns:
             Tuple of (engine_name, model_variant)
         """
-        return ("whisper-api", self.model)
+        return ("openai-whisper", self.model)
 
     def validate_requirements(self) -> List[str]:
         """

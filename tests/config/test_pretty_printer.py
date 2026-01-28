@@ -60,7 +60,7 @@ class TestConfigurationPrettyPrinter:
         template = self.printer.generate_engine_specific_template(EngineType.WHISPER_LOCAL.value)
         
         assert "Optimized for Local Whisper Processing" in template
-        assert "engine: whisper-local" in template
+        assert "engine: local-whisper" in template
         assert "prefer_local: true" in template
         assert "fallback_enabled: false" in template
         assert "Use local Whisper for privacy" in template
@@ -70,11 +70,11 @@ class TestConfigurationPrettyPrinter:
         template = self.printer.generate_engine_specific_template(EngineType.WHISPER_API.value)
         
         assert "Optimized for OpenAI Whisper API" in template
-        assert "engine: whisper-api" in template
+        assert "engine: openai-whisper" in template
         assert "prefer_local: false" in template
         assert "fallback_enabled: true" in template
-        assert "whisper-api" in template
-        assert "whisper-local" in template  # Fallback option
+        assert "openai-whisper" in template
+        assert "local-whisper" in template  # Fallback option
     
     def test_generate_aws_transcribe_template(self):
         """Test generating template optimized for AWS Transcribe."""
@@ -85,7 +85,7 @@ class TestConfigurationPrettyPrinter:
         assert "prefer_local: false" in template
         assert "fallback_enabled: true" in template
         assert "aws-transcribe" in template
-        assert "whisper-local" in template  # Fallback option
+        assert "local-whisper" in template  # Fallback option
     
     def test_generate_unknown_engine_template(self):
         """Test generating template for unknown engine returns minimal template."""
@@ -98,7 +98,7 @@ class TestConfigurationPrettyPrinter:
     def test_format_configuration_full_style(self):
         """Test formatting configuration with full style."""
         config = TranscriptionConfig(
-            engine="whisper-local",
+            engine="local-whisper",
             output_dir="./test-output",
             log_level="debug"
         )
@@ -107,7 +107,7 @@ class TestConfigurationPrettyPrinter:
         
         assert "Content Pipeline Configuration v0.6.5" in formatted
         assert "Generated from current settings" in formatted
-        assert "engine: whisper-local" in formatted
+        assert "engine: local-whisper" in formatted
         assert "output_dir: ./test-output" in formatted
         assert "log_level: debug" in formatted
         assert "# Transcription engine" in formatted
@@ -118,14 +118,14 @@ class TestConfigurationPrettyPrinter:
     def test_format_configuration_minimal_style(self):
         """Test formatting configuration with minimal style."""
         config = TranscriptionConfig(
-            engine="whisper-api",
+            engine="openai-whisper",
             output_dir="./api-output"
         )
         
         formatted = self.printer.format_configuration(config, style="minimal")
         
         assert "Content Pipeline Configuration v0.6.5" in formatted
-        assert "engine: whisper-api" in formatted
+        assert "engine: openai-whisper" in formatted
         assert "output_dir: ./api-output" in formatted
         assert "whisper_local:" in formatted
         assert "whisper_api:" in formatted
@@ -192,8 +192,8 @@ class TestConfigurationPrettyPrinter:
             self.printer.generate_full_template(include_examples=True),
             self.printer.generate_full_template(include_examples=False),
             self.printer.generate_minimal_template(),
-            self.printer.generate_engine_specific_template("whisper-local"),
-            self.printer.generate_engine_specific_template("whisper-api"),
+            self.printer.generate_engine_specific_template("local-whisper"),
+            self.printer.generate_engine_specific_template("openai-whisper"),
             self.printer.generate_engine_specific_template("aws-transcribe"),
         ]
         

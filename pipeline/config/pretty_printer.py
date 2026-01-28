@@ -39,9 +39,9 @@ class ConfigurationPrettyPrinter:
 # =============================================================================
 
 # Default transcription engine to use
-# Options: whisper-local, whisper-api, aws-transcribe, auto
-# - whisper-local: Process audio locally (privacy-focused, requires local installation)
-# - whisper-api: Use OpenAI's Whisper API (highest quality, requires API key)
+# Options: local-whisper, openai-whisper, aws-transcribe, auto
+# - local-whisper: Process audio locally (privacy-focused, requires local installation)
+# - openai-whisper: Use OpenAI's Whisper API (highest quality, requires API key)
 # - aws-transcribe: Use AWS Transcribe service (good quality, requires AWS credentials)
 # - auto: Automatically select best available engine
 engine: auto
@@ -178,19 +178,19 @@ auto_selection:
   
   # Engine priority order for auto-selection
   # Engines are tried in this order until one succeeds
-  # Options: whisper-local, whisper-api, aws-transcribe
+  # Options: local-whisper, openai-whisper, aws-transcribe
   priority_order:
-    - whisper-local    # Try local first (privacy + no cost)
+    - local-whisper    # Try local first (privacy + no cost)
     - aws-transcribe   # Then AWS (good quality, user has credits)
-    - whisper-api      # Finally OpenAI (highest quality, but paid)
+    - openai-whisper      # Finally OpenAI (highest quality, but paid)
 
 # =============================================================================
 # USAGE EXAMPLES
 # =============================================================================
 #
 # Basic usage with explicit engine:
-#   content-pipeline transcribe --engine whisper-local --source audio.mp3
-#   content-pipeline transcribe --engine whisper-api --source audio.mp3
+#   content-pipeline transcribe --engine local-whisper --source audio.mp3
+#   content-pipeline transcribe --engine openai-whisper --source audio.mp3
 #   content-pipeline transcribe --engine auto --source audio.mp3
 #
 # With custom output:
@@ -229,7 +229,7 @@ auto_selection:
         return """# Content Pipeline Configuration v0.6.5
 # Minimal configuration template
 
-# Transcription engine (whisper-local, whisper-api, aws-transcribe, auto)
+# Transcription engine (local-whisper, openai-whisper, aws-transcribe, auto)
 engine: auto
 
 # Output directory
@@ -258,7 +258,7 @@ aws_transcribe:
         Generate configuration template optimized for specific engine.
         
         Args:
-            engine_type: Target engine type (whisper-local, whisper-api, aws-transcribe)
+            engine_type: Target engine type (local-whisper, openai-whisper, aws-transcribe)
             
         Returns:
             Engine-specific configuration template
@@ -278,7 +278,7 @@ aws_transcribe:
 # Optimized for Local Whisper Processing
 
 # Use local Whisper for privacy and offline processing
-engine: whisper-local
+engine: local-whisper
 
 # Output directory
 output_dir: ./transcripts
@@ -311,7 +311,7 @@ auto_selection:
 # Optimized for OpenAI Whisper API
 
 # Use OpenAI Whisper API for highest quality transcription
-engine: whisper-api
+engine: openai-whisper
 
 # Output directory
 output_dir: ./transcripts
@@ -338,8 +338,8 @@ auto_selection:
   prefer_local: false
   fallback_enabled: true
   priority_order:
-    - whisper-api
-    - whisper-local  # Fallback to local if API fails
+    - openai-whisper
+    - local-whisper  # Fallback to local if API fails
 """
     
     def _generate_aws_transcribe_template(self) -> str:
@@ -380,7 +380,7 @@ auto_selection:
   fallback_enabled: true
   priority_order:
     - aws-transcribe
-    - whisper-local  # Fallback to local if AWS fails
+    - local-whisper  # Fallback to local if AWS fails
 """
     
     def format_configuration(self, config: TranscriptionConfig, 

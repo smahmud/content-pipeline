@@ -1,7 +1,7 @@
 """
-File: whisper_local.py
+File: local_whisper.py
 
-Implements the WhisperLocalAdapter using OpenAI's local Whisper model.
+Implements the LocalWhisperAdapter using OpenAI's local Whisper model.
 Conforms to the enhanced TranscriberAdapter protocol.
 
 This adapter processes audio entirely on the local machine for privacy-focused transcription.
@@ -14,7 +14,7 @@ from pipeline.utils.retry import retry
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 
 
-class WhisperLocalAdapter(TranscriberAdapter):
+class LocalWhisperAdapter(TranscriberAdapter):
     """
     Transcribes audio using a locally loaded Whisper model.
     
@@ -109,7 +109,7 @@ class WhisperLocalAdapter(TranscriberAdapter):
         Returns:
             Tuple of (engine_name, model_variant)
         """
-        return ("whisper-local", self.model_name)
+        return ("local-whisper", self.model_name)
 
     def validate_requirements(self) -> List[str]:
         """

@@ -35,7 +35,7 @@ class TestConfigurationManager:
     def test_load_configuration_with_yaml_file(self):
         """Test loading configuration from YAML file."""
         yaml_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./custom-output
 log_level: debug
 whisper_local:
@@ -49,7 +49,7 @@ whisper_local:
             
             config = self.config_manager.load_configuration(config_file=str(config_file))
             
-            assert config.engine == "whisper-local"
+            assert config.engine == "local-whisper"
             assert config.output_dir == "./custom-output"
             assert config.log_level == "debug"
             assert config.whisper_local.model == "large"
@@ -58,13 +58,13 @@ whisper_local:
     def test_cli_overrides_take_precedence(self):
         """Test that CLI overrides have highest precedence."""
         yaml_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./yaml-output
 log_level: debug
 """
         
         cli_overrides = {
-            'engine': 'whisper-api',
+            'engine': 'openai-whisper',
             'output_dir': './cli-output',
             'whisper_api': {'model': 'whisper-1-custom'}
         }
@@ -79,7 +79,7 @@ log_level: debug
             )
             
             # CLI overrides should win
-            assert config.engine == "whisper-api"
+            assert config.engine == "openai-whisper"
             assert config.output_dir == "./cli-output"
             assert config.whisper_api.model == "whisper-1-custom"
             
@@ -145,7 +145,7 @@ log_level: debug
     def test_invalid_yaml_raises_error(self):
         """Test that invalid YAML raises appropriate error."""
         invalid_yaml = """
-engine: whisper-local
+engine: local-whisper
   invalid: yaml: structure
     - missing proper indentation
 """
@@ -177,7 +177,7 @@ engine: whisper-local
     def test_save_configuration(self):
         """Test saving configuration to YAML file."""
         config = TranscriptionConfig(
-            engine="whisper-local",
+            engine="local-whisper",
             output_dir="./test-output",
             log_level="debug"
         )
@@ -191,7 +191,7 @@ engine: whisper-local
             assert config_file.exists()
             
             content = config_file.read_text()
-            assert "engine: whisper-local" in content
+            assert "engine: local-whisper" in content
             assert "output_dir: ./test-output" in content
             assert "log_level: debug" in content
             assert "Content Pipeline Configuration v0.6.5" in content
@@ -214,14 +214,14 @@ engine: whisper-local
         """Test that configuration merging follows correct precedence."""
         # Create temporary config files
         user_config = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./user-output
 whisper_local:
   model: small
 """
         
         project_config = """
-engine: whisper-api
+engine: openai-whisper
 log_level: debug
 whisper_local:
   timeout: 600
@@ -246,7 +246,7 @@ whisper_local:
                 assert config.log_level == "error"
                 
                 # Project config should override user config
-                assert config.engine == "whisper-api"
+                assert config.engine == "openai-whisper"
                 
                 # User config should be preserved where not overridden
                 assert config.output_dir == "./user-output"

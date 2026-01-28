@@ -13,8 +13,8 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pipeline.transcribers.factory import EngineFactory
 from pipeline.transcribers.adapters.base import TranscriberAdapter
-from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
-from pipeline.transcribers.adapters.whisper_api import WhisperAPIAdapter
+from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
+from pipeline.transcribers.adapters.openai_whisper import OpenAIWhisperAdapter
 from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, WhisperAPIConfig
 
 
@@ -49,34 +49,34 @@ class TestEngineFactory:
         factory = EngineFactory()
         
         available_engines = factory.get_available_engines()
-        assert 'whisper-local' in available_engines
-        assert 'whisper-api' in available_engines
+        assert 'local-whisper' in available_engines
+        assert 'openai-whisper' in available_engines
         assert len(available_engines) >= 2
     
     def test_create_whisper_local_engine(self):
         """Test creating a local Whisper engine."""
         factory = EngineFactory()
         config = TranscriptionConfig(
-            engine='whisper-local',
+            engine='local-whisper',
             whisper_local=WhisperLocalConfig(model='base')
         )
         
-        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
-            adapter = factory.create_engine('whisper-local', config)
+        with patch.object(LocalWhisperAdapter, 'validate_requirements', return_value=[]):
+            adapter = factory.create_engine('local-whisper', config)
             
-            assert isinstance(adapter, WhisperLocalAdapter)
+            assert isinstance(adapter, LocalWhisperAdapter)
             assert adapter.model_name == 'base'
     
     def test_create_engine_with_requirements_failure(self):
         """Test that engine creation fails when requirements are not met."""
         factory = EngineFactory()
-        config = TranscriptionConfig(engine='whisper-local')
+        config = TranscriptionConfig(engine='local-whisper')
         
         # Mock requirements validation to return errors
-        with patch.object(WhisperLocalAdapter, 'validate_requirements', 
+        with patch.object(LocalWhisperAdapter, 'validate_requirements', 
                          return_value=['Whisper not installed', 'Model not found']):
-            with pytest.raises(RuntimeError, match="Engine 'whisper-local' requirements not met"):
-                factory.create_engine('whisper-local', config)
+            with pytest.raises(RuntimeError, match="Engine 'local-whisper' requirements not met"):
+                factory.create_engine('local-whisper', config)
     
     def test_create_unsupported_engine(self):
         """Test that creating an unsupported engine raises ValueError."""
@@ -106,27 +106,27 @@ class TestEngineFactory:
         """Test that registering a duplicate adapter raises ValueError."""
         factory = EngineFactory()
         
-        with pytest.raises(ValueError, match="Engine type 'whisper-local' is already registered"):
-            factory.register_adapter('whisper-local', MockAdapter)
+        with pytest.raises(ValueError, match="Engine type 'local-whisper' is already registered"):
+            factory.register_adapter('local-whisper', MockAdapter)
     
     def test_validate_engine_requirements_success(self):
         """Test validating engine requirements when they are met."""
         factory = EngineFactory()
-        config = TranscriptionConfig(engine='whisper-local')
+        config = TranscriptionConfig(engine='local-whisper')
         
-        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
-            errors = factory.validate_engine_requirements('whisper-local', config)
+        with patch.object(LocalWhisperAdapter, 'validate_requirements', return_value=[]):
+            errors = factory.validate_engine_requirements('local-whisper', config)
             
             assert errors == []
     
     def test_validate_engine_requirements_failure(self):
         """Test validating engine requirements when they are not met."""
         factory = EngineFactory()
-        config = TranscriptionConfig(engine='whisper-local')
+        config = TranscriptionConfig(engine='local-whisper')
         
         expected_errors = ['Whisper not installed', 'Model not available']
-        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=expected_errors):
-            errors = factory.validate_engine_requirements('whisper-local', config)
+        with patch.object(LocalWhisperAdapter, 'validate_requirements', return_value=expected_errors):
+            errors = factory.validate_engine_requirements('local-whisper', config)
             
             assert errors == expected_errors
     
@@ -145,7 +145,7 @@ class TestEngineFactory:
         """Test checking if engines are available."""
         factory = EngineFactory()
         
-        assert factory.is_engine_available('whisper-local') is True
+        assert factory.is_engine_available('local-whisper') is True
         assert factory.is_engine_available('nonexistent-engine') is False
         
         # Register new engine and test
@@ -156,11 +156,11 @@ class TestEngineFactory:
         """Test getting engine information."""
         factory = EngineFactory()
         
-        info = factory.get_engine_info('whisper-local')
+        info = factory.get_engine_info('local-whisper')
         
-        assert info['engine_type'] == 'whisper-local'
-        assert info['adapter_class'] == 'WhisperLocalAdapter'
-        assert 'pipeline.transcribers.adapters.whisper_local' in info['module']
+        assert info['engine_type'] == 'local-whisper'
+        assert info['adapter_class'] == 'LocalWhisperAdapter'
+        assert 'pipeline.transcribers.adapters.local_whisper' in info['module']
         assert info['is_available'] is True
     
     def test_get_engine_info_unsupported(self):
@@ -174,14 +174,14 @@ class TestEngineFactory:
         """Test that adapter instances receive proper configuration."""
         factory = EngineFactory()
         
-        # Test whisper-local configuration
+        # Test local-whisper configuration
         config = TranscriptionConfig(
-            engine='whisper-local',
+            engine='local-whisper',
             whisper_local=WhisperLocalConfig(model='large')
         )
         
-        with patch.object(WhisperLocalAdapter, 'validate_requirements', return_value=[]):
-            adapter = factory.create_engine('whisper-local', config)
+        with patch.object(LocalWhisperAdapter, 'validate_requirements', return_value=[]):
+            adapter = factory.create_engine('local-whisper', config)
             assert adapter.model_name == 'large'
 
     def test_create_whisper_api_engine(self):
@@ -189,7 +189,7 @@ class TestEngineFactory:
         factory = EngineFactory()
         
         config = TranscriptionConfig(
-            engine='whisper-api',
+            engine='openai-whisper',
             whisper_api=WhisperAPIConfig(
                 api_key='sk-test123',
                 model='gpt-4o-transcribe',
@@ -198,10 +198,10 @@ class TestEngineFactory:
             )
         )
         
-        with patch.object(WhisperAPIAdapter, 'validate_requirements', return_value=[]):
-            adapter = factory.create_engine('whisper-api', config)
+        with patch.object(OpenAIWhisperAdapter, 'validate_requirements', return_value=[]):
+            adapter = factory.create_engine('openai-whisper', config)
             
-            assert isinstance(adapter, WhisperAPIAdapter)
+            assert isinstance(adapter, OpenAIWhisperAdapter)
             assert adapter.api_key == 'sk-test123'
             assert adapter.model == 'gpt-4o-transcribe'
             assert adapter.temperature == 0.1
@@ -310,7 +310,7 @@ class TestEngineFactoryIntegration:
         available_engines = factory.get_available_engines()
         assert 'engine-1' in available_engines
         assert 'engine-2' in available_engines
-        assert 'whisper-local' in available_engines  # Default should still be there
+        assert 'local-whisper' in available_engines  # Default should still be there
         
         # Create instances of each
         config1 = TranscriptionConfig(engine='engine-1')

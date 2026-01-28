@@ -162,7 +162,7 @@ class TestAWSTranscribeAdapter:
         assert info['max_file_size_gb'] == 2
         assert info['cost_per_minute_usd'] == 0.024
         assert info['credentials_configured'] is True
-        assert info['implementation_status'] == 'placeholder'
+        assert info['implementation_status'] == 'fully_implemented'
 
     def test_get_file_size_limit(self):
         """Test file size limit retrieval."""
@@ -185,52 +185,58 @@ class TestAWSTranscribeAdapter:
 
     def test_validate_requirements_missing_credentials(self):
         """Test validate_requirements when credentials are missing."""
-        # Test missing access key
-        adapter = AWSTranscribeAdapter(access_key_id=None, secret_access_key="test_secret")
-        
-        # Mock boto3 to be available
-        with patch('pipeline.transcribers.adapters.aws_transcribe.boto3'):
-            errors = adapter.validate_requirements()
-            
-            assert isinstance(errors, list)
-            assert len(errors) > 0
-            assert any("AWS access key not found" in error for error in errors)
-        
-        # Test missing secret key
-        adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key=None)
-        
-        with patch('pipeline.transcribers.adapters.aws_transcribe.boto3'):
-            errors = adapter.validate_requirements()
-            
-            assert isinstance(errors, list)
-            assert len(errors) > 0
-            assert any("AWS secret key not found" in error for error in errors)
-
-    @patch('pipeline.transcribers.adapters.aws_transcribe.boto3')
-    def test_validate_requirements_success_with_implementation_warning(self, mock_boto3):
-        """Test validate_requirements when all requirements are met but implementation is placeholder."""
-        # Mock successful boto3 client creation
+        # Patch boto3 in sys.modules
+        import sys
+        mock_boto3 = MagicMock()
         mock_client = MagicMock()
         mock_boto3.client.return_value = mock_client
         
-        adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
-        errors = adapter.validate_requirements()
+        # Mock list_transcription_jobs to raise credentials error
+        mock_client.list_transcription_jobs.side_effect = Exception("Unable to locate credentials")
         
-        assert isinstance(errors, list)
-        assert len(errors) == 1  # Only the implementation warning
-        assert any("not yet fully implemented" in error for error in errors)
+        with patch.dict(sys.modules, {'boto3': mock_boto3}):
+            # Test with no credentials - should detect missing credentials
+            adapter = AWSTranscribeAdapter(access_key_id=None, secret_access_key=None)
+            errors = adapter.validate_requirements()
+            
+            assert isinstance(errors, list)
+            assert len(errors) > 0
+            assert any("AWS credentials not found or invalid" in error for error in errors)
 
-    @patch('pipeline.transcribers.adapters.aws_transcribe.boto3')
-    def test_validate_requirements_client_initialization_failure(self, mock_boto3):
+    def test_validate_requirements_success(self):
+        """Test validate_requirements when all requirements are met."""
+        # Patch boto3 in sys.modules
+        import sys
+        mock_boto3 = MagicMock()
+        mock_client = MagicMock()
+        mock_boto3.client.return_value = mock_client
+        
+        # Mock successful list_transcription_jobs call
+        mock_client.list_transcription_jobs.return_value = {'TranscriptionJobSummaries': []}
+        
+        with patch.dict(sys.modules, {'boto3': mock_boto3}):
+            adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+            errors = adapter.validate_requirements()
+            
+            assert isinstance(errors, list)
+            assert len(errors) == 0  # No errors - adapter is fully implemented
+
+    def test_validate_requirements_client_initialization_failure(self):
         """Test validate_requirements when client initialization fails."""
+        # Patch boto3 in sys.modules
+        import sys
+        mock_boto3 = MagicMock()
+        
+        # Mock boto3.client to raise an exception
         mock_boto3.client.side_effect = Exception("AWS connection failed")
         
-        adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
-        errors = adapter.validate_requirements()
-        
-        assert isinstance(errors, list)
-        assert len(errors) >= 1
-        assert any("Failed to initialize AWS Transcribe client" in error for error in errors)
+        with patch.dict(sys.modules, {'boto3': mock_boto3}):
+            adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+            errors = adapter.validate_requirements()
+            
+            assert isinstance(errors, list)
+            assert len(errors) >= 1
+            assert any("Failed to initialize AWS Transcribe client" in error for error in errors)
 
     def test_transcribe_validates_file_existence(self):
         """Test that transcribe method validates file existence."""
@@ -274,27 +280,77 @@ class TestAWSTranscribeAdapter:
             finally:
                 os.unlink(temp_file_path)
 
-    @patch('pipeline.transcribers.adapters.aws_transcribe.boto3')
-    def test_transcribe_not_implemented_error(self, mock_boto3):
-        """Test that transcribe raises NotImplementedError for placeholder implementation."""
-        # Mock successful boto3 client creation
-        mock_client = MagicMock()
-        mock_boto3.client.return_value = mock_client
+    def test_transcribe_successful_flow(self):
+        """Test successful transcription flow with AWS Transcribe."""
+        import sys
+        import json
         
-        adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+        # Mock boto3 in sys.modules
+        mock_boto3 = MagicMock()
+        mock_transcribe_client = MagicMock()
+        mock_s3_client = MagicMock()
         
-        # Create a temporary valid audio file
-        import tempfile
+        def client_factory(service, **kwargs):
+            if service == 'transcribe':
+                return mock_transcribe_client
+            elif service == 's3':
+                return mock_s3_client
+            return MagicMock()
         
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
-            temp_file.write(b"fake audio data")
-            temp_file_path = temp_file.name
+        mock_boto3.client.side_effect = client_factory
         
-        try:
-            with pytest.raises(NotImplementedError, match="AWS Transcribe adapter is not yet fully implemented"):
-                adapter.transcribe(temp_file_path)
-        finally:
-            os.unlink(temp_file_path)
+        # Mock S3 operations
+        mock_s3_client.head_bucket.return_value = {}
+        mock_s3_client.upload_file.return_value = None
+        
+        # Mock transcription job status progression
+        mock_transcribe_client.get_transcription_job.side_effect = [
+            {'TranscriptionJob': {'TranscriptionJobStatus': 'IN_PROGRESS'}},
+            {'TranscriptionJob': {
+                'TranscriptionJobStatus': 'COMPLETED',
+                'Transcript': {'TranscriptFileUri': 'https://example.com/transcript.json'}
+            }}
+        ]
+        
+        # Mock transcript download
+        transcript_data = {
+            'results': {
+                'transcripts': [{'transcript': 'Hello world'}]
+            }
+        }
+        
+        with patch.dict(sys.modules, {'boto3': mock_boto3}):
+            with patch('urllib.request.urlopen') as mock_urlopen:
+                mock_response = MagicMock()
+                mock_response.read.return_value = json.dumps(transcript_data).encode('utf-8')
+                mock_response.__enter__.return_value = mock_response
+                mock_urlopen.return_value = mock_response
+                
+                adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+                
+                # Create a temporary valid audio file
+                import tempfile
+                
+                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
+                    temp_file.write(b"fake audio data")
+                    temp_file_path = temp_file.name
+                
+                try:
+                    result = adapter.transcribe(temp_file_path)
+                    
+                    # Verify result
+                    assert isinstance(result, dict)
+                    assert 'results' in result
+                    assert result['results']['transcripts'][0]['transcript'] == 'Hello world'
+                    
+                    # Verify S3 upload was called
+                    assert mock_s3_client.upload_file.called
+                    
+                    # Verify transcription job was started
+                    assert mock_transcribe_client.start_transcription_job.called
+                    
+                finally:
+                    os.unlink(temp_file_path)
 
     def test_supported_formats_immutability(self):
         """Test that supported formats list cannot be modified externally."""
@@ -333,33 +389,38 @@ class TestAWSTranscribeAdapter:
 class TestAWSTranscribeAdapterIntegration:
     """Integration tests for AWSTranscribeAdapter."""
 
-    @patch('pipeline.transcribers.adapters.aws_transcribe.boto3')
-    def test_full_adapter_lifecycle(self, mock_boto3):
+    def test_full_adapter_lifecycle(self):
         """Test the complete lifecycle of adapter usage."""
-        # Mock successful setup
+        import sys
+        
+        # Mock boto3 in sys.modules
+        mock_boto3 = MagicMock()
         mock_client = MagicMock()
         mock_boto3.client.return_value = mock_client
         
-        adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+        # Mock successful list_transcription_jobs call
+        mock_client.list_transcription_jobs.return_value = {'TranscriptionJobSummaries': []}
         
-        # Validate requirements (should have implementation warning)
-        errors = adapter.validate_requirements()
-        assert len(errors) == 1  # Only implementation warning
-        assert "not yet fully implemented" in errors[0]
-        
-        # Get engine info
-        engine, version = adapter.get_engine_info()
-        assert engine == "aws-transcribe"
-        assert "en-US-us-east-1" in version
-        
-        # Get supported formats
-        formats = adapter.get_supported_formats()
-        assert 'mp3' in formats
-        assert 'wav' in formats
-        
-        # Estimate cost
-        cost = adapter.estimate_cost(60.0)
-        assert cost == 0.024
+        with patch.dict(sys.modules, {'boto3': mock_boto3}):
+            adapter = AWSTranscribeAdapter(access_key_id="test_key", secret_access_key="test_secret")
+            
+            # Validate requirements (should have no errors - fully implemented)
+            errors = adapter.validate_requirements()
+            assert len(errors) == 0  # No errors
+            
+            # Get engine info
+            engine, version = adapter.get_engine_info()
+            assert engine == "aws-transcribe"
+            assert "en-US-us-east-1" in version
+            
+            # Get supported formats
+            formats = adapter.get_supported_formats()
+            assert 'mp3' in formats
+            assert 'wav' in formats
+            
+            # Estimate cost
+            cost = adapter.estimate_cost(60.0)
+            assert cost == 0.024
 
     def test_different_regions_and_languages(self):
         """Test adapter with different region and language configurations."""

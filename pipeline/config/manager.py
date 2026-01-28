@@ -315,7 +315,7 @@ class ConfigurationManager:
 # Enhanced Transcription & Configuration
 # This file configures transcription engines and output settings
 
-# Default transcription engine (whisper-local, whisper-api, aws-transcribe, auto)
+# Default transcription engine (local-whisper, openai-whisper, aws-transcribe, auto)
 engine: {config_dict['engine']}
 
 # Output directory for transcripts (supports environment variables)

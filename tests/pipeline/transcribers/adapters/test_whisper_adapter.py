@@ -94,7 +94,7 @@ def test_whisper_transcript_normalization():
 
     assert isinstance(transcript, TranscriptV1)
     assert len(transcript.transcript) > 0
-    assert transcript.metadata.engine == "whisper-local"
+    assert transcript.metadata.engine == "local-whisper"
     assert transcript.metadata.language is not None
 
 def format_timestamp(seconds: float) -> str:

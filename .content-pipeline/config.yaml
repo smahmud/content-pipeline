@@ -13,9 +13,9 @@
 # =============================================================================
 
 # Default transcription engine to use
-# Options: whisper-local, whisper-api, auto
-# - whisper-local: Process audio locally (privacy-focused, requires installation)
-# - whisper-api: Use OpenAI Whisper API (highest quality, requires API key)
+# Options: local-whisper, openai-whisper, auto
+# - local-whisper: Process audio locally (privacy-focused, requires installation)
+# - openai-whisper: Use OpenAI Whisper API (highest quality, requires API key)
 # - auto: Automatically select best available engine
 engine: auto
 
@@ -77,10 +77,10 @@ whisper_local:
 
 # OpenAI Whisper API Configuration
 whisper_api:
-  # OpenAI API key (required for whisper-api engine)
+  # OpenAI API key (required for openai-whisper engine)
   # SECURITY: Use environment variable instead of hardcoding
   # Get your API key at: https://platform.openai.com/api-keys
-  api_key: ${OPENAI_API_KEY}
+  api_key: ${OPENAI_API_KEY:-}
   # OpenAI model to use
   # Currently only 'whisper-1' is available
   model: whisper-1
@@ -156,7 +156,7 @@ auto_selection:
 # Example configurations for different use cases:
 
 # Privacy-focused (local only):
-# engine: whisper-local
+# engine: local-whisper
 # whisper_local:
 #   model: medium
 #   device: auto
@@ -165,7 +165,7 @@ auto_selection:
 #   fallback_enabled: false
 
 # Quality-focused (cloud services):
-# engine: whisper-api
+# engine: openai-whisper
 # whisper_api:
 #   temperature: 0.0
 # auto_selection:

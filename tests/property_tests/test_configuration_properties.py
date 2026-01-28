@@ -288,7 +288,7 @@ def test_cli_overrides_have_highest_precedence():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create config file with specific values
         config_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./config-output
 log_level: debug
 """
@@ -303,7 +303,7 @@ log_level: debug
         
         # CLI overrides
         cli_overrides = {
-            'engine': 'whisper-api',
+            'engine': 'openai-whisper',
             'output_dir': './cli-output',
             'log_level': 'error'
         }
@@ -314,7 +314,7 @@ log_level: debug
             config = config_manager.load_configuration(cli_overrides=cli_overrides)
             
             # CLI overrides should always win
-            assert config.engine == 'whisper-api'
+            assert config.engine == 'openai-whisper'
             assert config.output_dir == './cli-output'
             assert config.log_level == 'error'
 
@@ -329,7 +329,7 @@ def test_environment_variables_override_config_files():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create config file
         config_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./config-output
 """
         config_path = Path(temp_dir) / "config.yaml"
@@ -361,7 +361,7 @@ def test_project_config_overrides_user_config():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create user config
         user_config_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./user-output
 log_level: debug
 """
@@ -370,7 +370,7 @@ log_level: debug
         
         # Create project config (overrides some values)
         project_config_content = """
-engine: whisper-api
+engine: openai-whisper
 log_level: warning
 """
         project_config_path = Path(temp_dir) / "project.yaml"
@@ -382,7 +382,7 @@ log_level: warning
             config = config_manager.load_configuration()
             
             # Project config should override user config
-            assert config.engine == 'whisper-api'
+            assert config.engine == 'openai-whisper'
             assert config.log_level == 'warning'
             
             # Non-overridden values should be preserved from user config
@@ -399,7 +399,7 @@ def test_nested_configuration_merging():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create base config with nested structure
         base_config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: base
   device: cpu
@@ -410,7 +410,7 @@ whisper_local:
         
         # Create override config (partial nested override)
         override_config_content = """
-engine: whisper-api
+engine: openai-whisper
 whisper_local:
   model: large
   timeout: 600
@@ -424,7 +424,7 @@ whisper_local:
             config = config_manager.load_configuration()
             
             # Override values should win
-            assert config.engine == 'whisper-api'
+            assert config.engine == 'openai-whisper'
             assert config.whisper_local.model == 'large'
             assert config.whisper_local.timeout == 600
             
@@ -441,7 +441,7 @@ def test_full_precedence_chain():
     
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create user config
-        user_config_content = "engine: whisper-local"
+        user_config_content = "engine: local-whisper"
         user_config_path = Path(temp_dir) / "user.yaml"
         user_config_path.write_text(user_config_content)
         
@@ -458,14 +458,14 @@ def test_full_precedence_chain():
             assert config.engine == 'aws-transcribe'
             
             # Test 2: Add environment variable (should override project)
-            with patch.dict(os.environ, {'CONTENT_PIPELINE_DEFAULT_ENGINE': 'whisper-api'}):
+            with patch.dict(os.environ, {'CONTENT_PIPELINE_DEFAULT_ENGINE': 'openai-whisper'}):
                 config = config_manager.load_configuration()
-                assert config.engine == 'whisper-api'
+                assert config.engine == 'openai-whisper'
                 
                 # Test 3: Add CLI override (should override environment)
-                cli_overrides = {'engine': 'whisper-local'}
+                cli_overrides = {'engine': 'local-whisper'}
                 config = config_manager.load_configuration(cli_overrides=cli_overrides)
-                assert config.engine == 'whisper-local'
+                assert config.engine == 'local-whisper'
 
 
 """
@@ -760,7 +760,7 @@ def test_yaml_round_trip_with_custom_config():
     
     # Create custom configuration with safe values
     config = TranscriptionConfig(
-        engine="whisper-local",
+        engine="local-whisper",
         output_dir="./custom-output",
         log_level="debug",
         language="en"
@@ -782,7 +782,7 @@ def test_yaml_round_trip_with_custom_config():
     parsed_config = config_manager._dict_to_config(parsed_dict)
     
     # All values should be exactly preserved
-    assert parsed_config.engine == "whisper-local"
+    assert parsed_config.engine == "local-whisper"
     assert parsed_config.output_dir == "./custom-output"
     assert parsed_config.log_level == "debug"
     assert parsed_config.language == "en"
@@ -801,7 +801,7 @@ def test_yaml_round_trip_with_comments():
     yaml_parser = ConfigurationYAMLParser()
     
     config = TranscriptionConfig(
-        engine="whisper-api",
+        engine="openai-whisper",
         output_dir="./api-output",
         log_level="warning"
     )
@@ -818,7 +818,7 @@ def test_yaml_round_trip_with_comments():
     parsed_config = config_manager._dict_to_config(parsed_dict)
     
     # Essential values should be preserved
-    assert parsed_config.engine == "whisper-api"
+    assert parsed_config.engine == "openai-whisper"
     assert parsed_config.output_dir == "./api-output"
     assert parsed_config.log_level == "warning"
 
@@ -863,7 +863,7 @@ def test_round_trip_with_environment_variables():
     
     # Create YAML with environment variable placeholders
     yaml_content = """
-engine: whisper-api
+engine: openai-whisper
 output_dir: ./transcripts
 whisper_api:
   api_key: ${OPENAI_API_KEY}
@@ -902,7 +902,7 @@ def test_round_trip_preserves_data_types():
     yaml_parser = ConfigurationYAMLParser()
     
     config = TranscriptionConfig(
-        engine="whisper-local",
+        engine="local-whisper",
         output_dir="./test-output",
         log_level="debug",
         language="en"
@@ -1016,7 +1016,7 @@ from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, Whis
 
 
 # Strategy for generating valid engine types (currently only whisper-local is implemented)
-valid_engine_types = st.sampled_from(['whisper-local'])
+valid_engine_types = st.sampled_from(['local-whisper'])
 
 # Strategy for generating valid Whisper model sizes
 valid_whisper_models = st.sampled_from([m.value for m in WhisperModelSize])
@@ -1081,11 +1081,11 @@ def test_factory_passes_configuration_correctly(engine_type, model_size):
         adapter = factory.create_engine(engine_type, config)
         
         # Configuration should be passed correctly
-        if engine_type == 'whisper-local':
+        if engine_type == 'local-whisper':
             assert adapter.model_name == model_size
 
 
-@given(invalid_engine=st.text().filter(lambda x: x not in ['whisper-local']))
+@given(invalid_engine=st.text().filter(lambda x: x not in ['local-whisper']))
 def test_factory_rejects_invalid_engines(invalid_engine):
     """
     **Property 10: Engine Factory Instantiation**
@@ -1106,14 +1106,14 @@ def test_factory_validates_requirements_before_creation():
     *For any* engine with unmet requirements, the factory should raise a clear error.
     """
     factory = EngineFactory()
-    config = TranscriptionConfig(engine='whisper-local')
+    config = TranscriptionConfig(engine='local-whisper')
     
     # Mock requirements validation to return errors
     mock_errors = ['Whisper not installed', 'Model not available']
     with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', 
                return_value=mock_errors):
-        with pytest.raises(RuntimeError, match="Engine 'whisper-local' requirements not met"):
-            factory.create_engine('whisper-local', config)
+        with pytest.raises(RuntimeError, match="Engine 'local-whisper' requirements not met"):
+            factory.create_engine('local-whisper', config)
 
 
 def test_factory_available_engines_consistency():
@@ -1196,19 +1196,19 @@ def test_factory_requirement_validation_consistency():
     *For any* engine, validate_engine_requirements should return the same errors as the adapter.
     """
     factory = EngineFactory()
-    config = TranscriptionConfig(engine='whisper-local')
+    config = TranscriptionConfig(engine='local-whisper')
     
     expected_errors = ['Test error 1', 'Test error 2']
     
     with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', 
                return_value=expected_errors):
         # Factory validation should return the same errors
-        factory_errors = factory.validate_engine_requirements('whisper-local', config)
+        factory_errors = factory.validate_engine_requirements('local-whisper', config)
         assert factory_errors == expected_errors
         
         # Creating the engine should fail with the same errors
         with pytest.raises(RuntimeError) as exc_info:
-            factory.create_engine('whisper-local', config)
+            factory.create_engine('local-whisper', config)
         
         error_message = str(exc_info.value)
         for expected_error in expected_errors:
@@ -1245,5 +1245,5 @@ def test_factory_handles_all_configuration_combinations(data):
         adapter = factory.create_engine(engine_type, config)
         
         # Adapter should have the correct model configuration
-        if engine_type == 'whisper-local':
+        if engine_type == 'local-whisper':
             assert adapter.model_name == model_size

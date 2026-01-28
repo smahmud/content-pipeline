@@ -1,7 +1,7 @@
 """
 File: test_whisper_local_adapter.py
 
-Unit tests for WhisperLocalAdapter behavior and error handling.
+Unit tests for LocalWhisperAdapter behavior and error handling.
 
 Covers:
 - Local Whisper transcription functionality
@@ -12,16 +12,16 @@ Covers:
 import os
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from pipeline.transcribers.adapters.whisper_local import WhisperLocalAdapter
+from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 
 
-class TestWhisperLocalAdapter:
-    """Test the WhisperLocalAdapter class."""
+class TestLocalWhisperAdapter:
+    """Test the LocalWhisperAdapter class."""
 
     def test_adapter_implements_enhanced_protocol(self):
-        """Test that WhisperLocalAdapter implements all enhanced protocol methods."""
-        adapter = WhisperLocalAdapter(model_name="base")
+        """Test that LocalWhisperAdapter implements all enhanced protocol methods."""
+        adapter = LocalWhisperAdapter(model_name="base")
         
         # Check that all protocol methods exist
         assert hasattr(adapter, 'transcribe')
@@ -38,16 +38,16 @@ class TestWhisperLocalAdapter:
         assert callable(adapter.estimate_cost)
 
     def test_adapter_complies_with_protocol(self):
-        """Test that WhisperLocalAdapter is recognized as a TranscriberAdapter."""
-        adapter: TranscriberAdapter = WhisperLocalAdapter()
+        """Test that LocalWhisperAdapter is recognized as a TranscriberAdapter."""
+        adapter: TranscriberAdapter = LocalWhisperAdapter()
         engine, version = adapter.get_engine_info()
         assert isinstance(engine, str)
         assert isinstance(version, str)
-        assert engine == "whisper-local"
+        assert engine == "local-whisper"
 
     def test_initialization_with_default_parameters(self):
         """Test adapter initialization with default parameters."""
-        adapter = WhisperLocalAdapter()
+        adapter = LocalWhisperAdapter()
         
         assert adapter.model_name == "base"
         assert adapter.device == "cpu"
@@ -56,7 +56,7 @@ class TestWhisperLocalAdapter:
 
     def test_initialization_with_custom_parameters(self):
         """Test adapter initialization with custom parameters."""
-        adapter = WhisperLocalAdapter(model_name="large", device="cpu")
+        adapter = LocalWhisperAdapter(model_name="large", device="cpu")
         
         assert adapter.model_name == "large"
         assert adapter.device == "cpu"
@@ -65,7 +65,7 @@ class TestWhisperLocalAdapter:
 
     def test_get_supported_formats_returns_list(self):
         """Test that get_supported_formats returns a list of strings."""
-        adapter = WhisperLocalAdapter()
+        adapter = LocalWhisperAdapter()
         formats = adapter.get_supported_formats()
         
         assert isinstance(formats, list)
@@ -79,24 +79,24 @@ class TestWhisperLocalAdapter:
 
     def test_estimate_cost_returns_none(self):
         """Test that local Whisper returns None for cost estimation."""
-        adapter = WhisperLocalAdapter()
+        adapter = LocalWhisperAdapter()
         cost = adapter.estimate_cost(60.0)  # 1 minute of audio
         
         assert cost is None  # Local Whisper is free
 
     def test_get_engine_info_returns_correct_info(self):
         """Test that get_engine_info returns correct engine information."""
-        adapter = WhisperLocalAdapter(model_name="large")
+        adapter = LocalWhisperAdapter(model_name="large")
         engine_info = adapter.get_engine_info()
         
         assert isinstance(engine_info, tuple)
         assert len(engine_info) == 2
-        assert engine_info[0] == "whisper-local"
+        assert engine_info[0] == "local-whisper"
         assert engine_info[1] == "large"
 
     def test_get_model_size_info(self):
         """Test that get_model_size_info returns model information."""
-        adapter = WhisperLocalAdapter(model_name="base", device="cpu")
+        adapter = LocalWhisperAdapter(model_name="base", device="cpu")
         info = adapter.get_model_size_info()
         
         assert isinstance(info, dict)
@@ -117,7 +117,7 @@ class TestWhisperLocalAdapter:
         mock_load_model.return_value = mock_model
         mock_available_models.return_value = ['tiny', 'base', 'small', 'medium', 'large']
         
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -129,7 +129,7 @@ class TestWhisperLocalAdapter:
         # Mock model loading failure
         mock_load_model.side_effect = Exception("Model download failed")
         
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -143,7 +143,7 @@ class TestWhisperLocalAdapter:
         mock_available_models.return_value = ['tiny', 'base', 'small']
         mock_load_model.side_effect = Exception("Model not found")
         
-        adapter = WhisperLocalAdapter(model_name="invalid_model")
+        adapter = LocalWhisperAdapter(model_name="invalid_model")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -152,7 +152,7 @@ class TestWhisperLocalAdapter:
 
     def test_validate_requirements_missing_whisper_package(self):
         """Test validate_requirements when whisper package is not installed."""
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         
         # Mock import error for whisper package
         with patch('builtins.__import__', side_effect=ImportError("No module named 'whisper'")):
@@ -167,7 +167,7 @@ class TestWhisperLocalAdapter:
         """Test validate_requirements when CUDA is requested but not available."""
         mock_cuda_available.return_value = False
         
-        adapter = WhisperLocalAdapter(model_name="base", device="cuda")
+        adapter = LocalWhisperAdapter(model_name="base", device="cuda")
         errors = adapter.validate_requirements()
         
         assert isinstance(errors, list)
@@ -176,14 +176,14 @@ class TestWhisperLocalAdapter:
 
     def test_transcribe_validates_file_existence(self):
         """Test that transcribe method validates file existence."""
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         
         with pytest.raises(FileNotFoundError, match="Audio file not found"):
             adapter.transcribe("nonexistent_file.mp3")
 
     def test_transcribe_validates_file_format(self):
         """Test that transcribe method validates file format."""
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         
         # Create a temporary file with unsupported extension
         import tempfile
@@ -203,7 +203,7 @@ class TestWhisperLocalAdapter:
         """Test transcribe behavior when model loading fails."""
         mock_load_model.side_effect = RuntimeError("Model loading failed")
         
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         
         # Create a temporary valid audio file
         import tempfile
@@ -220,7 +220,7 @@ class TestWhisperLocalAdapter:
 
     def test_supported_formats_immutability(self):
         """Test that supported formats list cannot be modified externally."""
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         formats1 = adapter.get_supported_formats()
         formats2 = adapter.get_supported_formats()
         
@@ -238,7 +238,7 @@ class TestWhisperLocalAdapter:
         mock_model = MagicMock()
         mock_load_model.return_value = mock_model
         
-        adapter = WhisperLocalAdapter(model_name="base", device="cpu")
+        adapter = LocalWhisperAdapter(model_name="base", device="cpu")
         adapter._load_model()
         
         # Verify that load_model was called with correct parameters
@@ -252,7 +252,7 @@ class TestWhisperLocalAdapter:
         mock_model = MagicMock()
         mock_load_model.return_value = mock_model
         
-        adapter = WhisperLocalAdapter(model_name="base")
+        adapter = LocalWhisperAdapter(model_name="base")
         
         # Model should not be loaded during initialization
         assert adapter._model_loaded is False
@@ -275,7 +275,7 @@ class TestWhisperLocalAdapter:
             'custom_param': 'test_value'
         }
         
-        adapter = WhisperLocalAdapter(model_name="base", **config_kwargs)
+        adapter = LocalWhisperAdapter(model_name="base", **config_kwargs)
         
         assert adapter.config == config_kwargs
         assert adapter.config['timeout'] == 300
@@ -283,8 +283,8 @@ class TestWhisperLocalAdapter:
         assert adapter.config['custom_param'] == 'test_value'
 
 
-class TestWhisperLocalAdapterIntegration:
-    """Integration tests for WhisperLocalAdapter."""
+class TestLocalWhisperAdapterIntegration:
+    """Integration tests for LocalWhisperAdapter."""
 
     @patch('whisper.load_model')
     @patch('whisper.available_models')
@@ -300,7 +300,7 @@ class TestWhisperLocalAdapterIntegration:
         mock_load_model.return_value = mock_model
         mock_available_models.return_value = ['tiny', 'base', 'small', 'medium', 'large']
         
-        adapter = WhisperLocalAdapter(model_name="base", device="cpu")
+        adapter = LocalWhisperAdapter(model_name="base", device="cpu")
         
         # Validate requirements
         errors = adapter.validate_requirements()
@@ -308,7 +308,7 @@ class TestWhisperLocalAdapterIntegration:
         
         # Get engine info
         engine, version = adapter.get_engine_info()
-        assert engine == "whisper-local"
+        assert engine == "local-whisper"
         assert version == "base"
         
         # Get supported formats
@@ -339,14 +339,14 @@ class TestWhisperLocalAdapterIntegration:
         model_sizes = ['tiny', 'base', 'small', 'medium', 'large']
         
         for model_size in model_sizes:
-            adapter = WhisperLocalAdapter(model_name=model_size)
+            adapter = LocalWhisperAdapter(model_name=model_size)
             
             # Check that model size is set correctly
             assert adapter.model_name == model_size
             
             # Check engine info
             engine, version = adapter.get_engine_info()
-            assert engine == "whisper-local"
+            assert engine == "local-whisper"
             assert version == model_size
             
             # Check model size info
@@ -358,7 +358,7 @@ class TestWhisperLocalAdapterIntegration:
         devices = ['cpu', 'cuda', 'auto']
         
         for device in devices:
-            adapter = WhisperLocalAdapter(model_name="base", device=device)
+            adapter = LocalWhisperAdapter(model_name="base", device=device)
             
             # Check that device is set correctly
             assert adapter.device == device

@@ -96,7 +96,7 @@ logging:
 # Scenario 1: Privacy-focused user (local processing only)
 # Uncomment these settings if you want to ensure audio never leaves your machine:
 #
-# engine: whisper-local
+# engine: local-whisper
 # whisper_local:
 #   model: medium  # Good balance of accuracy and speed
 #   device: auto
@@ -106,7 +106,7 @@ logging:
 # Scenario 2: Quality-focused user (prefer cloud services)
 # Uncomment these settings if you prioritize transcription quality:
 #
-# engine: whisper-api
+# engine: openai-whisper
 # auto_prefer_local: false
 # whisper_api:
 #   temperature: 0.0  # Most deterministic output
@@ -123,7 +123,7 @@ logging:
 # Scenario 4: Batch processing user (optimized for speed)
 # Uncomment these settings for processing many files quickly:
 #
-# engine: whisper-local
+# engine: local-whisper
 # whisper_local:
 #   model: tiny  # Fastest model
 #   device: cuda  # Use GPU if available

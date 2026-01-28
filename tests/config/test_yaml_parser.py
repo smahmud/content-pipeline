@@ -22,7 +22,7 @@ class TestConfigurationYAMLParser:
     def test_parse_valid_yaml_file(self):
         """Test parsing a valid YAML configuration file."""
         yaml_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./test-output
 log_level: debug
 whisper_local:
@@ -36,7 +36,7 @@ whisper_local:
             
             result = self.parser.parse_file(config_file)
             
-            assert result['engine'] == 'whisper-local'
+            assert result['engine'] == 'local-whisper'
             assert result['output_dir'] == './test-output'
             assert result['log_level'] == 'debug'
             assert result['whisper_local']['model'] == 'large'
@@ -45,7 +45,7 @@ whisper_local:
     def test_parse_invalid_yaml_file_with_line_info(self):
         """Test that invalid YAML provides line number information."""
         invalid_yaml = """
-engine: whisper-local
+engine: local-whisper
   invalid: yaml: structure
     - missing proper indentation
 """
@@ -75,19 +75,19 @@ engine: whisper-local
     def test_parse_string_valid_yaml(self):
         """Test parsing valid YAML from string."""
         yaml_content = """
-engine: whisper-api
+engine: openai-whisper
 output_dir: ./api-output
 """
         
         result = self.parser.parse_string(yaml_content)
         
-        assert result['engine'] == 'whisper-api'
+        assert result['engine'] == 'openai-whisper'
         assert result['output_dir'] == './api-output'
     
     def test_parse_string_invalid_yaml(self):
         """Test parsing invalid YAML from string provides line info."""
         invalid_yaml = """
-engine: whisper-local
+engine: local-whisper
   invalid: yaml: structure
 """
         
@@ -100,7 +100,7 @@ engine: whisper-local
     def test_validate_configuration_structure_valid(self):
         """Test validation of valid configuration structure."""
         config_dict = {
-            'engine': 'whisper-local',
+            'engine': 'local-whisper',
             'output_dir': './output',
             'whisper_local': {
                 'model': 'base',
@@ -114,7 +114,7 @@ engine: whisper-local
     def test_validate_configuration_structure_unknown_keys(self):
         """Test validation catches unknown configuration keys."""
         config_dict = {
-            'engine': 'whisper-local',
+            'engine': 'local-whisper',
             'unknown_key': 'value',
             'whisper_local': {
                 'model': 'base',
@@ -162,7 +162,7 @@ engine: whisper-local
         """Test validation of auto_selection with invalid priority order."""
         config_dict = {
             'auto_selection': {
-                'priority_order': ['whisper-local', 'invalid-engine', 'whisper-api']
+                'priority_order': ['local-whisper', 'invalid-engine', 'openai-whisper']
             }
         }
         
@@ -188,7 +188,7 @@ engine: whisper-local
     def test_serialize_to_yaml_with_comments(self):
         """Test serialization to YAML with comments."""
         config = TranscriptionConfig(
-            engine='whisper-local',
+            engine='local-whisper',
             output_dir='./test-output',
             log_level='debug'
         )
@@ -196,7 +196,7 @@ engine: whisper-local
         yaml_content = self.parser.serialize_to_yaml(config, include_comments=True)
         
         assert 'Content Pipeline Configuration v0.6.5' in yaml_content
-        assert 'engine: whisper-local' in yaml_content
+        assert 'engine: local-whisper' in yaml_content
         assert 'output_dir: ./test-output' in yaml_content
         assert 'log_level: debug' in yaml_content
         assert '# Default transcription engine' in yaml_content
@@ -205,13 +205,13 @@ engine: whisper-local
     def test_serialize_to_yaml_without_comments(self):
         """Test serialization to YAML without comments."""
         config = TranscriptionConfig(
-            engine='whisper-api',
+            engine='openai-whisper',
             output_dir='./api-output'
         )
         
         yaml_content = self.parser.serialize_to_yaml(config, include_comments=False)
         
-        assert 'engine: whisper-api' in yaml_content
+        assert 'engine: openai-whisper' in yaml_content
         assert 'output_dir: ./api-output' in yaml_content
         assert '# Content Pipeline Configuration' not in yaml_content
         assert '# Default transcription engine' not in yaml_content
@@ -219,7 +219,7 @@ engine: whisper-local
     def test_validate_and_parse_file_success(self):
         """Test combined validation and parsing of valid file."""
         yaml_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./test-output
 whisper_local:
   model: base
@@ -232,13 +232,13 @@ whisper_local:
             config_dict, errors = self.parser.validate_and_parse_file(config_file)
             
             assert errors == []
-            assert config_dict['engine'] == 'whisper-local'
+            assert config_dict['engine'] == 'local-whisper'
             assert config_dict['output_dir'] == './test-output'
     
     def test_validate_and_parse_file_with_validation_errors(self):
         """Test combined validation and parsing with validation errors."""
         yaml_content = """
-engine: whisper-local
+engine: local-whisper
 unknown_key: value
 whisper_local:
   model: base
@@ -252,7 +252,7 @@ whisper_local:
             config_dict, errors = self.parser.validate_and_parse_file(config_file)
             
             assert len(errors) >= 2
-            assert config_dict['engine'] == 'whisper-local'
+            assert config_dict['engine'] == 'local-whisper'
             assert any('unknown_key' in error for error in errors)
     
     def test_empty_yaml_file(self):

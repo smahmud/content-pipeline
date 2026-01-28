@@ -135,7 +135,7 @@ log_file: ${HOME}/logs/content-pipeline.log
 
 ### Privacy-Focused Setup
 ```yaml
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: medium
 auto_prefer_local: true
@@ -144,7 +144,7 @@ auto_fallback_enabled: false
 
 ### Quality-Focused Setup
 ```yaml
-engine: whisper-api
+engine: openai-whisper
 whisper_api:
   temperature: 0.0
 auto_prefer_local: false

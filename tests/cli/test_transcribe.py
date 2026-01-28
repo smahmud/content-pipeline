@@ -59,8 +59,8 @@ class TestTranscribeCommand:
         assert "--output-dir" in result.output # New option
         assert "--config" in result.output # New option
         assert "--log-level" in result.output # New option
-        assert "whisper-local" in result.output
-        assert "whisper-api" in result.output
+        assert "local-whisper" in result.output
+        assert "openai-whisper" in result.output
         assert "auto" in result.output
     
     def test_transcribe_missing_engine_flag_breaking_change(self):
@@ -73,14 +73,14 @@ class TestTranscribeCommand:
         output_lower = result.output.lower()
         breaking_change_indicators = [
             'engine', 'required', 'breaking', 'v0.6.5',
-            'whisper-local', 'whisper-api', 'auto'
+            'local-whisper', 'openai-whisper', 'auto'
         ]
         assert any(indicator in output_lower for indicator in breaking_change_indicators)
     
     def test_transcribe_missing_source_argument(self):
         """Test that transcribe command fails when source argument is missing."""
         runner = CliRunner()
-        result = runner.invoke(transcribe, ['--engine', 'whisper-local', '--output', 'transcript.json'])
+        result = runner.invoke(transcribe, ['--engine', 'local-whisper', '--output', 'transcript.json'])
         
         assert result.exit_code != 0
         assert "Missing option" in result.output or "required" in result.output.lower()
@@ -93,7 +93,7 @@ class TestTranscribeCommand:
         with runner.isolated_filesystem():
             # Create a minimal config that doesn't require API keys
             config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
 output_dir: ./test_output
@@ -103,7 +103,7 @@ output_dir: ./test_output
             
             result = runner.invoke(transcribe, [
                 '--source', 'nonexistent.mp3', 
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--config', 'test_config.yaml'
             ])
             
@@ -124,7 +124,7 @@ output_dir: ./test_output
         assert "invalid" in result.output.lower() or "choice" in result.output.lower()
         # Should list valid engines
         output_lower = result.output.lower()
-        assert any(engine in output_lower for engine in ['whisper-local', 'whisper-api', 'auto'])
+        assert any(engine in output_lower for engine in ['local-whisper', 'openai-whisper', 'auto'])
     
     def test_transcribe_with_language_option(self):
         """Test that transcribe command accepts language option."""
@@ -134,7 +134,7 @@ output_dir: ./test_output
         with runner.isolated_filesystem():
             # Create a minimal config that doesn't require API keys
             config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
 output_dir: ./test_output
@@ -144,7 +144,7 @@ output_dir: ./test_output
             
             result = runner.invoke(transcribe, [
                 '--source', 'test.mp3',
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--language', 'en',
                 '--config', 'test_config.yaml'
             ])
@@ -163,7 +163,7 @@ output_dir: ./test_output
         with runner.isolated_filesystem():
             # Create a minimal config that doesn't require API keys
             config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
 output_dir: ./test_output
@@ -173,7 +173,7 @@ output_dir: ./test_output
             
             result = runner.invoke(transcribe, [
                 '--source', 'test.mp3',
-                '--engine', 'whisper-local',
+                '--engine', 'local-whisper',
                 '--model', 'base',
                 '--output-dir', './custom_output',
                 '--log-level', 'debug',
@@ -298,7 +298,7 @@ class TestTranscribeIntegration:
         # Create a test config file to avoid issues with the main config
         config_file = tmp_path / "test_config.yaml"
         config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
   timeout: 60
@@ -311,7 +311,7 @@ log_level: info
             sys.executable, "-m", "cli",
             "transcribe",
             "--source", str(input_audio),
-            "--engine", "whisper-local",  # Required in v0.6.5
+            "--engine", "local-whisper",  # Required in v0.6.5
             "--model", "tiny",            # Use fastest model for testing
             "--output-dir", str(output_dir),
             "--config", str(config_file)
@@ -366,7 +366,7 @@ log_level: info
         # Create a test config file
         config_file = tmp_path / "test_config.yaml"
         config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
   timeout: 60
@@ -379,7 +379,7 @@ log_level: info
             sys.executable, "-m", "cli",
             "transcribe",
             "--source", str(input_audio),
-            "--engine", "whisper-local",  # Required in v0.6.5
+            "--engine", "local-whisper",  # Required in v0.6.5
             "--model", "tiny",            # Use fastest model for testing
             "--output-dir", str(output_dir),
             "--config", str(config_file)
@@ -416,7 +416,7 @@ log_level: info
         # Create a test config file
         config_file = tmp_path / "test_config.yaml"
         config_content = """
-engine: whisper-local
+engine: local-whisper
 whisper_local:
   model: tiny
   timeout: 60
@@ -429,7 +429,7 @@ log_level: info
             sys.executable, "-m", "cli",
             "transcribe",
             "--source", str(input_audio),
-            "--engine", "whisper-local",  # Required in v0.6.5
+            "--engine", "local-whisper",  # Required in v0.6.5
             "--model", "tiny",            # Use fastest model for testing
             "--language", "en",
             "--output-dir", str(output_dir),
@@ -473,7 +473,7 @@ log_level: info
         output_lower = output_text.lower()
         breaking_change_indicators = [
             'engine', 'required', 'breaking', 'v0.6.5',
-            'whisper-local', 'whisper-api', 'auto'
+            'local-whisper', 'openai-whisper', 'auto'
         ]
         assert any(indicator in output_lower for indicator in breaking_change_indicators)
     
@@ -487,7 +487,7 @@ log_level: info
         # Create configuration file
         config_file = tmp_path / "config.yaml"
         config_content = """
-engine: whisper-local
+engine: local-whisper
 output_dir: ./config_output
 whisper_local:
   model: tiny
@@ -564,8 +564,8 @@ class TestBackwardCompatibilityAndMigration:
             'v0.6.5',
             'engine',
             'required',
-            'whisper-local',
-            'whisper-api',
+            'local-whisper',
+            'openai-whisper',
             'auto',
             'example'
         ]
@@ -584,7 +584,7 @@ class TestBackwardCompatibilityAndMigration:
             # Pattern 1: whisper-local
             [
                 "--source", str(input_audio),
-                "--engine", "whisper-local",
+                "--engine", "local-whisper",
                 "--model", "tiny",
                 "--output-dir", str(tmp_path / "output1")
             ],
@@ -631,7 +631,7 @@ class TestBackwardCompatibilityAndMigration:
             sys.executable, "-m", "cli",
             "transcribe",
             "--source", str(input_audio),
-            "--engine", "whisper-local",
+            "--engine", "local-whisper",
             "--model", "tiny",
             "--output-dir", str(output_dir)
         ], cwd=tmp_path, capture_output=True, text=True)
@@ -682,7 +682,7 @@ class TestBackwardCompatibilityAndMigration:
             sys.executable, "-m", "cli",
             "transcribe",
             "--source", str(input_audio),
-            "--engine", "whisper-local",
+            "--engine", "local-whisper",
             "--model", "tiny"
             # No --output-dir specified - should use default from config
         ], cwd=tmp_path, capture_output=True, text=True)

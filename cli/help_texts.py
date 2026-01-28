@@ -57,16 +57,16 @@ TRANSCRIBE_LANGUAGE_HELP = (
 # New option help texts for v0.6.5
 TRANSCRIBE_ENGINE_HELP = (
     "Transcription engine to use:\n"
-    "  whisper-local: Local Whisper model (privacy-focused, no internet required)\n"
-    "  whisper-api: OpenAI Whisper API (high quality, requires API key and credits)\n"
+    "  local-whisper: Local Whisper model (privacy-focused, no internet required)\n"
+    "  openai-whisper: OpenAI Whisper API (high quality, requires API key and credits)\n"
     "  aws-transcribe: AWS Transcribe service (good quality, requires AWS credentials)\n"
     "  auto: Automatically select best available engine based on configuration"
 )
 
 TRANSCRIBE_MODEL_HELP = (
     "Model to use for transcription. Options vary by engine:\n"
-    "  whisper-local: tiny, base, small, medium, large (default: base)\n"
-    "  whisper-api: whisper-1 (default and only option)\n"
+    "  local-whisper: tiny, base, small, medium, large (default: base)\n"
+    "  openai-whisper: whisper-1 (default and only option)\n"
     "  aws-transcribe: Uses service defaults\n"
     "  auto: Uses configured model for selected engine"
 )
@@ -113,16 +113,16 @@ Previous usage (no longer works):
   content-pipeline transcribe --source audio.mp3
 
 New usage (required):
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper
 
 Available engines:
-  --engine whisper-local    # Local Whisper (privacy-focused, no internet)
-  --engine whisper-api      # OpenAI API (high quality, requires API key)
+  --engine local-whisper    # Local Whisper (privacy-focused, no internet)
+  --engine openai-whisper      # OpenAI API (high quality, requires API key)
   --engine aws-transcribe   # AWS Transcribe (requires AWS credentials)
   --engine auto             # Automatically select best available
 
 For the same behavior as before, use:
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local --model base
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper --model base
 
 See documentation for configuration file setup to avoid repeating options.
 """
@@ -141,15 +141,15 @@ New behavior:
 
 Examples:
   # Use default directory
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper
   # Result: ./transcripts/audio.json
 
   # Specify output directory
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local --output-dir ./my-transcripts
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-dir ./my-transcripts
   # Result: ./my-transcripts/audio.json
 
   # Specify exact output file
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local --output ./results/my-transcript.json
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper --output ./results/my-transcript.json
   # Result: ./results/my-transcript.json
 """
 
@@ -165,7 +165,7 @@ New configuration locations (checked in order):
   4. Built-in defaults
 
 Example configuration file (~/.content-pipeline/config.yaml):
-  engine: whisper-local
+  engine: local-whisper
   output_dir: ./transcripts
   whisper_local:
     model: base
@@ -188,7 +188,7 @@ API CREDENTIAL SETUP REQUIRED
 
 Cloud transcription engines require proper authentication setup.
 
-For OpenAI Whisper API (--engine whisper-api):
+For OpenAI Whisper API (--engine openai-whisper):
   Option 1: Environment variable
     export OPENAI_API_KEY="your-api-key-here"
   
@@ -222,7 +222,7 @@ Key changes you need to know:
 
 1. ENGINE SELECTION NOW REQUIRED
    Old: content-pipeline transcribe --source audio.mp3
-   New: content-pipeline transcribe --source audio.mp3 --engine whisper-local
+   New: content-pipeline transcribe --source audio.mp3 --engine local-whisper
 
 2. OUTPUT PATHS CHANGED
    Old: Files saved to ./output/
@@ -230,14 +230,14 @@ Key changes you need to know:
 
 3. CONFIGURATION FILES SUPPORTED
    Create ~/.content-pipeline/config.yaml to set defaults:
-     engine: whisper-local
+     engine: local-whisper
      output_dir: ./transcripts
      whisper_local:
        model: base
 
 4. NEW ENGINE OPTIONS
-   • whisper-local: Same as before (local processing)
-   • whisper-api: OpenAI API (requires API key)
+   • local-whisper: Same as before (local processing)
+   • openai-whisper: OpenAI API (requires API key)
    • aws-transcribe: AWS service (requires AWS credentials)
    • auto: Automatically select best available
 
@@ -246,11 +246,11 @@ Key changes you need to know:
 
 Quick migration for common patterns:
   # Basic transcription (same as v0.6.0)
-  content-pipeline transcribe --source audio.mp3 --engine whisper-local
+  content-pipeline transcribe --source audio.mp3 --engine local-whisper
   
   # High quality with OpenAI
   export OPENAI_API_KEY="your-key"
-  content-pipeline transcribe --source audio.mp3 --engine whisper-api
+  content-pipeline transcribe --source audio.mp3 --engine openai-whisper
   
   # Let system choose best option
   content-pipeline transcribe --source audio.mp3 --engine auto

@@ -68,13 +68,13 @@ def test_missing_engine_flag_provides_migration_guidance(source_file):
             
             # If it's the breaking change message, it should contain proper guidance
             if "BREAKING CHANGE" in output:
-                assert "whisper-local" in output
-                assert "whisper-api" in output
+                assert "local-whisper" in output
+                assert "openai-whisper" in output
                 assert "auto" in output
                 assert "content-pipeline transcribe" in output
 
 
-@given(engine_type=st.sampled_from(['whisper-api', 'aws-transcribe']))
+@given(engine_type=st.sampled_from(['openai-whisper', 'aws-transcribe']))
 @settings(max_examples=10)
 def test_missing_credentials_provides_guidance(engine_type):
     """
@@ -99,7 +99,7 @@ def test_missing_credentials_provides_guidance(engine_type):
                 mock_factory.return_value = mock_factory_instance
                 
                 # Simulate credential validation failure
-                if engine_type == 'whisper-api':
+                if engine_type == 'openai-whisper':
                     mock_factory_instance.validate_engine_requirements.return_value = [
                         "OpenAI API key is required but not provided"
                     ]
@@ -119,7 +119,7 @@ def test_missing_credentials_provides_guidance(engine_type):
                 
                 # Should contain credential setup guidance
                 output = result.output
-                if engine_type == 'whisper-api':
+                if engine_type == 'openai-whisper':
                     assert "OPENAI_API_KEY" in output or "API key" in output
                     assert "api-key" in output or "environment variable" in output
                 elif engine_type == 'aws-transcribe':
@@ -191,7 +191,7 @@ def test_legacy_command_pattern_guidance(old_pattern):
     """
     # Test that breaking change messages contain migration examples
     assert "content-pipeline transcribe" in BREAKING_CHANGE_ENGINE_REQUIRED
-    assert "--engine whisper-local" in BREAKING_CHANGE_ENGINE_REQUIRED
+    assert "--engine local-whisper" in BREAKING_CHANGE_ENGINE_REQUIRED
     assert "--source" in BREAKING_CHANGE_ENGINE_REQUIRED
     
     # Test that migration summary contains comprehensive guidance
@@ -201,7 +201,7 @@ def test_legacy_command_pattern_guidance(old_pattern):
     
     # Test that examples show proper flag usage
     assert "--engine" in BREAKING_CHANGE_MIGRATION_SUMMARY
-    assert "whisper-local" in BREAKING_CHANGE_MIGRATION_SUMMARY
+    assert "local-whisper" in BREAKING_CHANGE_MIGRATION_SUMMARY
 
 
 def test_breaking_change_error_codes_consistency():

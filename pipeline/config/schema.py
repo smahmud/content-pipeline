@@ -15,8 +15,8 @@ from enum import Enum
 
 class EngineType(Enum):
     """Supported transcription engine types."""
-    WHISPER_LOCAL = "whisper-local"
-    WHISPER_API = "whisper-api"
+    WHISPER_LOCAL = "local-whisper"
+    WHISPER_API = "openai-whisper"
     AWS_TRANSCRIBE = "aws-transcribe"
     AUTO = "auto"
 
