@@ -217,7 +217,7 @@ class ConfigurationYAMLParser:
         
         expected_keys = {
             'access_key_id', 'secret_access_key', 'region', 'language_code', 
-            'media_format', 'timeout', 'retry_attempts', 'retry_delay'
+            's3_bucket', 'media_format', 'timeout', 'retry_attempts', 'retry_delay'
         }
         unknown_keys = set(config.keys()) - expected_keys
         if unknown_keys:

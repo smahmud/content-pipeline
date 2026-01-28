@@ -81,7 +81,6 @@ whisper_api:
   # SECURITY: Use environment variable instead of hardcoding
   # Get your API key at: https://platform.openai.com/api-keys
   api_key: ${OPENAI_API_KEY}
-  
   # OpenAI model to use
   # Currently only 'whisper-1' is available
   model: whisper-1
@@ -105,26 +104,35 @@ whisper_api:
 
 # AWS Transcribe Configuration (if using aws-transcribe engine)
 aws_transcribe:
+  # AWS credentials (required for aws-transcribe engine)
+  # SECURITY: Use environment variables instead of hardcoding
+  # Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+  # Or configure them here (not recommended for production)
+  # Or use AWS CLI: Run 'aws configure' to set up credentials
+  access_key_id: null
+  secret_access_key: null
+  
   # AWS region to use
+  # Common regions: us-east-1, us-west-2, eu-west-1, ap-southeast-1
   region: ${AWS_DEFAULT_REGION:-us-east-1}
   
-  # S3 bucket for temporary audio file storage
-  # Required for AWS Transcribe (audio must be in S3)
-  s3_bucket: ${AWS_TRANSCRIBE_BUCKET}
-  
   # Language code for transcription
-  # Use AWS language codes (e.g., 'en-US', 'es-ES', 'fr-FR')
+  # Use AWS language codes (e.g., 'en-US', 'es-ES', 'fr-FR', 'de-DE')
+  # The system will auto-convert ISO 639-1 codes (en, es, fr) to AWS format
   language_code: en-US
   
-  # Media format
-  # Options: mp3, mp4, wav, flac, ogg, amr, webm
-  media_format: auto
+  # Optional: Custom S3 bucket name for transcription files
+  # If not specified, a default bucket will be created: content-pipeline-transcribe-{region}
+  s3_bucket: null
   
-  # Operation timeout in seconds
+  # Operation timeout in seconds (AWS Transcribe can take longer for large files)
   timeout: 600
   
-  # Number of retry attempts
+  # Number of retry attempts on failure
   retry_attempts: 3
+  
+  # Delay between retry attempts in seconds
+  retry_delay: 2.0
 
 # =============================================================================
 # AUTO-SELECTION PREFERENCES
@@ -132,80 +140,14 @@ aws_transcribe:
 
 # Auto-selection engine preferences
 # These settings control how the 'auto' engine chooses between available engines
+auto_selection:
+  # Prefer local processing when available
+  # Set to false to prefer cloud services for potentially better quality
+  prefer_local: true
 
-# Prefer local processing when available
-# Set to false to prefer cloud services for potentially better quality
-auto_prefer_local: true
-
-# Enable fallback to other engines if preferred engine fails
-# Set to false to fail immediately if preferred engine is unavailable
-auto_fallback_enabled: true
-
-# Priority order for auto-selection (first available engine is chosen)
-# Uncomment and modify to customize selection priority
-# auto_priority_order:
-#   - whisper-local
-#   - whisper-api
-#   - aws-transcribe
-
-# =============================================================================
-# ADVANCED SETTINGS
-# =============================================================================
-
-# File handling settings
-file_handling:
-  # Supported audio formats
-  # The system will validate input files against these formats
-  supported_formats:
-    - mp3
-    - wav
-    - m4a
-    - flac
-    - ogg
-    - webm
-    - mp4
-  
-  # Maximum file size in MB (0 = no limit)
-  max_file_size: 0
-  
-  # Temporary directory for processing
-  temp_dir: ${TMPDIR:-/tmp}
-
-# Output formatting settings
-output:
-  # Default output format
-  # Options: json, txt, srt, vtt
-  format: json
-  
-  # Include metadata in output
-  include_metadata: true
-  
-  # Include timing information
-  include_timestamps: true
-  
-  # File naming pattern for auto-generated names
-  # Available variables: {basename}, {engine}, {model}, {timestamp}
-  filename_pattern: "{basename}_{engine}_transcript.json"
-
-# Logging settings
-logging:
-  # Enable file logging
-  enable_file_logging: false
-  
-  # Log file path (only used if enable_file_logging is true)
-  log_file: ${CONTENT_PIPELINE_LOG_FILE:-./logs/content-pipeline.log}
-  
-  # Maximum log file size in MB before rotation
-  max_log_size: 10
-  
-  # Number of backup log files to keep
-  backup_count: 5
-  
-  # Include timestamps in console output
-  include_timestamps: true
-  
-  # Include module names in debug output
-  include_module_names: true
+  # Enable fallback to other engines if preferred engine fails
+  # Set to false to fail immediately if preferred engine is unavailable
+  fallback_enabled: true
 
 # =============================================================================
 # EXAMPLES AND COMMON CONFIGURATIONS
@@ -218,27 +160,19 @@ logging:
 # whisper_local:
 #   model: medium
 #   device: auto
-# auto_prefer_local: true
-# auto_fallback_enabled: false
+# auto_selection:
+#   prefer_local: true
+#   fallback_enabled: false
 
 # Quality-focused (cloud services):
 # engine: whisper-api
 # whisper_api:
 #   temperature: 0.0
-# auto_prefer_local: false
+# auto_selection:
+#   prefer_local: false
 
 # Development/testing:
 # engine: auto
 # log_level: debug
 # whisper_local:
 #   model: tiny  # Fastest for testing
-# logging:
-#   enable_file_logging: true
-
-# Production deployment:
-# engine: auto
-# log_level: warning
-# output_dir: /var/transcripts
-# logging:
-#   enable_file_logging: true
-#   log_file: /var/log/content-pipeline.log

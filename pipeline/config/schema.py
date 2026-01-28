@@ -70,6 +70,7 @@ class AWSTranscribeConfig(EngineConfig):
     secret_access_key: Optional[str] = None
     region: str = "us-east-1"
     language_code: str = "en-US"
+    s3_bucket: Optional[str] = None  # Optional custom S3 bucket name
     media_format: str = "auto"  # auto-detect or specify: mp3, mp4, wav, etc.
 
 

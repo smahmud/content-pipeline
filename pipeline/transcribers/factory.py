@@ -104,12 +104,16 @@ class EngineFactory:
             )
         elif engine_type == 'aws-transcribe':
             # Create AWSTranscribeAdapter with configuration
-            return adapter_class(
-                access_key_id=config.aws_transcribe.access_key_id,
-                secret_access_key=config.aws_transcribe.secret_access_key,
-                region=config.aws_transcribe.region,
-                language_code=config.aws_transcribe.language_code
-            )
+            kwargs = {
+                'access_key_id': config.aws_transcribe.access_key_id,
+                'secret_access_key': config.aws_transcribe.secret_access_key,
+                'region': config.aws_transcribe.region,
+                'language_code': config.aws_transcribe.language_code
+            }
+            # Add s3_bucket if specified
+            if config.aws_transcribe.s3_bucket:
+                kwargs['s3_bucket'] = config.aws_transcribe.s3_bucket
+            return adapter_class(**kwargs)
         else:
             # Generic instantiation for custom adapters
             return adapter_class()
