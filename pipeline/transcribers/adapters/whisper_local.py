@@ -48,9 +48,14 @@ class WhisperLocalAdapter(TranscriberAdapter):
             return
             
         try:
-            # Load model with device specification
-            # type: ignore[attr-defined]
-            self.model = whisper.load_model(self.model_name, device=self.device) # type: ignore[attr-defined]
+            # Handle device parameter - whisper.load_model doesn't handle "auto" well
+            device_param = self.device
+            if device_param == "auto":
+                # Let Whisper decide automatically by not specifying device
+                self.model = whisper.load_model(self.model_name)
+            else:
+                # Use specific device
+                self.model = whisper.load_model(self.model_name, device=device_param)
             self._model_loaded = True
         except Exception as e:
             raise RuntimeError(f"Failed to load local Whisper model '{self.model_name}' on device '{self.device}': {e}")

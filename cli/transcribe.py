@@ -142,7 +142,7 @@ def transcribe(source, output, language, engine, model, api_key, output_dir, con
         # Step 6: Create transcription adapter
         logger.info(f"Creating {selected_engine} adapter...")
         start_time = time.time()
-        adapter = factory.create_adapter(selected_engine, transcription_config)
+        adapter = factory.create_engine(selected_engine, transcription_config)
         adapter_creation_time = time.time() - start_time
         logging_config.log_operation_timing("Adapter creation", adapter_creation_time)
         
@@ -172,15 +172,15 @@ def transcribe(source, output, language, engine, model, api_key, output_dir, con
             progress.update(message="Transcript saved")
         
         # Step 9: Success message
-        click.echo(f"✅ Transcription completed successfully!")
-        click.echo(f"📄 Transcript saved to: {output_path}")
+        click.echo("Transcription completed successfully!")
+        click.echo(f"Transcript saved to: {output_path}")
         
         # Show cost information if available
         if hasattr(adapter, 'estimate_cost'):
             try:
                 cost_info = adapter.estimate_cost(source)
                 if cost_info and cost_info.get('estimated_cost', 0) > 0:
-                    click.echo(f"💰 Estimated cost: ${cost_info['estimated_cost']:.4f}")
+                    click.echo(f"Estimated cost: ${cost_info['estimated_cost']:.4f}")
                     logger.debug(f"Cost estimation: {cost_info}")
             except Exception as e:
                 logger.debug(f"Could not get cost information: {e}")
@@ -262,8 +262,8 @@ def transcribe(source, output, language, engine, model, api_key, output_dir, con
             sys.exit(ExitCodes.PERMISSION_ERROR)
         else:
             # Generic error with migration summary
-            click.echo(f"❌ Transcription failed: {error_message}", err=True)
-            click.echo("\n💡 If you're upgrading from v0.6.0, see migration guide below:", err=True)
+            click.echo(f"Transcription failed: {error_message}", err=True)
+            click.echo("\nIf you're upgrading from v0.6.0, see migration guide below:", err=True)
             show_breaking_change_error("migration_summary")
 
 
@@ -326,7 +326,7 @@ def _select_and_validate_engine(
         available_engines = factory.get_available_engines() if hasattr(factory, 'get_available_engines') else ['whisper-local', 'whisper-api']
         logging_config.log_engine_selection(selected_engine, reason, available_engines)
         
-        click.echo(f"🤖 Auto-selected engine: {selected_engine}")
+        click.echo(f"Auto-selected engine: {selected_engine}")
         click.echo(f"   Reason: {reason}")
         return selected_engine
     else:
@@ -357,7 +357,7 @@ def _select_and_validate_engine(
                 show_breaking_change_error("credentials", f"Engine {engine} requires authentication")
             else:
                 # Suggest alternatives
-                click.echo("\n💡 Try one of these alternatives:")
+                click.echo("\nTry one of these alternatives:")
                 click.echo("  • --engine auto (automatically select best available)")
                 click.echo("  • --engine whisper-local (if you have Whisper installed)")
                 click.echo("  • Check configuration and credentials")

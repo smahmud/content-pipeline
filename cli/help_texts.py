@@ -105,7 +105,7 @@ FILE_NOT_FOUND_ERROR = "Source file not found: {path}"
 
 # Breaking change migration messages
 BREAKING_CHANGE_ENGINE_REQUIRED = """
-🚨 BREAKING CHANGE in v0.6.5 🚨
+BREAKING CHANGE in v0.6.5
 
 The --engine flag is now REQUIRED for transcription.
 
@@ -128,7 +128,7 @@ See documentation for configuration file setup to avoid repeating options.
 """
 
 BREAKING_CHANGE_OUTPUT_PATH = """
-🚨 OUTPUT PATH CHANGE in v0.6.5 🚨
+OUTPUT PATH CHANGE in v0.6.5
 
 Output files are no longer saved to hardcoded './output/' directory.
 
@@ -154,7 +154,7 @@ Examples:
 """
 
 BREAKING_CHANGE_CONFIGURATION = """
-🚨 CONFIGURATION CHANGE in v0.6.5 🚨
+CONFIGURATION CHANGE in v0.6.5
 
 Configuration is now managed through YAML files and environment variables.
 
@@ -184,7 +184,7 @@ This eliminates the need to specify the same options repeatedly.
 """
 
 BREAKING_CHANGE_API_CREDENTIALS = """
-🚨 API CREDENTIAL SETUP REQUIRED 🚨
+API CREDENTIAL SETUP REQUIRED
 
 Cloud transcription engines require proper authentication setup.
 
@@ -216,7 +216,7 @@ Get API keys:
 """
 
 BREAKING_CHANGE_MIGRATION_SUMMARY = """
-🚨 MIGRATION SUMMARY: v0.6.0 → v0.6.5 🚨
+MIGRATION SUMMARY: v0.6.0 -> v0.6.5
 
 Key changes you need to know:
 

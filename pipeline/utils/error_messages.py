@@ -43,7 +43,7 @@ Configuration Error: Invalid YAML syntax in {file_path}
 
 Line {line_number}: {error_details}
 
-💡 Suggestions:
+Suggestions:
   • Check for proper indentation (use spaces, not tabs)
   • Ensure all quotes are properly closed
   • Validate YAML syntax online: https://yamlchecker.com/
@@ -60,7 +60,7 @@ Configuration Error: Missing required field '{field_name}'
 
 The configuration file is missing a required field.
 
-💡 Suggestions:
+Suggestions:
   • Add the missing field to your configuration file
   • Use --config to specify a different configuration file
   • Run with --help to see all available options
@@ -75,7 +75,7 @@ Configuration Error: Invalid value for '{field_name}'
 Current value: {current_value}
 Expected: {expected_values}
 
-💡 Suggestions:
+Suggestions:
   • Update the configuration file with a valid value
   • Check the documentation for valid options
   • Use CLI flags to override configuration values
@@ -89,7 +89,7 @@ Configuration Error: Environment variable '{variable_name}' not found
 
 The configuration references ${{{variable_name}}} but this environment variable is not set.
 
-💡 Suggestions:
+Suggestions:
   • Set the environment variable: export {variable_name}=your_value
   • Use a default value: ${{{variable_name}:-default_value}}
   • Provide the value directly in the configuration file
@@ -106,7 +106,7 @@ Engine Error: '{engine_name}' engine is not available
 
 {specific_reason}
 
-💡 Suggestions:
+Suggestions:
   • Install required dependencies: {installation_command}
   • Try a different engine: --engine auto
   • Check system requirements and compatibility
@@ -119,7 +119,7 @@ Engine Error: Model '{model_name}' not found for {engine_name}
 
 The specified model is not available or not downloaded.
 
-💡 Suggestions:
+Suggestions:
   • Use a different model: {available_models}
   • Download the model (it will be downloaded automatically on first use)
   • Check your internet connection for model downloads
@@ -133,7 +133,7 @@ Engine Error: Failed to initialize {engine_name} engine
 
 {error_details}
 
-💡 Suggestions:
+Suggestions:
   • Check system requirements and dependencies
   • Verify configuration settings for this engine
   • Try restarting with --log-level debug for more details
@@ -153,7 +153,7 @@ Authentication Error: API key required for {service_name}
 
 No API key found for {service_name} service.
 
-💡 Setup Instructions:
+Setup Instructions:
   Option 1: Environment variable
     export {env_var_name}="your-api-key-here"
   
@@ -172,7 +172,7 @@ Authentication Error: Invalid API key for {service_name}
 
 The provided API key is not valid or has expired.
 
-💡 Suggestions:
+Suggestions:
   • Verify your API key is correct and active
   • Check if your API key has the required permissions
   • Generate a new API key if needed
@@ -186,7 +186,7 @@ Authentication Error: API quota exceeded for {service_name}
 
 You have exceeded your API usage limits.
 
-💡 Suggestions:
+Suggestions:
   • Check your usage dashboard: {dashboard_url}
   • Upgrade your plan if needed
   • Wait for quota reset (usually monthly)
@@ -205,7 +205,7 @@ File Error: File not found '{file_path}'
 
 The specified file does not exist or cannot be accessed.
 
-💡 Suggestions:
+Suggestions:
   • Check the file path is correct
   • Verify the file exists: ls -la "{file_path}"
   • Use absolute path if relative path is not working
@@ -221,7 +221,7 @@ File Error: Permission denied accessing '{file_path}'
 
 You don't have the required permissions to access this file.
 
-💡 Suggestions:
+Suggestions:
   • Check file permissions: ls -la "{file_path}"
   • Change permissions: chmod 644 "{file_path}"
   • Run as appropriate user or use sudo if necessary
@@ -237,7 +237,7 @@ File Error: Cannot create directory '{directory_path}'
 
 Failed to create the output directory.
 
-💡 Suggestions:
+Suggestions:
   • Check parent directory permissions
   • Ensure sufficient disk space
   • Verify the path is valid for your operating system
@@ -252,7 +252,7 @@ File Error: Cannot write to file '{file_path}'
 
 Failed to write the output file.
 
-💡 Suggestions:
+Suggestions:
   • Check directory permissions for the output location
   • Ensure sufficient disk space
   • Verify the file is not locked or in use
@@ -270,7 +270,7 @@ Network Error: Connection timeout to {service_name}
 
 The request timed out while connecting to the service.
 
-💡 Retry Strategies:
+Retry Strategies:
   • Check your internet connection
   • Try again in a few minutes (service may be busy)
   • Use a different network if available
@@ -285,7 +285,7 @@ Network Error: Failed to connect to {service_name}
 
 Cannot establish connection to the remote service.
 
-💡 Suggestions:
+Suggestions:
   • Check your internet connection
   • Verify the service is not down: {status_url}
   • Check firewall and proxy settings
@@ -302,7 +302,7 @@ Network Error: Rate limit exceeded for {service_name}
 
 You are making requests too quickly.
 
-💡 Suggestions:
+Suggestions:
   • Wait {retry_after} seconds before retrying
   • Reduce request frequency
   • Consider upgrading your API plan
@@ -321,7 +321,7 @@ Validation Error: Invalid input format for '{field_name}'
 Current value: {current_value}
 Expected format: {expected_format}
 
-💡 Suggestions:
+Suggestions:
   • Check the input format matches the expected pattern
   • Review the documentation for valid formats
   • Use the provided examples as a reference
@@ -336,7 +336,7 @@ Validation Error: Value out of range for '{field_name}'
 Current value: {current_value}
 Valid range: {min_value} to {max_value}
 
-💡 Suggestions:
+Suggestions:
   • Use a value within the valid range
   • Check the documentation for acceptable values
   • Consider using the default value if unsure
@@ -406,7 +406,7 @@ Example:
 
 {error_details}
 
-💡 General Suggestions:
+General Suggestions:
   • Check the logs for more detailed error information
   • Try running with --log-level debug for additional details
   • Verify your configuration and input parameters
@@ -458,22 +458,18 @@ class ErrorFormatter:
     """
     
     @staticmethod
-    def format_for_cli(error_message: str, include_emoji: bool = True) -> str:
+    def format_for_cli(error_message: str, include_emoji: bool = False) -> str:
         """
         Format error message for CLI output with consistent styling.
         
         Args:
             error_message: The error message to format
-            include_emoji: Whether to include emoji indicators
+            include_emoji: Whether to include emoji indicators (disabled for Windows compatibility)
             
         Returns:
             Formatted error message for CLI display
         """
-        if include_emoji:
-            # Add error emoji if not already present
-            if not error_message.startswith("❌"):
-                error_message = f"❌ {error_message}"
-        
+        # Emoji support disabled for Windows compatibility
         return error_message
     
     @staticmethod
@@ -519,7 +515,7 @@ class ErrorFormatter:
         for line in lines:
             line = line.strip()
             
-            if "💡 Suggestions:" in line or "💡 Setup Instructions:" in line:
+            if "Suggestions:" in line or "Setup Instructions:" in line:
                 in_suggestions = True
                 continue
             

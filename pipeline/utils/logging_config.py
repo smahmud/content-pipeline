@@ -78,17 +78,17 @@ class ProgressIndicator:
         """Complete the progress indicator."""
         elapsed = time.time() - self.start_time
         final_message = message or f"{self.description} completed"
-        print(f"\r{final_message} ✅ [{elapsed:.1f}s]")
+        print(f"\r{final_message} [OK] [{elapsed:.1f}s]")
     
     def _create_progress_bar(self, percentage: float, width: int = 20) -> str:
         """Create a text-based progress bar."""
         filled = int(width * percentage / 100)
-        bar = "█" * filled + "░" * (width - filled)
+        bar = "#" * filled + "-" * (width - filled)
         return f"[{bar}]"
     
     def _get_spinner_char(self) -> str:
         """Get rotating spinner character."""
-        chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+        chars = "|/-\\"
         return chars[self.current_step % len(chars)]
 
 
