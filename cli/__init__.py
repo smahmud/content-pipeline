@@ -13,14 +13,15 @@ import click
 from pipeline.config.logging_config import configure_logging
 from .extract import extract
 from .transcribe import transcribe
+from .enrich import enrich
 
 # Configure logging when CLI package is imported
 configure_logging()
 
 @click.group()
-@click.version_option(version='0.6.0', prog_name='content-pipeline')
+@click.version_option(version='0.7.0', prog_name='content-pipeline')
 def main():
-    """Content Pipeline CLI - Extract and transcribe multimedia content.
+    """Content Pipeline CLI - Extract, transcribe, and enrich multimedia content.
     
     A modular pipeline for extracting, enriching, and publishing audio-based 
     content from platforms like YouTube. Built for transparency, auditability, 
@@ -31,6 +32,7 @@ def main():
 # Register subcommands
 main.add_command(extract)
 main.add_command(transcribe)
+main.add_command(enrich)
 
 # Entry point for setup.py console script
 def cli():

@@ -42,7 +42,12 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 - Enhanced Transcription & Configuration (v0.6.5): Multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto), explicit engine selection with --engine flag, YAML configuration management, environment variable support, and user-controlled output paths
 
 ### 🧭 Upcoming
-- 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata
+- 🤖 **LLM-Powered Enrichment (v0.7.0)** - Planning complete, ready for implementation
+  - Semantic enrichment: summaries, tags, chapters, highlights
+  - Multi-provider support: OpenAI, AWS Bedrock, Claude, Local (Ollama)
+  - Cost control with `--max-cost` and dry-run mode
+  - Quality presets and content profiles
+  - See [milestone-v0-7-0-game-plan.md](milestones/milestone-v0-7-0-game-plan.md) for full implementation plan
 - 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
 - 📦 Archive and index enriched content in a searchable store
 - 🧠 Integrate MCP server for agent routing, retries, and tagging

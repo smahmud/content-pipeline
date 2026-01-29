@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Planning
+- **v0.7.0 LLM-Powered Enrichment** - Implementation game plan complete
+  - Multi-provider LLM support (OpenAI, AWS Bedrock, Claude, Local/Ollama)
+  - Semantic enrichment: summaries, tags, chapters, highlights
+  - Cost control with `--max-cost` and dry-run mode
+  - Quality presets and content profiles
+  - Intelligent caching and batch processing
+  - See [docs/milestones/milestone-v0-7-0-game-plan.md](docs/milestones/milestone-v0-7-0-game-plan.md)
+
 ## [0.6.5] - 2026-01-29
 
 > **📖 Detailed Release Notes**: See [docs/releases/v0.6.5.md](docs/releases/v0.6.5.md) for comprehensive upgrade guide, configuration examples, and migration instructions.

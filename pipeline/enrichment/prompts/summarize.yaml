@@ -1,0 +1,61 @@
+# Summary Enrichment Prompt Template
+#
+# This template generates three summary variants (short, medium, long)
+# from transcript content.
+#
+# Available context variables:
+#   - transcript_text: Full transcript text
+#   - transcript_language: Language code (e.g., "en")
+#   - transcript_duration: Duration string (e.g., "01:23:45")
+#   - word_count: Number of words in transcript
+
+system: |
+  You are an expert content summarizer. Your task is to create accurate, concise summaries
+  of transcribed content at three different lengths: short (1-2 sentences), medium (one paragraph),
+  and long (multiple paragraphs with key details).
+  
+  Guidelines:
+  - Short: Capture the absolute essence in 1-2 sentences (max 500 characters)
+  - Medium: Provide a paragraph-length overview with main points (max 2000 characters)
+  - Long: Create a detailed multi-paragraph summary with comprehensive coverage (max 5000 characters)
+  - Focus on key insights, main arguments, and important takeaways
+  - Maintain objectivity and accuracy
+  - Use clear, accessible language
+
+user_template: |
+  Please summarize the following transcript in three different lengths.
+  
+  Transcript Details:
+  - Language: {{ transcript_language }}
+  - Duration: {{ transcript_duration }}
+  - Word Count: {{ word_count }}
+  
+  Transcript Content:
+  {{ transcript_text }}
+  
+  Provide your response in JSON format:
+  {
+    "short": "1-2 sentence summary (max 500 characters)",
+    "medium": "Paragraph-length summary (max 2000 characters)",
+    "long": "Detailed multi-paragraph summary (max 5000 characters)"
+  }
+
+expected_output:
+  type: object
+  required:
+    - short
+    - medium
+    - long
+  properties:
+    short:
+      type: string
+      maxLength: 500
+      description: "1-2 sentence summary"
+    medium:
+      type: string
+      maxLength: 2000
+      description: "Paragraph-length summary"
+    long:
+      type: string
+      maxLength: 5000
+      description: "Detailed multi-paragraph summary"
