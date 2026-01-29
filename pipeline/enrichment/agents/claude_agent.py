@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional
 import os
 
 from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
+from pipeline.enrichment.retry import retry_with_backoff
 from pipeline.enrichment.errors import (
     LLMProviderError,
     AuthenticationError,
@@ -99,6 +100,7 @@ class ClaudeAgent(BaseLLMAgent):
                 "anthropic package not installed. Install with: pip install anthropic"
             )
     
+    @retry_with_backoff(max_attempts=3, base_delay=1.0)
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate completion using Claude.
         

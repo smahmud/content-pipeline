@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
+from pipeline.enrichment.retry import retry_with_backoff
 
 
 @dataclass
@@ -106,6 +107,7 @@ class OpenAIAgent(BaseLLMAgent):
         encoding = self._get_tiktoken_encoding(model)
         return len(encoding.encode(text))
     
+    @retry_with_backoff(max_attempts=3, base_delay=1.0)
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate completion from OpenAI.
         
@@ -161,8 +163,27 @@ class OpenAIAgent(BaseLLMAgent):
             
         except Exception as e:
             # Import here to avoid circular dependency
-            from pipeline.enrichment.errors import LLMProviderError
-            raise LLMProviderError(f"OpenAI API call failed: {str(e)}")
+            from pipeline.enrichment.errors import (
+                LLMProviderError,
+                RateLimitError,
+                AuthenticationError,
+                InvalidRequestError,
+                TimeoutError
+            )
+            
+            error_msg = str(e).lower()
+            
+            # Classify error type for proper retry behavior
+            if "rate" in error_msg or "429" in error_msg:
+                raise RateLimitError(f"OpenAI rate limit exceeded: {str(e)}")
+            elif "auth" in error_msg or "401" in error_msg or "403" in error_msg:
+                raise AuthenticationError(f"OpenAI authentication failed: {str(e)}")
+            elif "invalid" in error_msg or "400" in error_msg:
+                raise InvalidRequestError(f"Invalid OpenAI request: {str(e)}")
+            elif "timeout" in error_msg:
+                raise TimeoutError(f"OpenAI request timed out: {str(e)}")
+            else:
+                raise LLMProviderError(f"OpenAI API call failed: {str(e)}")
     
     def estimate_cost(self, request: LLMRequest) -> float:
         """Estimate cost for the request.

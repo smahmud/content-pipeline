@@ -114,3 +114,57 @@ class ConfigurationError(EnrichmentError):
     or contains conflicting settings.
     """
     pass
+
+
+
+class InvalidRequestError(LLMProviderError):
+    """Invalid request to LLM provider.
+    
+    Raised when a request is malformed or contains invalid parameters.
+    This is a permanent error that should NOT trigger retry logic.
+    """
+    pass
+
+
+class TimeoutError(LLMProviderError):
+    """Request to LLM provider timed out.
+    
+    Raised when an API call takes longer than the configured timeout.
+    This is a transient error that should trigger retry logic.
+    """
+    pass
+
+
+class NetworkError(LLMProviderError):
+    """Network error communicating with LLM provider.
+    
+    Raised when network connectivity issues prevent API calls.
+    This is a transient error that should trigger retry logic.
+    """
+    pass
+
+
+class ChunkingError(EnrichmentError):
+    """Error during transcript chunking.
+    
+    Raised when automatic chunking fails or produces invalid chunks.
+    """
+    pass
+
+
+class BatchProcessingError(EnrichmentError):
+    """Error during batch processing.
+    
+    Raised when batch processing encounters an error that affects
+    the entire batch operation.
+    """
+    pass
+
+
+class OutputFileError(EnrichmentError):
+    """Error writing output file.
+    
+    Raised when output file cannot be written due to permissions,
+    disk space, or other file system issues.
+    """
+    pass
