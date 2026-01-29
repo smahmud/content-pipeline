@@ -288,7 +288,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 4. Schema Enforcement
+### 5. Schema Enforcement
 
 #### `pipeline/extractors/schema/metadata.py`
 
@@ -310,7 +310,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 5. Configuration & Logging
+### 6. Configuration & Logging
 
 #### `pipeline/config/logging_config.py`
 
@@ -319,7 +319,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 6. Utilities
+### 7. Utilities
 
 #### `pipeline/utils/retry.py`
 
@@ -328,7 +328,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-## 7. Multi-Agent Protocol (Planned)
+## 8. Multi-Agent Protocol (Planned)
 
 The pipeline will integrate with an MCP server to support agent-based orchestration:
 
@@ -338,7 +338,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 8. Observability & Testing
+## 9. Observability & Testing
 
 - Integration tests validate CLI behavior and extractor output
 - Logging is unified across all components
@@ -346,7 +346,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 9. Test Coverage
+## 10. Test Coverage
 
 - Unit tests validate extractor logic, schema compliance, and CLI flag behavior
 - Integration tests simulate real input scenarios across platforms and verify output normalization
