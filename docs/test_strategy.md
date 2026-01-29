@@ -2,6 +2,8 @@
 
 This document outlines the testing approach for the Content Pipeline project, focusing on reliability, modularity, and milestone alignment.
 
+> **Quick Start**: For practical instructions on running tests, see [Testing Guide](testing-guide.md)
+
 ---
 
 ## 1. Purpose and Scope
@@ -54,9 +56,15 @@ tests/
 ├── output/
 ├── cli/
 │   ├── test_extract.py              # Extract subcommand tests
-│   ├── test_transcribe.py           # Transcribe subcommand tests
+│   ├── test_transcribe.py           # Transcribe subcommand tests (v0.6.5: engine selection)
 │   ├── test_shared_options.py       # Shared decorator tests
 │   └── test_help_texts.py           # Help text consistency tests
+├── config/                           # NEW in v0.6.5: Configuration testing
+│   ├── test_config_manager.py       # ConfigurationManager tests
+│   ├── test_schema.py               # Configuration schema validation
+│   └── test_environment_variables.py # Environment variable integration tests
+├── output/                           # NEW in v0.6.5: Output management testing
+│   └── test_output_manager.py       # OutputManager path resolution tests
 ├── property_tests/
 │   └── test_cli_properties.py       # Property-based tests for CLI refactoring
 ├── integration/
@@ -72,7 +80,11 @@ tests/
 │   │       └── test_metadata.py
 │   └── transcribers/
 │       ├── adapters/
-│       │   └── test_whisper_adapter.py
+│       │   ├── test_local_whisper_adapter.py    # v0.6.5
+│       │   ├── test_openai_whisper_adapter.py   # v0.6.5
+│       │   ├── test_aws_transcribe_adapter.py   # v0.6.5
+│       │   └── test_whisper_adapter.py          # Backward compatibility
+│       ├── test_factory.py          # NEW in v0.6.5: Factory pattern tests
 │       ├── schemas/
 │       │   └── test_transcript_v1.py
 │       ├── test_normalize.py
@@ -170,20 +182,20 @@ Each property test validates correctness across randomized input ranges, catchin
 
 The test strategy evolves with each milestone to ensure comprehensive coverage:
 
-#### **Current Testing Focus (v0.6.0)**
-- Modular CLI architecture validation
-- Property-based testing for universal CLI behaviors  
-- Subcommand independence and routing verification
-- Shared decorator behavioral equivalence
-- Help text consistency across commands
-- Backward compatibility with previous CLI interface
-
-#### **Next Testing Phase (v0.6.5)**
-- Engine selection and factory pattern testing
-- Configuration management and YAML parsing validation
+#### **Current Testing Focus (v0.6.5)**
+- Engine selection and factory pattern validation
+- Configuration management and YAML parsing
 - Environment variable integration testing
 - Breaking change migration guidance verification
 - Multi-engine adapter protocol conformance
+- Output path management and resolution
+- Auto-selection logic and fallback mechanisms
+
+#### **Next Testing Phase (v0.7.0)**
+- LLM-based content enrichment testing
+- Semantic metadata generation validation
+- Transcript summarization quality assurance
+- Tag and highlight extraction verification
 
 *For complete milestone details, see [docs/README.md](README.md#milestone-status)*
 
@@ -194,4 +206,12 @@ The test strategy evolves with each milestone to ensure comprehensive coverage:
 - Introduce extractor interface compliance tests for future platforms (TikTok, Vimeo)  
 - Integrate coverage reporting and CI hooks for milestone tracking
 - Multi-engine transcription quality and performance benchmarking
+
+---
+
+## See Also
+
+- **[Testing Guide](testing-guide.md)** - Practical guide for running tests, markers, and workflows
+- **[Architecture](architecture.md)** - System design and component overview
+- **[CLI Commands](cli-commands.md)** - Command-line interface documentation
 

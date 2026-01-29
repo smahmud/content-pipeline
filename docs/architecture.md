@@ -42,9 +42,16 @@ Modular adapters that convert extracted audio into structured transcript data.
 Adapter implementations for different transcription engines. Each adapter conforms to a shared interface (`TranscriberAdapter`) and exposes:
 - `transcribe()` — Converts audio file to raw transcript dictionary  
 - `get_engine_info()` — Returns engine name and version for metadata construction  
+- `validate_requirements()` — Checks if engine dependencies and credentials are available
 
-Current implementation:
-- `whisper.py` — Uses OpenAI Whisper for transcription; supports multiple model variants
+Enhanced in v0.6.5 with multiple engine support:
+- `base.py` — Enhanced adapter protocol with cost estimation and capability reporting
+- `local_whisper.py` — Local Whisper adapter for privacy-first transcription
+- `openai_whisper.py` — OpenAI Whisper API adapter for cloud-based transcription
+- `aws_transcribe.py` — AWS Transcribe adapter for enterprise transcription
+- `whisper.py` — Backward compatibility adapter (deprecated, use `local_whisper.py`)
+- `auto_selector.py` — Smart engine selection with intelligent fallback
+- `factory.py` — Engine factory pattern for adapter instantiation
 
 ---
 
@@ -76,6 +83,39 @@ Validates raw transcript dictionaries against the `TranscriptV1` schema:
 Handles transcript serialization and file output:
 - Persists any `TranscriptV1` or compatible object to disk  
 - Returns absolute path to saved file
+
+---
+
+### 2.5 Configuration Management
+
+Centralized configuration system introduced in v0.6.5 for managing transcription engines, API keys, and output preferences.
+
+#### `pipeline/config/`
+- `manager.py` — ConfigurationManager for loading and merging configuration sources
+- `schema.py` — Pydantic models for configuration validation (TranscriptionConfig, EngineConfig)
+- `environment.py` — Environment variable definitions and loading
+- `yaml_parser.py` — YAML parsing with enhanced error reporting
+- `pretty_printer.py` — Configuration template generation
+
+Configuration sources (in precedence order):
+1. CLI flags (highest priority)
+2. Environment variables
+3. Explicit config file (`--config file.yaml`)
+4. Project config file (`./.content-pipeline/config.yaml`)
+5. User config file (`~/.content-pipeline/config.yaml`)
+6. Default values (lowest priority)
+
+---
+
+### 2.6 Output Management
+
+Flexible output path management introduced in v0.6.5, replacing hardcoded output directories.
+
+#### `pipeline/output/`
+- `manager.py` — OutputManager for resolving and managing output paths
+- Supports absolute paths, relative paths, and directory-based output
+- Automatic directory creation and unique filename generation
+- Integration with configuration system for default output directories
 
 ---
 
@@ -112,6 +152,14 @@ Used with the `transcribe` subcommand:
 - `--source` — path to the input audio file (`.mp3`)
 - `--output` — path for saving transcript output (`.json`)
 - `--language` — specifies spoken language in the audio (e.g., `en`, `fr`, `de`)
+
+Enhanced in v0.6.5 with engine selection and configuration:
+- `--engine` — **REQUIRED** transcription engine selection (local-whisper, openai-whisper, aws-transcribe, auto)
+- `--model` — model size/version for selected engine (e.g., `base`, `large`, `whisper-1`)
+- `--api-key` — API key for cloud services (or use environment variables)
+- `--config` — path to YAML configuration file
+- `--output-dir` — output directory (overrides configuration)
+- `--log-level` — logging verbosity (debug, info, warning, error)
 
 Output includes:
 - Transcript `.json` conforming to `TranscriptV1` schema
@@ -191,6 +239,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
   - `v0.4.x`: Architecture overhaul and multi-agent readiness
   - `v0.5.x`: Transcriber functionality with Whisper integration
   - `v0.6.0`: CLI refactoring with modular architecture
+  - `v0.6.5`: Enhanced transcription with multiple engines, configuration management, and flexible output paths
 
 ---
 
@@ -201,7 +250,6 @@ For full folder and file layout, see [project_structure.md](project_structure.md
 ---
 
 ## 🧭 Future Directions
-- 🧠 Enhanced transcription with explicit engine selection and configuration management
 - 🤖 Summarize transcripts with LLMs to generate structured highlights, tags, and semantic metadata  
 - 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across major social media platforms
 - 📦 Archive and index all enriched content into a searchable store  

@@ -19,7 +19,7 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 ## 📦 Key Features
 
 - Multi-platform content extraction and ingestion (YouTube, TikTok, Vimeo, local files, cloud storage)
-- AI-powered transcription with multiple engine support (Whisper local, API, auto-selection)
+- AI-powered transcription with multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto) with YAML configuration and environment variables
 - LLM-driven content enrichment and semantic analysis (summarization, tagging, chapters, highlights)
 - Multi-format content generation and publishing (blogs, tweet threads, SEO metadata, social media)
 - Enterprise-grade architecture with schema validation and audit trails
@@ -39,9 +39,9 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 - Architecture overhaul and multi-agent readiness
 - Transcriber functionality with Whisper adapter, transcript normalization, and schema persistence
 - Modular CLI architecture with `cli/` package, shared options, extensible subcommands, and comprehensive testing
+- Enhanced Transcription & Configuration (v0.6.5): Multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto), explicit engine selection with --engine flag, YAML configuration management, environment variable support, and user-controlled output paths
 
 ### 🧭 Upcoming
-- Enhanced Transcription & Configuration: Explicit engine selection (local-whisper, openai-whisper, auto), YAML configuration management, environment variable support, and user-controlled output paths
 - 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata
 - 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
 - 📦 Archive and index enriched content in a searchable store

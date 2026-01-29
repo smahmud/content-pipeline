@@ -28,7 +28,7 @@ def test_transcribe_invalid_audio_file(tmp_path):
     with pytest.raises(Exception):
         adapter.transcribe(str(bad_audio))
 
-@patch("pipeline.transcribers.adapters.whisper_local.LocalWhisperAdapter.transcribe")
+@patch("pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.transcribe")
 def test_transcribe_mocked_response(mock_transcribe):
     mock_transcribe.return_value = {
         "segments": [

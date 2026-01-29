@@ -1040,8 +1040,8 @@ def test_factory_creates_valid_adapters(engine_type, model_size):
     )
     
     # Mock the requirements validation to avoid actual model loading
-    with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', return_value=[]), \
-         patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter._load_model'):
+    with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
+         patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
         adapter = factory.create_engine(engine_type, config)
         
         # Adapter should implement the protocol
@@ -1076,8 +1076,8 @@ def test_factory_passes_configuration_correctly(engine_type, model_size):
         whisper_local=WhisperLocalConfig(model=model_size)
     )
     
-    with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', return_value=[]), \
-         patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter._load_model'):
+    with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
+         patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
         adapter = factory.create_engine(engine_type, config)
         
         # Configuration should be passed correctly
@@ -1110,7 +1110,7 @@ def test_factory_validates_requirements_before_creation():
     
     # Mock requirements validation to return errors
     mock_errors = ['Whisper not installed', 'Model not available']
-    with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', 
+    with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', 
                return_value=mock_errors):
         with pytest.raises(RuntimeError, match="Engine 'local-whisper' requirements not met"):
             factory.create_engine('local-whisper', config)
@@ -1200,7 +1200,7 @@ def test_factory_requirement_validation_consistency():
     
     expected_errors = ['Test error 1', 'Test error 2']
     
-    with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', 
+    with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', 
                return_value=expected_errors):
         # Factory validation should return the same errors
         factory_errors = factory.validate_engine_requirements('local-whisper', config)
@@ -1239,8 +1239,8 @@ def test_factory_handles_all_configuration_combinations(data):
     
     factory = EngineFactory()
     
-    with patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter.validate_requirements', return_value=[]), \
-         patch('pipeline.transcribers.adapters.whisper_local.WhisperLocalAdapter._load_model'):
+    with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
+         patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
         # Should be able to create adapter regardless of other configuration settings
         adapter = factory.create_engine(engine_type, config)
         

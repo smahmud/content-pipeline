@@ -214,7 +214,7 @@ class TestAdapterProtocolConformance:
         api_cost = api_adapter.estimate_cost(-10.0)
         assert api_cost == 0.0
 
-    @patch('pipeline.transcribers.adapters.whisper_local.whisper.load_model')
+    @patch('pipeline.transcribers.adapters.local_whisper.whisper.load_model')
     def test_transcribe_returns_standardized_format_local(self, mock_load_model):
         """
         **Property 4: Engine Adapter Protocol Conformance**
@@ -375,8 +375,8 @@ class TestAdapterProtocolConformance:
             whisper_local=WhisperLocalConfig(model='base')
         )
         
-        with patch('pipeline.transcribers.adapters.whisper_local.LocalWhisperAdapter.validate_requirements', return_value=[]), \
-             patch('pipeline.transcribers.adapters.whisper_local.LocalWhisperAdapter._load_model'):
+        with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
+             patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
             local_adapter = factory.create_engine('local-whisper', local_config)
             
             # Should be protocol compliant
@@ -393,7 +393,7 @@ class TestAdapterProtocolConformance:
             whisper_api=WhisperAPIConfig(api_key='sk-test123', model='whisper-1')
         )
         
-        with patch('pipeline.transcribers.adapters.whisper_api.OpenAIWhisperAdapter.validate_requirements', return_value=[]):
+        with patch('pipeline.transcribers.adapters.openai_whisper.OpenAIWhisperAdapter.validate_requirements', return_value=[]):
             api_adapter = factory.create_engine('openai-whisper', api_config)
             
             # Should be protocol compliant
@@ -414,7 +414,7 @@ class TestAdapterProtocolConformance:
         # We'll mock the actual transcription to avoid dependencies
         
         # Test LocalWhisperAdapter
-        with patch('pipeline.transcribers.adapters.whisper_local.whisper.load_model') as mock_load_model:
+        with patch('pipeline.transcribers.adapters.local_whisper.whisper.load_model') as mock_load_model:
             mock_model = Mock()
             mock_result = {
                 'text': 'Hello world',

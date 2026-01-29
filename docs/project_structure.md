@@ -15,25 +15,38 @@ pipeline/
 │   ├── youtube/             # YouTube audio and metadata extraction
 │   ├── local/               # Local file-based extraction
 ├── transcribers/            # Audio-to-text transcription modules
-│   ├── adapters/            # Transcriber engine wrappers (e.g. Whisper)
-│   │   └── base.py          # Protocol interface for transcriber adapters
+│   ├── adapters/            # Transcriber engine wrappers (v0.6.5 enhanced)
+│   │   ├── base.py          # Enhanced adapter protocol with cost estimation
+│   │   ├── local_whisper.py # Local Whisper adapter for privacy-first transcription
+│   │   ├── openai_whisper.py # OpenAI Whisper API adapter for cloud transcription
+│   │   ├── aws_transcribe.py # AWS Transcribe adapter for enterprise transcription
+│   │   ├── whisper.py       # Backward compatibility adapter (deprecated)
+│   │   └── auto_selector.py # Smart engine selection with intelligent fallback
+│   ├── factory.py           # Engine factory pattern for adapter instantiation (v0.6.5)
 │   ├── schemas/             # Transcript normalization models (e.g. transcript_v1)
-├── config/                  # Logging and runtime setup
+├── config/                  # Configuration management (NEW in v0.6.5)
+│   ├── manager.py           # ConfigurationManager for loading and merging configs
+│   ├── schema.py            # Pydantic models for configuration validation
+│   ├── environment.py       # Environment variable definitions
+│   ├── yaml_parser.py       # YAML parsing with enhanced error reporting
+│   └── pretty_printer.py    # Configuration template generation
+├── output/                  # Output path management (NEW in v0.6.5)
+│   └── manager.py           # OutputManager for resolving and managing output paths
 ├── utils/                   # Reusable helpers (e.g., retry logic)
 ```
 
 ## 🖥️ `cli/` — Modular CLI Architecture
 
-Refactored in v0.6.0 into a modular, extensible CLI package:
+Refactored in v0.6.0 into a modular, extensible CLI package. Enhanced in v0.6.5 with configuration management and engine selection:
 
 ```text
 cli/
 ├── __init__.py              # Main CLI group and command registration
 ├── __main__.py              # Module execution entry point (python -m cli)
 ├── extract.py               # Extract subcommand implementation
-├── transcribe.py            # Transcribe subcommand implementation
-├── shared_options.py        # Reusable option decorators
-└── help_texts.py            # Centralized help text constants
+├── transcribe.py            # Transcribe subcommand (v0.6.5: enhanced with engine selection)
+├── shared_options.py        # Reusable option decorators (v0.6.5: added engine_option, config_option)
+└── help_texts.py            # Centralized help text constants (v0.6.5: breaking change messages)
 ```
 
 ---

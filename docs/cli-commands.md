@@ -6,8 +6,7 @@ This document outlines the current and planned CLI commands for the Content Pipe
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| ✅ **Implemented** | 2 | `extract` (v0.1.0-v0.4.0), `transcribe` (v0.5.0) - Both refactored in v0.6.0 |
-| 🚧 **In Development** | 1 | Currently being implemented |
+| ✅ **Implemented** | 2 | `extract` (v0.1.0-v0.4.0), `transcribe` (v0.5.0-v0.6.5) - Both refactored in v0.6.0 |
 | 📋 **Planned for v1.0.0** | 6 | Essential commands for production release |
 | 💭 **Future** | 2 | Conceptual, post-v1.0.0 |
 
@@ -39,56 +38,57 @@ content-pipeline extract --source ./video.mp4 --output ./audio.wav --format wav
 ```
 
 ### `transcribe`
-**Status:** ✅ Implemented in v0.5.0, Refactored in v0.6.0  
-**Purpose:** Converts audio files to text transcripts using OpenAI Whisper (local implementation only).
+**Status:** ✅ Implemented in v0.5.0, Refactored in v0.6.0, Enhanced in v0.6.5  
+**Purpose:** Converts audio files to text transcripts using multiple transcription engines with configuration management.
 
 **Usage:**
 ```bash
-content-pipeline transcribe --source AUDIO_FILE --output TRANSCRIPT_FILE [OPTIONS]
+content-pipeline transcribe --source AUDIO_FILE --engine ENGINE_TYPE [OPTIONS]
 ```
 
 **Key Options:**
 - `--source, -s`: Input audio file path
 - `--output, -o`: Output transcript file path
+- `--engine`: **REQUIRED** - Transcription engine (local-whisper, openai-whisper, aws-transcribe, auto)
 - `--language, -l`: Source language (auto-detect if not specified)
+- `--model`: Model size/version for selected engine
+- `--api-key`: API key for cloud services
+- `--config`: Path to YAML configuration file
+- `--output-dir`: Output directory (overrides configuration)
+- `--log-level`: Logging verbosity (debug, info, warning, error)
 
-**Example:**
+**Examples:**
+
+**v0.5.0-v0.6.0 (Legacy):**
 ```bash
 content-pipeline transcribe --source ./audio.mp3 --output ./transcript.json --language en
-content-pipeline transcribe --source ./audio.wav --output ./transcript.txt
 ```
 
-**Current Limitations (v0.6.0):**
-- Uses local Whisper implementation only (no cloud options)
-- Output limited to local filesystem
-- No engine selection (will be added in v0.6.5)
-
----
-
-## 🚧 **Next Milestone** (v0.6.5)
-
-### Enhanced Transcription & Configuration
-**Status:** 🚧 Planned for v0.6.5  
-**Purpose:** Adds explicit engine selection, configuration management, and user-controlled output paths.
-
-**Planned Enhancements:**
-- **Engine Selection**: `--engine` flag with options: `whisper-local`, `whisper-api`, `auto`
-- **Configuration Files**: YAML configuration support
-- **Output Control**: User-controlled output directories
-- **Environment Variables**: Support for API keys and configuration
-- **Breaking Changes**: No default engine - users must explicitly choose
-
-**Planned Usage:**
+**v0.6.5 Examples:**
 ```bash
 # Local Whisper (privacy-first)
-content-pipeline transcribe --source audio.mp3 --engine whisper-local --output transcript.json
+content-pipeline transcribe --source audio.mp3 --engine local-whisper --model base
 
-# OpenAI API (quality-first)  
-content-pipeline transcribe --source audio.mp3 --engine whisper-api --api-key $OPENAI_API_KEY
+# OpenAI API (quality-first)
+content-pipeline transcribe --source audio.mp3 --engine openai-whisper --api-key $OPENAI_API_KEY
+
+# AWS Transcribe (enterprise)
+content-pipeline transcribe --source audio.mp3 --engine aws-transcribe
 
 # Auto engine selection
 content-pipeline transcribe --source audio.mp3 --engine auto --config ~/.content-pipeline/config.yaml
+
+# Custom output directory
+content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-dir ./my-transcripts
 ```
+
+**Enhanced in v0.6.5:**
+- ✅ Multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto)
+- ✅ Explicit engine selection via `--engine` flag (REQUIRED)
+- ✅ YAML configuration file support
+- ✅ Environment variable integration for API keys
+- ✅ User-controlled output paths
+- ✅ Breaking change: `--engine` flag is now required
 
 ---
 
@@ -203,13 +203,13 @@ For the v1.0.0 production release, we aim to have:
 - **v0.1.0 - v0.4.0:** `extract` command development and refinement
 - **v0.5.0:** `transcribe` command implementation (local Whisper only)
 - **v0.6.0:** CLI refactoring - modular architecture, no new functionality
-- **v0.6.5:** Enhanced transcription with engine selection and configuration
-- **v0.7.0:** `enrich` command implementation
-- **v0.8.0:** `format` command implementation
-- **v0.9.0:** `validate` command implementation
-- **v0.10.0:** `publish` command implementation
-- **v0.11.0:** `review` command implementation
-- **v0.12.0:** `pipeline` command implementation
+- **v0.6.5:** Enhanced transcription with multiple engines (local-whisper, openai-whisper, aws-transcribe, auto), configuration management, and flexible output paths
+- **v0.7.0:** `enrich` command implementation (planned)
+- **v0.8.0:** `format` command implementation (planned)
+- **v0.9.0:** `validate` command implementation (planned)
+- **v0.10.0:** `publish` command implementation (planned)
+- **v0.11.0:** `review` command implementation (planned)
+- **v0.12.0:** `pipeline` command implementation (planned)
 - **v1.0.0:** Production release with all 8 commands
 
 ---
@@ -238,11 +238,12 @@ The modular CLI structure introduced in v0.6.0 enables easy extension for future
 - **Dual Entry Points**: `python -m cli` and `content-pipeline` console script
 - **Extensible**: Easy to add new commands in future versions
 
-## 📝 Current Implementation (v0.6.0)
+## 📝 Current Implementation (v0.6.5)
 
 The current CLI provides:
 - **extract**: Audio extraction from video sources
-- **transcribe**: Speech-to-text conversion (local Whisper only)
+- **transcribe**: Speech-to-text conversion with multiple engines (local-whisper, openai-whisper, aws-transcribe, auto)
+- **Configuration management**: YAML files and environment variables
 - **Shared options**: Common decorators for input/output
 - **Centralized help**: Consistent help text across commands
 

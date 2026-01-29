@@ -163,17 +163,17 @@ class OpenAIWhisperAdapter(TranscriberAdapter):
         """
         errors = []
         
+        # Check if API key is available first (before trying to import)
+        if self.api_key is None or not self.api_key:
+            errors.append("OpenAI API key not found. Set OPENAI_API_KEY environment variable or provide api_key parameter.")
+            return errors  # Can't continue without API key
+        
         # Check if openai package is available
         try:
             import openai
         except ImportError:
             errors.append("OpenAI package not installed. Install with: pip install openai")
             return errors  # Can't continue without the package
-        
-        # Check if API key is available
-        if not self.api_key:
-            errors.append("OpenAI API key not found. Set OPENAI_API_KEY environment variable or provide api_key parameter.")
-            return errors  # Can't continue without API key
         
         # Validate API key format (should start with 'sk-')
         if not self.api_key.startswith('sk-'):

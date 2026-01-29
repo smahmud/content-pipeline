@@ -19,10 +19,14 @@ from pipeline.extractors.schema.metadata import build_local_placeholder_metadata
 TEST_OUTPUT_DIR = "tests/output"
 
 @pytest.mark.integration
+@pytest.mark.external
 def test_extract_audio_from_youtube_integration():
     source = "https://www.youtube.com/watch?v=p4SoSxyJ7Nc"
     output_path = os.path.join(TEST_OUTPUT_DIR, "test_download.mp3")
     metadata_path = output_path.replace(".mp3", ".json")
+    
+    # Ensure output directory exists
+    os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
     try:        
         extractor = YouTubeExtractor()
@@ -74,6 +78,9 @@ def test_extract_audio_from_youtube_integration():
 def test_extract_audio_from_file_integration():
     video_path = "tests/assets/sample_video.mp4"
     output_path = os.path.join(TEST_OUTPUT_DIR, "test_audio.mp3")
+    
+    # Ensure output directory exists
+    os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
     try:
         result_path = extract_audio_from_file(video_path, output_path)

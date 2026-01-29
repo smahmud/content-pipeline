@@ -35,9 +35,22 @@ docs/tools/
 docs/code_review/
 docs/notes/
 
+# Configuration examples (personal reference)
+examples/
+
 # Kiro development artifacts
 .kiro/
 
 # Hypothesis testing artifacts
 .hypothesis/
 
+
+# Temporary development files
+.out
+COMMIT_CHECKLIST.md
+add_test_isolation.py
+final_test_fixes.py
+fix_all_tests.py
+fix_mock_paths.py
+fix_remaining_tests.py
+TEST_FIX_SUMMARY.md

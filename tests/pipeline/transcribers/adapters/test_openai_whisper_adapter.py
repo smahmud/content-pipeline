@@ -189,12 +189,14 @@ class TestOpenAIWhisperAdapter:
 
     def test_validate_requirements_missing_api_key(self):
         """Test validate_requirements when API key is missing."""
-        adapter = OpenAIWhisperAdapter(api_key=None)
-        errors = adapter.validate_requirements()
-        
-        assert isinstance(errors, list)
-        assert len(errors) > 0
-        assert any("OpenAI API key not found" in error for error in errors)
+        # Clear environment variables to ensure no API key is available
+        with patch.dict(os.environ, {}, clear=True):
+            adapter = OpenAIWhisperAdapter(api_key=None)
+            errors = adapter.validate_requirements()
+            
+            assert isinstance(errors, list)
+            assert len(errors) > 0
+            assert any("OpenAI API key not found" in error for error in errors)
 
     def test_validate_requirements_invalid_api_key_format(self):
         """Test validate_requirements with invalid API key format."""

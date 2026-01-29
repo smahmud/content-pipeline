@@ -26,6 +26,7 @@ from pipeline.output.manager import OutputManager
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 class TestEnhancedTranscriptionWorkflows:
     """Integration tests for complete transcription workflows."""
     
@@ -33,6 +34,9 @@ class TestEnhancedTranscriptionWorkflows:
         """Set up test environment for each test."""
         self.runner = CliRunner()
         self.test_audio_file = "tests/assets/sample_audio.mp3"
+        # Ensure test assets exist
+        os.makedirs("tests/assets", exist_ok=True)
+        os.makedirs("tests/output", exist_ok=True)
         
     def test_complete_whisper_local_workflow(self, tmp_path):
         """Test complete workflow with local-whisper engine."""
@@ -69,17 +73,22 @@ whisper_local:
             transcript_data = json.load(f)
             assert 'metadata' in transcript_data
             assert 'transcript' in transcript_data
-            assert transcript_data['metadata']['engine'] == 'whisper'
-    @patch('pipeline.transcribers.adapters.whisper_api.openai')
-    def test_complete_whisper_api_workflow(self, mock_openai, tmp_path):
+            assert transcript_data['metadata']['engine'] in ['whisper', 'local-whisper']
+    @patch('openai.OpenAI')
+    def test_complete_whisper_api_workflow(self, mock_openai_class, tmp_path):
         """Test complete workflow with openai-whisper engine."""
-        # Mock OpenAI API response
+        # Mock OpenAI client and API response
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        
         mock_response = MagicMock()
         mock_response.text = "This is a test transcription."
-        mock_openai.Audio.transcribe.return_value = mock_response
+        mock_response.segments = []
+        mock_response.language = "en"
+        mock_client.audio.transcriptions.create.return_value = mock_response
         
         # Set API key environment variable
-        with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-api-key'}):
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'sk-test-key'}):
             result = self.runner.invoke(transcribe, [
                 '--source', self.test_audio_file,
                 '--engine', 'openai-whisper',
@@ -91,7 +100,7 @@ whisper_local:
         assert "Transcription completed successfully" in result.output
         
         # Verify API was called
-        mock_openai.Audio.transcribe.assert_called_once()
+        mock_client.audio.transcriptions.create.assert_called_once()
         
         # Verify output file was created
         output_files = list((tmp_path / 'output').glob('*.json'))
@@ -301,30 +310,36 @@ whisper_local:
         output_lower = result.output.lower()
         assert any(indicator in output_lower for indicator in migration_indicators)
 
-    @patch('pipeline.transcribers.adapters.whisper_api.openai')
-    def test_api_authentication_scenarios(self, mock_openai, tmp_path):
+    @patch('openai.OpenAI')
+    def test_api_authentication_scenarios(self, mock_openai_class, tmp_path):
         """Test API authentication scenarios."""
-        # Test 1: Missing API key
-        result = self.runner.invoke(transcribe, [
-            '--source', self.test_audio_file,
-            '--engine', 'openai-whisper',
-            '--output-dir', str(tmp_path / 'output')
-        ])
+        # Test 1: Missing API key (clear environment)
+        with patch.dict(os.environ, {}, clear=True):
+            result = self.runner.invoke(transcribe, [
+                '--source', self.test_audio_file,
+                '--engine', 'openai-whisper',
+                '--output-dir', str(tmp_path / 'output')
+            ])
+            
+            # Should fail with authentication error
+            assert result.exit_code != 0
+            assert "api" in result.output.lower() or "key" in result.output.lower()
         
-        # Should fail with authentication error
-        assert result.exit_code != 0
-        assert "api" in result.output.lower() or "key" in result.output.lower()
+        # Test 2: Valid API key via environment
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
         
-        # Test 2: Valid API key via CLI flag
         mock_response = MagicMock()
         mock_response.text = "Test transcription"
-        mock_openai.Audio.transcribe.return_value = mock_response
+        mock_response.segments = []
+        mock_response.language = "en"
+        mock_client.audio.transcriptions.create.return_value = mock_response
         
-        result = self.runner.invoke(transcribe, [
-            '--source', self.test_audio_file,
-            '--engine', 'openai-whisper',
-            '--api-key', 'test-key',
-            '--output-dir', str(tmp_path / 'output')
-        ])
-        
-        assert result.exit_code == 0
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'sk-test-key'}):
+            result = self.runner.invoke(transcribe, [
+                '--source', self.test_audio_file,
+                '--engine', 'openai-whisper',
+                '--output-dir', str(tmp_path / 'output')
+            ])
+            
+            assert result.exit_code == 0

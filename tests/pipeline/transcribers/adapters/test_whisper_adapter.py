@@ -10,7 +10,7 @@ Covers:
 """
 import os
 import pytest
-from pipeline.transcribers.adapters.whisper import WhisperAdapter
+from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
 from pipeline.transcribers.adapters.base import TranscriberAdapter
 from pipeline.transcribers.schemas.transcript_v1 import TranscriptV1, TranscriptSegment, build_transcript_metadata
 
@@ -19,13 +19,13 @@ OUTPUT_DIR = "tests/output"
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "transcript.txt")
 
 def test_whisper_adapter_complies_with_protocol():
-    adapter: TranscriberAdapter = WhisperAdapter()
+    adapter: TranscriberAdapter = LocalWhisperAdapter()
     engine, version = adapter.get_engine_info()
     assert isinstance(engine, str)
     assert isinstance(version, str)
 
 def test_whisper_invalid_audio_path():
-    adapter = WhisperAdapter(model_name="base")
+    adapter = LocalWhisperAdapter(model_name="base")
     invalid_path = "tests/assets/does_not_exist.mp3"
 
     with pytest.raises(FileNotFoundError):
@@ -33,7 +33,7 @@ def test_whisper_invalid_audio_path():
 
 @pytest.mark.skipif(not os.path.exists(TEST_AUDIO_PATH), reason="Test audio file not found")
 def test_whisper_raw_output_structure():
-    adapter = WhisperAdapter(model_name="base")
+    adapter = LocalWhisperAdapter(model_name="base")
     raw = adapter.transcribe(TEST_AUDIO_PATH)
 
     assert isinstance(raw, dict)
@@ -45,7 +45,7 @@ def test_whisper_raw_output_structure():
 
 @pytest.mark.skipif(not os.path.exists(TEST_AUDIO_PATH), reason="Test audio file not found")
 def test_whisper_transcription_runs():
-    adapter = WhisperAdapter(model_name="base")
+    adapter = LocalWhisperAdapter(model_name="base")
     result = adapter.transcribe(TEST_AUDIO_PATH)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -56,12 +56,16 @@ def test_whisper_transcription_runs():
     assert "text" in result
     assert isinstance(result["text"], str)
     assert len(result["text"]) > 0
+    
+    # Cleanup
+    if os.path.exists(OUTPUT_FILE):
+        os.remove(OUTPUT_FILE)
 
 OUTPUT_JSON = os.path.join(OUTPUT_DIR, "transcript_v1.json")
 
 @pytest.mark.skipif(not os.path.exists(TEST_AUDIO_PATH), reason="Test audio file not found")
 def test_whisper_transcript_normalization():
-    adapter = WhisperAdapter(model_name="base")
+    adapter = LocalWhisperAdapter(model_name="base")
     result = adapter.transcribe(TEST_AUDIO_PATH)
 
     # Extract confidences for aggregation
@@ -96,6 +100,10 @@ def test_whisper_transcript_normalization():
     assert len(transcript.transcript) > 0
     assert transcript.metadata.engine == "local-whisper"
     assert transcript.metadata.language is not None
+    
+    # Cleanup
+    if os.path.exists(OUTPUT_JSON):
+        os.remove(OUTPUT_JSON)
 
 def format_timestamp(seconds: float) -> str:
     """Convert float seconds to HH:MM:SS.mmm format"""

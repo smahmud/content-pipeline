@@ -176,7 +176,7 @@ ffmpeg -version
 ```bash
 # Test CLI installation
 python -m cli --version
-# Expected: content-pipeline, version 0.6.0
+# Expected: content-pipeline, version 0.6.5
 
 # Test CLI help
 python -m cli --help
@@ -187,7 +187,14 @@ python -m cli extract --help
 python -m cli transcribe --help
 ```
 
-**Note:** In v0.6.0, the transcribe command uses local Whisper implementation only. Engine selection will be added in v0.6.5.
+**Note:** In v0.6.5, the transcribe command requires explicit engine selection via `--engine` flag. Available engines: local-whisper, openai-whisper, aws-transcribe, auto. See [cli-commands.md](cli-commands.md) for usage examples.
+
+**Test v0.6.5 engine selection:**
+```bash
+# Verify --engine option is available and required
+python -m cli transcribe --help
+# Should show --engine option as required with choices: local-whisper, openai-whisper, aws-transcribe, auto
+```
 
 ### Step 4: Verify Core Functionality
 

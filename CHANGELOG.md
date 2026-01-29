@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.5] - 2026-01-29
+
+> **📖 Detailed Release Notes**: See [docs/releases/v0.6.5.md](docs/releases/v0.6.5.md) for comprehensive upgrade guide, configuration examples, and migration instructions.
+
+### Added
+- Multiple transcription engine support with explicit engine selection via `--engine` flag
+- Configuration management system with YAML file support (user and project configs)
+- Environment variable support for configuration and credentials
+- Flexible output path management with `--output-dir` flag and configuration
+- Auto-selection engine with intelligent fallback between local-whisper, openai-whisper, and aws-transcribe
+- AWS Transcribe adapter for enterprise-grade transcription
+- Configuration validation with Pydantic models
+- Comprehensive testing guide (`docs/testing-guide.md`) with test markers and execution strategies
+- Test isolation fixtures for reliable test execution
+- Property-based testing for configuration management
+
+### Changed
+- **BREAKING**: Engine selection now required via `--engine` flag (no default engine)
+- **BREAKING**: Engine names standardized to provider-first pattern:
+  - `whisper-local` → `local-whisper`
+  - `whisper-api` → `openai-whisper`
+  - `aws-transcribe` unchanged
+- File naming standardized to provider-first pattern:
+  - `whisper_local.py` → `local_whisper.py`
+  - `whisper_api.py` → `openai_whisper.py`
+- Output directory no longer hardcoded to `./output/` - now configurable
+- Moved configuration examples from `examples/` to `docs/examples/` for better organization
+- Enhanced test strategy with slow and external test markers
+- Updated all documentation to reflect v0.6.5 capabilities
+
+### Fixed
+- OpenAI Whisper adapter validation to check API key before importing openai module
+- Test isolation issues with environment variables and temporary directories
+- Mock paths in integration tests after file renaming
+
+### Notes
+- Backward compatibility maintained via `whisper.py` adapter wrapper
+- Configuration hierarchy: CLI flags > Environment variables > Project config > User config > Defaults
+- Run fast tests: `pytest -m "not slow and not external"`
+- See `docs/examples/README-Configuration.md` for configuration guide
+
 ## [0.6.0] - 2026-01-26
 
 ### Added
