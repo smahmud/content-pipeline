@@ -14,6 +14,7 @@ from pipeline.enrichment.agents.base import BaseLLMAgent
 from pipeline.enrichment.agents.openai_agent import OpenAIAgent, OpenAIAgentConfig
 from pipeline.enrichment.agents.ollama_agent import OllamaAgent, OllamaAgentConfig
 from pipeline.enrichment.agents.bedrock_agent import BedrockAgent, BedrockAgentConfig
+from pipeline.enrichment.agents.claude_agent import ClaudeAgent
 from pipeline.enrichment.errors import ConfigurationError
 
 
@@ -52,7 +53,7 @@ class AgentFactory:
         openai_config: Optional[OpenAIAgentConfig] = None,
         ollama_config: Optional[OllamaAgentConfig] = None,
         bedrock_config: Optional[BedrockAgentConfig] = None,
-        claude_config: Optional[Any] = None,  # Will be implemented later
+        claude_api_key: Optional[str] = None,
         auto_selection: Optional[AutoSelectionConfig] = None
     ):
         """Initialize agent factory.
@@ -61,13 +62,13 @@ class AgentFactory:
             openai_config: Configuration for OpenAI agent
             ollama_config: Configuration for Ollama agent
             bedrock_config: Configuration for Bedrock agent
-            claude_config: Configuration for Claude agent (not yet implemented)
+            claude_api_key: API key for Claude agent (reads from ANTHROPIC_API_KEY if not provided)
             auto_selection: Configuration for auto-selection behavior
         """
         self.openai_config = openai_config or self._default_openai_config()
         self.ollama_config = ollama_config or OllamaAgentConfig()
         self.bedrock_config = bedrock_config or self._default_bedrock_config()
-        self.claude_config = claude_config
+        self.claude_api_key = claude_api_key or os.getenv("ANTHROPIC_API_KEY")
         self.auto_selection = auto_selection or AutoSelectionConfig()
         
         # Cache for instantiated agents
@@ -182,13 +183,12 @@ class AgentFactory:
             return BedrockAgent(self.bedrock_config)
         
         elif provider == "claude":
-            if self.claude_config is None:
+            if not self.claude_api_key:
                 raise ConfigurationError(
-                    "Claude agent not yet implemented. "
-                    "Will be available in Phase 6 of implementation."
+                    "Claude API key not configured. "
+                    "Set ANTHROPIC_API_KEY environment variable or provide in config."
                 )
-            # TODO: Implement in Phase 6
-            raise NotImplementedError("Claude agent coming in Phase 6")
+            return ClaudeAgent(api_key=self.claude_api_key)
         
         else:
             raise ConfigurationError(

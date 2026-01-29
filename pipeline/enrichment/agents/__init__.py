@@ -15,6 +15,7 @@ from pipeline.enrichment.agents.factory import AgentFactory, AutoSelectionConfig
 from pipeline.enrichment.agents.openai_agent import OpenAIAgent, OpenAIAgentConfig
 from pipeline.enrichment.agents.ollama_agent import OllamaAgent, OllamaAgentConfig
 from pipeline.enrichment.agents.bedrock_agent import BedrockAgent, BedrockAgentConfig
+from pipeline.enrichment.agents.claude_agent import ClaudeAgent
 
 __all__ = [
     "BaseLLMAgent",
@@ -28,4 +29,5 @@ __all__ = [
     "OllamaAgentConfig",
     "BedrockAgent",
     "BedrockAgentConfig",
+    "ClaudeAgent",
 ]

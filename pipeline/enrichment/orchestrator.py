@@ -18,6 +18,7 @@ from pipeline.enrichment.prompts.loader import PromptLoader
 from pipeline.enrichment.prompts.renderer import PromptRenderer
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1, EnrichmentMetadata
 from pipeline.enrichment.validate import validate_and_repair_enrichment
+from pipeline.enrichment.cache import CacheSystem
 from pipeline.enrichment.errors import (
     CostLimitExceededError,
     EnrichmentError,
@@ -93,7 +94,8 @@ class EnrichmentOrchestrator:
         self,
         agent_factory: AgentFactory,
         prompt_loader: Optional[PromptLoader] = None,
-        prompt_renderer: Optional[PromptRenderer] = None
+        prompt_renderer: Optional[PromptRenderer] = None,
+        cache_system: Optional[CacheSystem] = None
     ):
         """Initialize orchestrator.
         
@@ -101,10 +103,12 @@ class EnrichmentOrchestrator:
             agent_factory: Factory for creating LLM agents
             prompt_loader: Optional prompt loader (creates default if not provided)
             prompt_renderer: Optional prompt renderer (creates default if not provided)
+            cache_system: Optional cache system (creates default if not provided)
         """
         self.agent_factory = agent_factory
         self.prompt_loader = prompt_loader or PromptLoader()
         self.prompt_renderer = prompt_renderer or PromptRenderer()
+        self.cache_system = cache_system or CacheSystem()
     
     def enrich(self, request: EnrichmentRequest) -> EnrichmentV1 | DryRunReport:
         """Execute enrichment workflow.
@@ -152,20 +156,30 @@ class EnrichmentOrchestrator:
         
         # 5. Dry-run mode
         if request.dry_run:
+            # Check if result would be in cache
+            cache_hit = False
+            if request.use_cache:
+                cache_key = self._generate_cache_key(request, prompts, estimate.model)
+                cached_result = self.cache_system.get(cache_key)
+                cache_hit = cached_result is not None
+            
             return DryRunReport(
                 estimate=estimate,
                 enrichment_types=request.enrichment_types,
                 provider=request.provider,
                 model=estimate.model,
                 would_use_cache=request.use_cache,
-                cache_hit=False  # TODO: Check cache when implemented
+                cache_hit=cache_hit
             )
         
-        # 6. Check cache (TODO: Implement in Phase 5)
-        # if request.use_cache:
-        #     cached_result = self._check_cache(...)
-        #     if cached_result:
-        #         return cached_result
+        # 6. Check cache
+        if request.use_cache:
+            cache_key = self._generate_cache_key(request, prompts, estimate.model)
+            cached_result = self.cache_system.get(cache_key)
+            
+            if cached_result is not None:
+                # Cache hit! Return cached result
+                return cached_result
         
         # 7. Execute enrichment for each type
         results = {}
@@ -195,9 +209,10 @@ class EnrichmentOrchestrator:
             total_tokens=total_tokens
         )
         
-        # 9. Cache result (TODO: Implement in Phase 5)
-        # if request.use_cache:
-        #     self._store_in_cache(...)
+        # 9. Cache result
+        if request.use_cache:
+            cache_key = self._generate_cache_key(request, prompts, estimate.model)
+            self.cache_system.set(cache_key, enrichment)
         
         return enrichment
     
@@ -353,4 +368,38 @@ class EnrichmentOrchestrator:
             tags=enrichments.get("tag"),
             chapters=enrichments.get("chapter"),
             highlights=enrichments.get("highlight")
+        )
+    
+    def _generate_cache_key(
+        self,
+        request: EnrichmentRequest,
+        prompts: Dict[str, str],
+        model: str
+    ) -> str:
+        """Generate cache key for the enrichment request.
+        
+        Args:
+            request: Enrichment request
+            prompts: Rendered prompts for each enrichment type
+            model: Model being used
+            
+        Returns:
+            Cache key (hash)
+        """
+        # Combine all prompts into a single template string
+        combined_prompts = "\n---\n".join(
+            f"{etype}:\n{prompt}"
+            for etype, prompt in sorted(prompts.items())
+        )
+        
+        # Generate cache key
+        return self.cache_system.generate_key(
+            transcript_text=request.transcript_text,
+            model=model,
+            prompt_template=combined_prompts,
+            enrichment_types=sorted(request.enrichment_types),
+            parameters={
+                "language": request.language,
+                "duration": request.duration
+            }
         )
