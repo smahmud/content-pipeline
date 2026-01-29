@@ -27,6 +27,7 @@ class ExitCodes:
 # Command help texts
 EXTRACT_HELP = "Extract audio/video content from various sources including URLs, files, and cloud storage."
 TRANSCRIBE_HELP = "Transcribe audio content to text using configurable speech recognition engines."
+ENRICH_HELP = "Enrich transcripts with AI-powered semantic analysis including summaries, tags, chapters, and highlights."
 
 # Option help texts - Extract command
 EXTRACT_SOURCE_HELP = (
@@ -89,6 +90,91 @@ TRANSCRIBE_CONFIG_HELP = (
 )
 
 TRANSCRIBE_LOG_LEVEL_HELP = (
+    "Logging level for detailed output. Use DEBUG for troubleshooting."
+)
+
+# Option help texts - Enrich command
+ENRICH_INPUT_HELP = (
+    "Path to transcript file (.json) or glob pattern for batch processing. "
+    "Examples: transcript.json, transcripts/*.json, **/*.json"
+)
+
+ENRICH_OUTPUT_HELP = (
+    "Output file path for enriched transcript. If not specified, appends '-enriched' to input filename. "
+    "For batch processing, use --output-dir instead."
+)
+
+ENRICH_OUTPUT_DIR_HELP = (
+    "Output directory for batch processing. Preserves original filenames with '-enriched' suffix."
+)
+
+ENRICH_PROVIDER_HELP = (
+    "LLM provider to use for enrichment:\n"
+    "  openai: OpenAI GPT models (requires API key)\n"
+    "  claude: Anthropic Claude models (requires API key)\n"
+    "  bedrock: AWS Bedrock (requires AWS credentials)\n"
+    "  ollama: Local Ollama models (free, requires local installation)\n"
+    "  auto: Automatically select best available provider (default)"
+)
+
+ENRICH_MODEL_HELP = (
+    "Specific model to use. Options vary by provider:\n"
+    "  openai: gpt-4, gpt-4-turbo, gpt-3.5-turbo\n"
+    "  claude: claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-2\n"
+    "  bedrock: anthropic.claude-v2, anthropic.claude-3-*, amazon.titan-*\n"
+    "  ollama: llama2:7b, llama2:13b, llama2:70b, mistral, etc.\n"
+    "If not specified, uses quality preset default."
+)
+
+ENRICH_QUALITY_HELP = (
+    "Quality preset for model selection:\n"
+    "  fast: Smaller, cheaper models (gpt-3.5-turbo, claude-haiku, llama2:7b)\n"
+    "  balanced: Mid-tier models (gpt-4-turbo, claude-sonnet, llama2:13b) [DEFAULT]\n"
+    "  best: Largest, highest-quality models (gpt-4, claude-opus, llama2:70b)"
+)
+
+ENRICH_PRESET_HELP = (
+    "Content profile for domain-specific enrichment:\n"
+    "  podcast: Medium summaries, speaker extraction, chapter detection\n"
+    "  meeting: Short summaries, action items, decision highlights\n"
+    "  lecture: Long summaries, key concepts, chapter detection\n"
+    "  custom: Use custom profile from configuration file"
+)
+
+ENRICH_SUMMARIZE_HELP = "Generate short, medium, and long summary variants"
+ENRICH_TAG_HELP = "Extract categories, keywords, and entities"
+ENRICH_CHAPTERIZE_HELP = "Detect chapters with titles, timestamps, and descriptions"
+ENRICH_HIGHLIGHT_HELP = "Identify key moments with timestamps and importance levels"
+ENRICH_ALL_HELP = "Enable all enrichment types (summary, tags, chapters, highlights)"
+
+ENRICH_MAX_COST_HELP = (
+    "Maximum cost limit in USD. Operation aborts if estimated cost exceeds this limit. "
+    "Example: --max-cost 0.50 (50 cents)"
+)
+
+ENRICH_DRY_RUN_HELP = (
+    "Display cost estimates and enrichment plan without making LLM API calls. "
+    "Useful for previewing costs before committing."
+)
+
+ENRICH_NO_CACHE_HELP = (
+    "Bypass cache and generate fresh enrichment results. "
+    "By default, cached results are reused to save costs."
+)
+
+ENRICH_CUSTOM_PROMPTS_HELP = (
+    "Directory containing custom YAML prompt templates. "
+    "Templates: summarize.yaml, tag.yaml, chapterize.yaml, highlight.yaml"
+)
+
+ENRICH_CONFIG_HELP = (
+    "Path to configuration file (.yaml). If not specified, looks for:\n"
+    "  1. ./.content-pipeline/config.yaml (project config)\n"
+    "  2. ~/.content-pipeline/config.yaml (user config)\n"
+    "  3. Built-in defaults"
+)
+
+ENRICH_LOG_LEVEL_HELP = (
     "Logging level for detailed output. Use DEBUG for troubleshooting."
 )
 

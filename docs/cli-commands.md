@@ -6,8 +6,8 @@ This document outlines the current and planned CLI commands for the Content Pipe
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| ✅ **Implemented** | 2 | `extract` (v0.1.0-v0.4.0), `transcribe` (v0.5.0-v0.6.5) - Both refactored in v0.6.0 |
-| 📋 **Planned for v1.0.0** | 6 | Essential commands for production release |
+| ✅ **Implemented** | 3 | `extract` (v0.1.0-v0.4.0), `transcribe` (v0.5.0-v0.6.5), `enrich` (v0.7.0) |
+| 📋 **Planned for v1.0.0** | 5 | Essential commands for production release |
 | 💭 **Future** | 2 | Conceptual, post-v1.0.0 |
 
 ---
@@ -92,16 +92,122 @@ content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-d
 
 ---
 
-## 📋 **Planned for v0.7.0+**
-
 ### `enrich`
-**Status:** 📋 Planned for v0.7.0  
-**Purpose:** Generates semantic metadata including summaries, tags, chapters, and key highlights using LLM processing.
+**Status:** ✅ Implemented in v0.7.0  
+**Purpose:** Generates semantic metadata including summaries, tags, chapters, and key highlights using LLM processing with multi-provider support.
 
-**Planned Usage:**
+**Usage:**
 ```bash
-content-pipeline enrich --source TRANSCRIPT_FILE --output ENRICHED_FILE [OPTIONS]
+content-pipeline enrich --input TRANSCRIPT_FILE [OPTIONS]
 ```
+
+**Key Options:**
+- `--input, -i`: Input transcript file or glob pattern for batch processing
+- `--output, -o`: Output file path (auto-generated if not specified)
+- `--output-dir`: Output directory for batch processing
+- `--provider`: LLM provider (openai, claude, bedrock, ollama, auto)
+- `--model`: Specific model to use (overrides quality preset)
+- `--quality`: Quality preset (fast, balanced, best)
+- `--preset`: Content profile (podcast, meeting, lecture, custom)
+- `--summarize`: Generate summaries
+- `--tag`: Extract tags
+- `--chapterize`: Detect chapters
+- `--highlight`: Identify highlights
+- `--all`: Enable all enrichment types
+- `--max-cost`: Maximum cost limit in USD
+- `--dry-run`: Preview costs without making API calls
+- `--no-cache`: Bypass cache and generate fresh results
+- `--custom-prompts`: Directory with custom YAML prompt templates
+- `--config`: Path to configuration file
+- `--log-level`: Logging verbosity
+
+**Examples:**
+
+**Basic enrichment with all types:**
+```bash
+content-pipeline enrich --input transcript.json --all
+```
+
+**Specific enrichment types:**
+```bash
+content-pipeline enrich --input transcript.json --summarize --tag
+```
+
+**Provider selection:**
+```bash
+# OpenAI (requires API key)
+content-pipeline enrich --input transcript.json --provider openai --all
+
+# Local Ollama (free, privacy-first)
+content-pipeline enrich --input transcript.json --provider ollama --all
+
+# Auto-select best available
+content-pipeline enrich --input transcript.json --provider auto --all
+```
+
+**Quality presets:**
+```bash
+# Fast and cheap
+content-pipeline enrich --input transcript.json --quality fast --all
+
+# Balanced (default)
+content-pipeline enrich --input transcript.json --quality balanced --all
+
+# Best quality
+content-pipeline enrich --input transcript.json --quality best --all
+```
+
+**Content profiles:**
+```bash
+# Podcast profile (medium summaries, chapters, highlights)
+content-pipeline enrich --input transcript.json --preset podcast
+
+# Meeting profile (short summaries, action items)
+content-pipeline enrich --input transcript.json --preset meeting
+
+# Lecture profile (long summaries, key concepts)
+content-pipeline enrich --input transcript.json --preset lecture
+```
+
+**Cost control:**
+```bash
+# Set maximum cost limit
+content-pipeline enrich --input transcript.json --all --max-cost 0.50
+
+# Dry run to preview costs
+content-pipeline enrich --input transcript.json --all --dry-run
+```
+
+**Batch processing:**
+```bash
+# Process all transcripts in directory
+content-pipeline enrich --input "transcripts/*.json" --all --output-dir enriched/
+
+# Process with cost limit
+content-pipeline enrich --input "**/*.json" --all --max-cost 5.00 --output-dir enriched/
+```
+
+**Custom prompts:**
+```bash
+# Use custom prompt templates
+content-pipeline enrich --input transcript.json --all --custom-prompts ./my-prompts/
+```
+
+**Key Features in v0.7.0:**
+- ✅ Multi-provider LLM support (OpenAI, Claude, Bedrock, Ollama)
+- ✅ Four enrichment types (summary, tags, chapters, highlights)
+- ✅ Cost estimation and control with `--max-cost` and `--dry-run`
+- ✅ Quality presets (fast, balanced, best)
+- ✅ Content profiles (podcast, meeting, lecture)
+- ✅ Intelligent caching with TTL and size limits
+- ✅ Batch processing with progress tracking
+- ✅ Long transcript handling with automatic chunking
+- ✅ Custom YAML prompt templates
+- ✅ Retry logic with exponential backoff
+
+---
+
+## 📋 **Planned for v0.8.0+**
 
 ### `format`
 **Status:** 📋 Planned for v0.8.0  
@@ -204,7 +310,7 @@ For the v1.0.0 production release, we aim to have:
 - **v0.5.0:** `transcribe` command implementation (local Whisper only)
 - **v0.6.0:** CLI refactoring - modular architecture, no new functionality
 - **v0.6.5:** Enhanced transcription with multiple engines (local-whisper, openai-whisper, aws-transcribe, auto), configuration management, and flexible output paths
-- **v0.7.0:** `enrich` command implementation (planned)
+- **v0.7.0:** `enrich` command implementation with multi-provider LLM support
 - **v0.8.0:** `format` command implementation (planned)
 - **v0.9.0:** `validate` command implementation (planned)
 - **v0.10.0:** `publish` command implementation (planned)
@@ -238,11 +344,12 @@ The modular CLI structure introduced in v0.6.0 enables easy extension for future
 - **Dual Entry Points**: `python -m cli` and `content-pipeline` console script
 - **Extensible**: Easy to add new commands in future versions
 
-## 📝 Current Implementation (v0.6.5)
+## 📝 Current Implementation (v0.7.0)
 
 The current CLI provides:
 - **extract**: Audio extraction from video sources
 - **transcribe**: Speech-to-text conversion with multiple engines (local-whisper, openai-whisper, aws-transcribe, auto)
+- **enrich**: LLM-powered semantic enrichment with multi-provider support (openai, claude, bedrock, ollama, auto)
 - **Configuration management**: YAML files and environment variables
 - **Shared options**: Common decorators for input/output
 - **Centralized help**: Consistent help text across commands

@@ -119,7 +119,95 @@ Flexible output path management introduced in v0.6.5, replacing hardcoded output
 
 ---
 
-### 3. CLI Orchestration
+### 3. Enrichment System
+
+AI-powered semantic enrichment introduced in v0.7.0 for transforming transcripts into structured, semantically rich content.
+
+#### `pipeline/enrichment/`
+Core enrichment infrastructure for LLM-powered analysis:
+
+- `orchestrator.py` — Coordinates enrichment workflow across agents, prompts, and validation
+- `cost_estimator.py` — Pre-flight cost calculation with token counting and pricing database
+- `cache.py` — File-based caching system with TTL expiration and size limits
+- `chunking.py` — Automatic transcript splitting for long-form content
+- `batch.py` — Batch processing with progress tracking and error handling
+- `validate.py` — Schema validation and automatic repair for LLM responses
+- `retry.py` — Exponential backoff retry logic for transient failures
+- `output.py` — Output file management with path resolution
+- `errors.py` — Comprehensive error hierarchy for enrichment operations
+
+---
+
+#### `pipeline/enrichment/agents/`
+LLM provider adapters implementing unified agent protocol:
+
+- `base.py` — BaseLLMAgent protocol defining agent interface
+- `openai_agent.py` — OpenAI GPT models (GPT-4, GPT-3.5-turbo)
+- `claude_agent.py` — Anthropic Claude models (Claude 3 Opus/Sonnet/Haiku, Claude 2)
+- `bedrock_agent.py` — AWS Bedrock (Claude and Titan models)
+- `ollama_agent.py` — Local Ollama models (Llama 2, Mistral, etc.)
+- `factory.py` — Agent factory with auto-selection and credential validation
+
+All agents support:
+- Cost estimation with provider-specific token counting
+- Context window detection and validation
+- Standardized request/response formats
+- Retry logic with exponential backoff
+
+---
+
+#### `pipeline/enrichment/schemas/`
+Pydantic models for enrichment output validation:
+
+- `enrichment_v1.py` — EnrichmentV1 container with metadata
+- `summary.py` — SummaryEnrichment (short/medium/long variants)
+- `tag.py` — TagEnrichment (categories, keywords, entities)
+- `chapter.py` — ChapterEnrichment (title, timestamps, description)
+- `highlight.py` — HighlightEnrichment (quote, timestamp, importance level)
+
+All schemas include:
+- Field validation with Pydantic v2
+- JSON schema generation
+- Automatic repair logic for common LLM output issues
+
+---
+
+#### `pipeline/enrichment/prompts/`
+YAML-based prompt engineering system:
+
+- `loader.py` — PromptLoader for loading and caching templates
+- `renderer.py` — PromptRenderer with Jinja2 templating
+- `summarize.yaml` — Summary generation prompt
+- `tag.yaml` — Tag extraction prompt
+- `chapterize.yaml` — Chapter detection prompt
+- `highlight.yaml` — Highlight identification prompt
+
+Supports:
+- Custom prompt directories
+- Template variables (transcript_text, language, duration, word_count)
+- Fallback from custom to default prompts
+
+---
+
+#### `pipeline/enrichment/presets/`
+Quality and content profile configurations:
+
+- `quality.py` — Quality presets (FAST, BALANCED, BEST)
+- `content.py` — Content profiles (PODCAST, MEETING, LECTURE)
+
+Quality presets select appropriate models per provider:
+- FAST: Smaller, cheaper models (gpt-3.5-turbo, claude-haiku, llama2:7b)
+- BALANCED: Mid-tier models (gpt-4-turbo, claude-sonnet, llama2:13b)
+- BEST: Largest models (gpt-4, claude-opus, llama2:70b)
+
+Content profiles adapt enrichment to domain:
+- PODCAST: Medium summaries, speaker extraction, chapter detection
+- MEETING: Short summaries, action items, decision highlights
+- LECTURE: Long summaries, key concepts, chapter detection
+
+---
+
+### 4. CLI Orchestration
 
 Modular CLI architecture refactored in v0.6.0 into the `cli/` package.
 
@@ -127,6 +215,7 @@ The CLI is organized into subcommands using Click groups with shared components:
 
 - `extract` — triggers the extraction pipeline
 - `transcribe` — triggers the transcription pipeline
+- `enrich` — triggers the enrichment pipeline (NEW in v0.7.0)
 
 Each subcommand is implemented as a separate module with reusable decorators and centralized help text.
 
@@ -166,6 +255,35 @@ Output includes:
 
 ---
 
+#### 🎨 Enrich Flags
+
+Used with the `enrich` subcommand (NEW in v0.7.0):
+
+- `--input` — path to transcript file or glob pattern for batch processing
+- `--output` — path for saving enriched output (auto-generated if not specified)
+- `--output-dir` — directory for batch processing outputs
+- `--provider` — LLM provider selection (openai, claude, bedrock, ollama, auto)
+- `--model` — specific model to use (overrides quality preset)
+- `--quality` — quality preset (fast, balanced, best)
+- `--preset` — content profile (podcast, meeting, lecture, custom)
+- `--summarize` — generate summaries
+- `--tag` — extract tags
+- `--chapterize` — detect chapters
+- `--highlight` — identify highlights
+- `--all` — enable all enrichment types
+- `--max-cost` — maximum cost limit in USD
+- `--dry-run` — preview costs without making API calls
+- `--no-cache` — bypass cache and generate fresh results
+- `--custom-prompts` — directory with custom YAML prompt templates
+- `--config` — path to configuration file
+- `--log-level` — logging verbosity
+
+Output includes:
+- Enriched transcript `.json` conforming to `EnrichmentV1` schema
+- Metadata including provider, model, cost, tokens, and cache status
+
+---
+
 Handles logging, error propagation, and output normalization across all flows.
 
 ---
@@ -183,6 +301,12 @@ Handles logging, error propagation, and output normalization across all flows.
 - Defines the transcript schema used by transcriber adapters
 - Enforced via integration tests and schema validation
 - Enables structured enrichment, publishing, and archival
+
+#### `pipeline/enrichment/schemas/`
+
+- Defines enrichment output schemas (EnrichmentV1, Summary, Tag, Chapter, Highlight)
+- Enforced via Pydantic validation with automatic repair
+- Ensures consistent downstream formatting and publishing
 
 ---
 
@@ -240,6 +364,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
   - `v0.5.x`: Transcriber functionality with Whisper integration
   - `v0.6.0`: CLI refactoring with modular architecture
   - `v0.6.5`: Enhanced transcription with multiple engines, configuration management, and flexible output paths
+  - `v0.7.0`: LLM-powered enrichment with multi-provider support, cost control, and intelligent caching
 
 ---
 
@@ -250,7 +375,6 @@ For full folder and file layout, see [project_structure.md](project_structure.md
 ---
 
 ## 🧭 Future Directions
-- 🤖 Summarize transcripts with LLMs to generate structured highlights, tags, and semantic metadata  
 - 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across major social media platforms
 - 📦 Archive and index all enriched content into a searchable store  
 - 🧠 Integrate MCP server for agent orchestration, routing, retries, and tagging  
