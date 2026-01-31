@@ -24,6 +24,39 @@ pipeline/
 │   │   └── auto_selector.py # Smart engine selection with intelligent fallback
 │   ├── factory.py           # Engine factory pattern for adapter instantiation (v0.6.5)
 │   ├── schemas/             # Transcript normalization models (e.g. transcript_v1)
+├── enrichment/              # LLM-powered semantic enrichment (NEW in v0.7.0)
+│   ├── agents/              # LLM provider adapters
+│   │   ├── base.py          # BaseLLMAgent protocol
+│   │   ├── openai_agent.py  # OpenAI GPT models
+│   │   ├── claude_agent.py  # Anthropic Claude models
+│   │   ├── bedrock_agent.py # AWS Bedrock (Claude and Titan)
+│   │   ├── ollama_agent.py  # Local Ollama models
+│   │   └── factory.py       # Agent factory with auto-selection
+│   ├── schemas/             # Enrichment output models
+│   │   ├── enrichment_v1.py # EnrichmentV1 container
+│   │   ├── summary.py       # Summary enrichment schema
+│   │   ├── tag.py           # Tag enrichment schema
+│   │   ├── chapter.py       # Chapter enrichment schema
+│   │   └── highlight.py     # Highlight enrichment schema
+│   ├── prompts/             # YAML prompt templates
+│   │   ├── loader.py        # Prompt loading and caching
+│   │   ├── renderer.py      # Jinja2 template rendering
+│   │   ├── summarize.yaml   # Summary generation prompt
+│   │   ├── tag.yaml         # Tag extraction prompt
+│   │   ├── chapterize.yaml  # Chapter detection prompt
+│   │   └── highlight.yaml   # Highlight identification prompt
+│   ├── presets/             # Quality and content profiles
+│   │   ├── quality.py       # Quality presets (FAST, BALANCED, BEST)
+│   │   └── content.py       # Content profiles (PODCAST, MEETING, LECTURE)
+│   ├── orchestrator.py      # Enrichment workflow coordinator
+│   ├── cost_estimator.py    # Pre-flight cost calculation
+│   ├── cache.py             # File-based caching system
+│   ├── chunking.py          # Long transcript handling
+│   ├── batch.py             # Batch processing
+│   ├── validate.py          # Schema validation and repair
+│   ├── retry.py             # Exponential backoff retry logic
+│   ├── output.py            # Output file management
+│   └── errors.py            # Error hierarchy
 ├── config/                  # Configuration management (NEW in v0.6.5)
 │   ├── manager.py           # ConfigurationManager for loading and merging configs
 │   ├── schema.py            # Pydantic models for configuration validation
@@ -45,8 +78,9 @@ cli/
 ├── __main__.py              # Module execution entry point (python -m cli)
 ├── extract.py               # Extract subcommand implementation
 ├── transcribe.py            # Transcribe subcommand (v0.6.5: enhanced with engine selection)
+├── enrich.py                # Enrich subcommand (NEW in v0.7.0: LLM-powered enrichment)
 ├── shared_options.py        # Reusable option decorators (v0.6.5: added engine_option, config_option)
-└── help_texts.py            # Centralized help text constants (v0.6.5: breaking change messages)
+└── help_texts.py            # Centralized help text constants (v0.6.5: breaking change messages, v0.7.0: enrichment help)
 ```
 
 ---

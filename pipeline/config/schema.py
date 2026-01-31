@@ -38,6 +38,30 @@ class WhisperModelSize(Enum):
     LARGE = "large"
 
 
+class LLMProvider(Enum):
+    """Supported LLM providers for enrichment."""
+    OPENAI = "openai"
+    CLAUDE = "claude"
+    BEDROCK = "bedrock"
+    OLLAMA = "ollama"
+    AUTO = "auto"
+
+
+class QualityPreset(Enum):
+    """Quality presets for enrichment."""
+    FAST = "fast"
+    BALANCED = "balanced"
+    BEST = "best"
+
+
+class ContentProfile(Enum):
+    """Content profiles for enrichment."""
+    PODCAST = "podcast"
+    MEETING = "meeting"
+    LECTURE = "lecture"
+    CUSTOM = "custom"
+
+
 @dataclass
 class EngineConfig:
     """Base configuration for transcription engines."""
@@ -155,3 +179,190 @@ class TranscriptionConfig:
             return self.aws_transcribe
         else:
             raise ValueError(f"Unknown engine type: {engine_type}")
+
+
+
+# ============================================================================
+# Enrichment Configuration (v0.7.0)
+# ============================================================================
+
+@dataclass
+class EnrichmentProviderConfig:
+    """Configuration for a specific LLM provider.
+    
+    Attributes:
+        enabled: Whether this provider is enabled
+        api_key: API key for the provider (if applicable)
+        default_model: Default model to use for this provider
+        max_cost_per_request: Maximum cost per request in USD
+    """
+    enabled: bool = True
+    api_key: Optional[str] = None
+    default_model: Optional[str] = None
+    max_cost_per_request: Optional[float] = None
+
+
+@dataclass
+class EnrichmentCacheConfig:
+    """Configuration for enrichment caching.
+    
+    Attributes:
+        enabled: Whether caching is enabled
+        ttl_days: Time-to-live for cache entries in days
+        max_size_mb: Maximum cache size in megabytes
+        cache_dir: Directory for cache files
+    """
+    enabled: bool = True
+    ttl_days: int = 30
+    max_size_mb: int = 500
+    cache_dir: str = ".content-pipeline/cache/enrichment"
+
+
+@dataclass
+class EnrichmentCostControlConfig:
+    """Configuration for cost control.
+    
+    Attributes:
+        max_cost_per_request: Maximum cost per enrichment request in USD
+        max_cost_per_batch: Maximum cost per batch operation in USD
+        warning_threshold: Threshold for cost warnings (0.5 = 50%)
+        require_confirmation: Whether to require confirmation before proceeding
+    """
+    max_cost_per_request: Optional[float] = None
+    max_cost_per_batch: Optional[float] = None
+    warning_threshold: float = 0.5
+    require_confirmation: bool = False
+
+
+@dataclass
+class EnrichmentConfig:
+    """Complete enrichment configuration for v0.7.0.
+    
+    This configuration defines settings for LLM-powered enrichment including
+    provider configurations, cost control, caching, and default preferences.
+    
+    Attributes:
+        provider: Default LLM provider to use
+        quality: Default quality preset
+        content_profile: Default content profile
+        enrichment_types: Default enrichment types to enable
+        custom_prompts_dir: Optional custom prompts directory
+        providers: Provider-specific configurations
+        cache: Cache configuration
+        cost_control: Cost control configuration
+    """
+    # Default settings
+    provider: str = LLMProvider.AUTO.value
+    quality: str = QualityPreset.BALANCED.value
+    content_profile: Optional[str] = None
+    enrichment_types: List[str] = field(default_factory=lambda: ["summary", "tag"])
+    custom_prompts_dir: Optional[str] = None
+    
+    # Provider configurations
+    openai: EnrichmentProviderConfig = field(default_factory=EnrichmentProviderConfig)
+    claude: EnrichmentProviderConfig = field(default_factory=EnrichmentProviderConfig)
+    bedrock: EnrichmentProviderConfig = field(default_factory=EnrichmentProviderConfig)
+    ollama: EnrichmentProviderConfig = field(default_factory=EnrichmentProviderConfig)
+    
+    # Cache configuration
+    cache: EnrichmentCacheConfig = field(default_factory=EnrichmentCacheConfig)
+    
+    # Cost control configuration
+    cost_control: EnrichmentCostControlConfig = field(default_factory=EnrichmentCostControlConfig)
+    
+    def validate(self) -> List[str]:
+        """Validate enrichment configuration and return list of errors."""
+        errors = []
+        
+        # Validate provider
+        try:
+            LLMProvider(self.provider)
+        except ValueError:
+            valid_providers = [p.value for p in LLMProvider]
+            errors.append(f"Invalid provider '{self.provider}'. Valid options: {valid_providers}")
+        
+        # Validate quality preset
+        try:
+            QualityPreset(self.quality)
+        except ValueError:
+            valid_presets = [q.value for q in QualityPreset]
+            errors.append(f"Invalid quality '{self.quality}'. Valid options: {valid_presets}")
+        
+        # Validate content profile if specified
+        if self.content_profile:
+            try:
+                ContentProfile(self.content_profile)
+            except ValueError:
+                valid_profiles = [p.value for p in ContentProfile]
+                errors.append(f"Invalid content_profile '{self.content_profile}'. Valid options: {valid_profiles}")
+        
+        # Validate enrichment types
+        valid_types = ["summary", "tag", "chapter", "highlight"]
+        for etype in self.enrichment_types:
+            if etype not in valid_types:
+                errors.append(f"Invalid enrichment type '{etype}'. Valid options: {valid_types}")
+        
+        # Validate cache settings
+        if self.cache.ttl_days <= 0:
+            errors.append("cache.ttl_days must be positive")
+        if self.cache.max_size_mb <= 0:
+            errors.append("cache.max_size_mb must be positive")
+        
+        # Validate cost control settings
+        if self.cost_control.max_cost_per_request is not None and self.cost_control.max_cost_per_request <= 0:
+            errors.append("cost_control.max_cost_per_request must be positive")
+        if self.cost_control.max_cost_per_batch is not None and self.cost_control.max_cost_per_batch <= 0:
+            errors.append("cost_control.max_cost_per_batch must be positive")
+        if not (0.0 <= self.cost_control.warning_threshold <= 1.0):
+            errors.append("cost_control.warning_threshold must be between 0.0 and 1.0")
+        
+        return errors
+    
+    def get_provider_config(self, provider: str) -> EnrichmentProviderConfig:
+        """Get configuration for specific provider.
+        
+        Args:
+            provider: Provider name
+            
+        Returns:
+            Provider configuration
+            
+        Raises:
+            ValueError: If provider is unknown
+        """
+        if provider == LLMProvider.OPENAI.value:
+            return self.openai
+        elif provider == LLMProvider.CLAUDE.value:
+            return self.claude
+        elif provider == LLMProvider.BEDROCK.value:
+            return self.bedrock
+        elif provider == LLMProvider.OLLAMA.value:
+            return self.ollama
+        else:
+            raise ValueError(f"Unknown provider: {provider}")
+
+
+@dataclass
+class PipelineConfig:
+    """Complete pipeline configuration combining transcription and enrichment.
+    
+    This is the top-level configuration that includes both transcription
+    and enrichment settings.
+    
+    Attributes:
+        transcription: Transcription configuration
+        enrichment: Enrichment configuration
+    """
+    transcription: TranscriptionConfig = field(default_factory=TranscriptionConfig)
+    enrichment: EnrichmentConfig = field(default_factory=EnrichmentConfig)
+    
+    def validate(self) -> List[str]:
+        """Validate complete pipeline configuration.
+        
+        Returns:
+            List of validation errors (empty if valid)
+        """
+        errors = []
+        errors.extend(self.transcription.validate())
+        errors.extend(self.enrichment.validate())
+        return errors

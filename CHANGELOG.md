@@ -2,6 +2,92 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Planning
+- **v0.8.0 Content Formatting** - Multi-platform content formatting (planned)
+- **v0.9.0 Validation** - Quality assurance and schema validation (planned)
+- **v0.10.0 Publishing** - External platform publishing (planned)
+
+## [0.7.0] - 2026-01-29
+
+> **📖 Detailed Release Notes**: See [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) for comprehensive usage guide, configuration examples, and migration instructions.
+
+### Added
+- **LLM-Powered Enrichment System** - Complete semantic enrichment pipeline
+  - Multi-provider LLM support (OpenAI, Anthropic Claude, AWS Bedrock, Local Ollama)
+  - Four enrichment types: summaries, tags, chapters, highlights
+  - Auto-selection with intelligent fallback between providers
+  - Cost estimation and control with `--max-cost` and `--dry-run` flags
+  - Quality presets (fast, balanced, best) for model selection
+  - Content profiles (podcast, meeting, lecture) for domain-specific enrichment
+  - Intelligent file-based caching with TTL expiration and size limits
+  - Batch processing with progress tracking and error handling
+  - Long transcript handling with automatic chunking and merging
+  - Custom YAML prompt templates with Jinja2 rendering
+  - Retry logic with exponential backoff for transient failures
+  - Comprehensive error hierarchy with descriptive messages
+
+- **LLM Agent Infrastructure**
+  - `BaseLLMAgent` protocol defining unified agent interface
+  - `OpenAIAgent` with tiktoken integration and pricing database
+  - `ClaudeAgent` for Anthropic Claude models (Claude 2, Claude 3 Opus/Sonnet/Haiku)
+  - `BedrockAgent` for AWS Bedrock (Claude and Titan models)
+  - `OllamaAgent` for local models with zero cost
+  - `AgentFactory` with auto-selection and credential validation
+
+- **Enrichment Schemas**
+  - `EnrichmentV1` container schema with metadata
+  - `SummaryEnrichment` with short/medium/long variants
+  - `TagEnrichment` with categories, keywords, entities
+  - `ChapterEnrichment` with title, timestamps, description
+  - `HighlightEnrichment` with quote, timestamp, importance level
+  - Schema validation with automatic repair for common LLM output issues
+
+- **Prompt Engineering System**
+  - YAML-based prompt templates for all enrichment types
+  - `PromptLoader` with caching and custom directory support
+  - `PromptRenderer` with Jinja2 templating and context variables
+  - Default prompts: summarize.yaml, tag.yaml, chapterize.yaml, highlight.yaml
+
+- **Cost Control and Caching**
+  - `CostEstimator` with provider-specific token counting
+  - Pre-flight cost calculation with warning thresholds (50% of max-cost)
+  - `CacheSystem` with SHA256 key generation and TTL expiration
+  - Cache size limit enforcement (default 500 MB)
+  - Cache hit/miss tracking in metadata
+
+- **CLI Enrich Command**
+  - `content-pipeline enrich` command with comprehensive options
+  - Provider selection: `--provider` (openai, claude, bedrock, ollama, auto)
+  - Model selection: `--model` (overrides quality preset)
+  - Quality presets: `--quality` (fast, balanced, best)
+  - Content profiles: `--preset` (podcast, meeting, lecture, custom)
+  - Enrichment type flags: `--summarize`, `--tag`, `--chapterize`, `--highlight`, `--all`
+  - Cost control: `--max-cost`, `--dry-run`
+  - Cache control: `--no-cache`
+  - Custom prompts: `--custom-prompts`
+  - Batch processing: glob patterns in `--input`, `--output-dir`
+
+- **Configuration Extensions**
+  - `EnrichmentConfig` in configuration schema
+  - Provider configurations (API keys, regions, endpoints)
+  - Cost control settings (max_cost, warning_threshold)
+  - Cache settings (enabled, ttl, max_size)
+  - Custom content profile definitions
+
+### Changed
+- Updated CLI version to 0.7.0
+- Extended configuration schema to support enrichment settings
+- Enhanced error hierarchy with enrichment-specific errors
+
+### Notes
+- All 4 LLM providers fully implemented and tested
+- 43 correctness properties defined in design document
+- Comprehensive prompt templates with best practices
+- Production-ready with retry logic and error handling
+- See `.kiro/specs/llm-powered-enrichment/` for complete specification
+
 ## [0.6.5] - 2026-01-29
 
 > **📖 Detailed Release Notes**: See [docs/releases/v0.6.5.md](docs/releases/v0.6.5.md) for comprehensive upgrade guide, configuration examples, and migration instructions.

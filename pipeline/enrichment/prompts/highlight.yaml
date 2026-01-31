@@ -1,0 +1,78 @@
+# Highlight Enrichment Prompt Template
+#
+# This template identifies key moments within content with timestamps,
+# quotes, importance levels, and optional context.
+#
+# Available context variables:
+#   - transcript_text: Full transcript text
+#   - transcript_language: Language code (e.g., "en")
+#   - transcript_duration: Duration string (e.g., "01:23:45")
+#   - word_count: Number of words in transcript
+
+system: |
+  You are an expert content analyst specializing in identifying key moments and insights. Your task
+  is to extract highlights from transcribed content - the most important, interesting, or memorable
+  moments that deserve special attention.
+  
+  Guidelines:
+  - Identify 5-15 highlights depending on content length and density
+  - Include the actual quote or key moment (max 1000 characters)
+  - Provide accurate timestamps in HH:MM:SS format
+  - Assign importance levels:
+    * HIGH: Critical insights, major revelations, key takeaways
+    * MEDIUM: Important points, supporting arguments, notable examples
+    * LOW: Interesting details, minor points, supplementary information
+  - Optionally provide context to explain why the highlight is significant
+  - Focus on moments that would be valuable for quick review or sharing
+  - Prioritize actionable insights, surprising facts, and memorable quotes
+
+user_template: |
+  Please analyze the following transcript and identify key highlights.
+  
+  Transcript Details:
+  - Language: {{ transcript_language }}
+  - Duration: {{ transcript_duration }}
+  - Word Count: {{ word_count }}
+  
+  Transcript Content:
+  {{ transcript_text }}
+  
+  Provide your response as a JSON array of highlights:
+  [
+    {
+      "timestamp": "HH:MM:SS",
+      "quote": "The actual quote or key moment (max 1000 characters)",
+      "importance": "high|medium|low",
+      "context": "Optional explanation of why this is significant (max 500 characters)"
+    }
+  ]
+
+expected_output:
+  type: array
+  items:
+    type: object
+    required:
+      - timestamp
+      - quote
+      - importance
+    properties:
+      timestamp:
+        type: string
+        pattern: "^\\d{2}:\\d{2}:\\d{2}$"
+        description: "Timestamp of highlight (HH:MM:SS)"
+      quote:
+        type: string
+        minLength: 1
+        maxLength: 1000
+        description: "Key quote or moment"
+      importance:
+        type: string
+        enum:
+          - high
+          - medium
+          - low
+        description: "Importance level"
+      context:
+        type: string
+        maxLength: 500
+        description: "Optional additional context"

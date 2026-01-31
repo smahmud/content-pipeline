@@ -1,6 +1,10 @@
 # Test artifacts
 tests/output/
 tests/assets/
+test_output/
+
+# Personal test scripts (not versioned)
+tests/my-test-scripts/
 
 # Virtual environments
 .venv/
@@ -37,6 +41,15 @@ docs/notes/
 
 # Configuration examples (personal reference)
 examples/
+
+# Environment variables (contains API keys)
+.env
+.env.dev
+.env.local
+.env.production
+.env.test
+# But DO version the template
+!.env.template
 
 # Kiro development artifacts
 .kiro/

@@ -29,14 +29,26 @@ python -m pytest tests/property_tests/
 ```
 
 ### Integration Tests
-End-to-end tests that test complete workflows.
-```bash
-# All integration tests
-python -m pytest tests/integration/
+End-to-end tests that test complete workflows with real external services.
 
-# Fast integration tests only
-python -m pytest tests/integration/ -m "not slow"
+**See [Integration Tests Documentation](testing/integration-tests.md) for detailed documentation.**  
+**Quick Start**: [Integration Test Quick Start Guide](testing/integration-quickstart.md)
+
+```bash
+# All integration tests (includes external APIs - costs money)
+python -m pytest tests/integration/ --external --slow
+
+# Fast integration tests only (free)
+python -m pytest tests/integration/ -m "not slow and not external"
+
+# Cost estimation only (dry-run, free)
+python -m pytest tests/integration/test_full_pipeline.py::test_pipeline_cost_estimation_only -v -s --external
+
+# Full pipeline test (extract → transcribe → enrich, ~$0.01-0.05)
+python -m pytest tests/integration/test_full_pipeline.py::TestFullPipeline::test_full_pipeline_youtube_to_enrichment -v -s --external --slow
 ```
+
+**Important**: Integration tests with `@pytest.mark.external` use real APIs and will incur costs. Always check cost estimates before running.
 
 ## Test Markers
 
@@ -62,14 +74,15 @@ python -m pytest -m "not slow and not external"
 
 ## Test Execution Times
 
-| Test Category | Count | Time | Marker |
-|--------------|-------|------|--------|
-| Adapter Tests | 5 | ~5 min | - |
-| Property Tests | 201 | ~4 min | - |
-| Unit Tests | 179 | ~6 min | - |
-| Fast Integration | 2 | ~1 min | `integration` |
-| Slow Integration | 13 | ~50 min | `slow` |
-| External Tests | 1 | varies | `external` |
+| Test Category | Count | Time | Marker | Cost |
+|--------------|-------|------|--------|------|
+| Adapter Tests | 5 | ~5 min | - | Free |
+| Property Tests | 201 | ~4 min | - | Free |
+| Unit Tests | 179 | ~6 min | - | Free |
+| Fast Integration | 2 | ~1 min | `integration` | Free |
+| Slow Integration | 13 | ~50 min | `slow` | Free |
+| External Tests (YouTube) | 1 | ~1 min | `external` | Free |
+| Full Pipeline Tests | 2 | ~3-5 min | `external`, `slow` | ~$0.01-0.05 |
 
 ## Recommended Workflows
 

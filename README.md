@@ -7,6 +7,7 @@ Built for transparency, auditability, and enterprise-grade scalability.
 
 - **Modular extractors** for YouTube and local files with extensible platform support
 - **AI-powered transcription** with multiple engine options (local-whisper, openai-whisper, aws-transcribe, auto)  
+- **LLM-powered enrichment** with multi-provider support (OpenAI, Claude, Bedrock, Ollama) for summaries, tags, chapters, and highlights
 - **Schema-driven design** with structured metadata and transcript validation
 - **CLI-first architecture** with planned GUI and MCP server integration
 

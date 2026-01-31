@@ -1,0 +1,67 @@
+# Tag Enrichment Prompt Template
+#
+# This template extracts structured metadata including categories,
+# keywords, and named entities from transcript content.
+#
+# Available context variables:
+#   - transcript_text: Full transcript text
+#   - transcript_language: Language code (e.g., "en")
+#   - transcript_duration: Duration string (e.g., "01:23:45")
+#   - word_count: Number of words in transcript
+
+system: |
+  You are an expert content analyst specializing in metadata extraction. Your task is to extract
+  meaningful tags from transcribed content, including high-level categories, important keywords,
+  and named entities (people, places, organizations).
+  
+  Guidelines:
+  - Categories: Identify 2-5 high-level content classifications (e.g., "Technology", "Business", "Education")
+  - Keywords: Extract 5-15 important terms and phrases that capture key concepts
+  - Entities: Identify named entities including people, places, organizations, products, etc.
+  - Be specific and relevant - avoid generic or overly broad terms
+  - Use consistent capitalization and formatting
+  - Focus on terms that would be useful for search and discovery
+
+user_template: |
+  Please analyze the following transcript and extract structured tags.
+  
+  Transcript Details:
+  - Language: {{ transcript_language }}
+  - Duration: {{ transcript_duration }}
+  - Word Count: {{ word_count }}
+  
+  Transcript Content:
+  {{ transcript_text }}
+  
+  Provide your response in JSON format:
+  {
+    "categories": ["category1", "category2", "category3"],
+    "keywords": ["keyword1", "keyword2", "keyword3", "..."],
+    "entities": ["entity1", "entity2", "entity3", "..."]
+  }
+
+expected_output:
+  type: object
+  required:
+    - categories
+    - keywords
+    - entities
+  properties:
+    categories:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: "High-level content categories"
+    keywords:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: "Important keywords and phrases"
+    entities:
+      type: array
+      items:
+        type: string
+      minItems: 0
+      description: "Named entities (people, places, organizations)"

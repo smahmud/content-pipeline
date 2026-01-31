@@ -3,15 +3,15 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.6.0 — Refactors CLI into modular subcommands with click groups,
-improving maintainability and contributor onboarding. Establishes foundation
-for future commands (enrich, format, etc.).
+Version: 0.7.0 — Adds LLM-powered enrichment with multi-provider support
+(OpenAI, Claude, Bedrock, Ollama) for summaries, tags, chapters, and highlights.
+Includes cost control, intelligent caching, and batch processing.
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.6.0",
+    version="0.7.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
@@ -20,6 +20,13 @@ setup(
         "pydantic>=2.0",
         "ffmpeg-python",
         "openai-whisper",
+        "boto3>=1.34.0",
+        "openai>=1.0",
+        "anthropic>=0.77.0",
+        "tiktoken>=0.5.0",
+        "pyyaml>=6.0",
+        "jinja2>=3.0",
+        "requests>=2.31.0",
     ],
     entry_points={
         "console_scripts": [
