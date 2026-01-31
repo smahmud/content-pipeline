@@ -1,9 +1,12 @@
 """
-Anthropic Claude Agent
+Cloud Anthropic Claude Agent
 
-LLM agent implementation for Anthropic's Claude models via the Anthropic API.
+Cloud-based LLM agent implementation for Anthropic's Claude models via the Anthropic API.
 Supports Claude 2, Claude 3 (Opus, Sonnet, Haiku) with proper prompt formatting
 and cost estimation.
+
+File naming follows pattern: cloud_{provider}_agent.py
+Provider ID: cloud-anthropic
 """
 
 from typing import Dict, Any, Optional
@@ -19,14 +22,18 @@ from pipeline.enrichment.errors import (
 )
 
 
-class ClaudeAgent(BaseLLMAgent):
-    """LLM agent for Anthropic Claude models.
+class CloudAnthropicAgent(BaseLLMAgent):
+    """Cloud Anthropic Claude LLM agent.
     
-    This agent interfaces with Anthropic's Claude API, supporting:
+    This agent interfaces with Anthropic's cloud API, supporting:
     - Claude 2 (claude-2.1, claude-2.0)
     - Claude 3 Opus (claude-3-opus-20240229)
     - Claude 3 Sonnet (claude-3-sonnet-20240229)
     - Claude 3 Haiku (claude-3-haiku-20240307)
+    
+    Deployment: Cloud (requires API key and internet connection)
+    Provider: Anthropic
+    Access Method: Direct API
     
     Features:
     - Proper prompt formatting for Claude's message format
@@ -35,7 +42,7 @@ class ClaudeAgent(BaseLLMAgent):
     - Error handling with retry logic
     
     Example:
-        >>> agent = ClaudeAgent(api_key="sk-ant-...")
+        >>> agent = CloudAnthropicAgent(api_key="sk-ant-...")
         >>> request = LLMRequest(prompt="Summarize this text", max_tokens=500)
         >>> response = agent.generate(request)
     """
@@ -49,8 +56,12 @@ class ClaudeAgent(BaseLLMAgent):
         # Claude 3 Opus
         "claude-3-opus-20240229": {"input": 15.00, "output": 75.00},
         
-        # Claude 3 Sonnet
+        # Claude 3 Sonnet (legacy)
         "claude-3-sonnet-20240229": {"input": 3.00, "output": 15.00},
+        
+        # Claude 3.5 Sonnet (current)
+        "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
+        "claude-3-5-sonnet-20240620": {"input": 3.00, "output": 15.00},
         
         # Claude 3 Haiku
         "claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
@@ -62,18 +73,20 @@ class ClaudeAgent(BaseLLMAgent):
         "claude-2.0": 100_000,
         "claude-3-opus-20240229": 200_000,
         "claude-3-sonnet-20240229": 200_000,
+        "claude-3-5-sonnet-20241022": 200_000,
+        "claude-3-5-sonnet-20240620": 200_000,
         "claude-3-haiku-20240307": 200_000,
     }
     
-    # Default model
-    DEFAULT_MODEL = "claude-3-sonnet-20240229"
+    # Default model (updated to Claude 3 Haiku for reliability)
+    DEFAULT_MODEL = "claude-3-haiku-20240307"
     
     def __init__(
         self,
         api_key: Optional[str] = None,
         default_model: Optional[str] = None
     ):
-        """Initialize Claude agent.
+        """Initialize Cloud Anthropic agent.
         
         Args:
             api_key: Anthropic API key (reads from ANTHROPIC_API_KEY env var if not provided)
@@ -195,7 +208,7 @@ class ClaudeAgent(BaseLLMAgent):
             Dict with provider info, supported models, and features
         """
         return {
-            "provider": "claude",
+            "provider": "cloud-anthropic",
             "default_model": self.default_model,
             "supported_models": list(self.PRICING.keys()),
             "max_context_window": max(self.CONTEXT_WINDOWS.values()),

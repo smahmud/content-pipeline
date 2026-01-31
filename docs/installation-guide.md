@@ -28,6 +28,13 @@ The following packages are automatically installed when you install the Content 
 | **pydantic** | ≥2.0 | Data validation and schema management |
 | **whisper** | ≥1.0 | OpenAI Whisper for speech-to-text transcription |
 | **ffmpeg-python** | ≥0.2.0 | Python wrapper for FFmpeg operations |
+| **openai** | ≥1.0 | OpenAI GPT models for enrichment (optional) |
+| **anthropic** | ≥0.77.0 | Anthropic Claude models for enrichment (optional) |
+| **boto3** | ≥1.34.0 | AWS Bedrock for enrichment (optional) |
+| **tiktoken** | ≥0.5.0 | Token counting for cost estimation (optional) |
+| **pyyaml** | ≥6.0 | YAML configuration and prompt templates |
+| **jinja2** | ≥3.0 | Prompt template rendering |
+| **requests** | ≥2.31.0 | HTTP client for Ollama (optional) |
 
 ### Installation Methods
 
@@ -176,24 +183,29 @@ ffmpeg -version
 ```bash
 # Test CLI installation
 python -m cli --version
-# Expected: content-pipeline, version 0.6.5
+# Expected: content-pipeline, version 0.7.0
 
 # Test CLI help
 python -m cli --help
-# Should show main CLI help with extract and transcribe commands
+# Should show main CLI help with extract, transcribe, and enrich commands
 
 # Test subcommand help
 python -m cli extract --help
 python -m cli transcribe --help
+python -m cli enrich --help
 ```
 
-**Note:** In v0.6.5, the transcribe command requires explicit engine selection via `--engine` flag. Available engines: local-whisper, openai-whisper, aws-transcribe, auto. See [cli-commands.md](cli-commands.md) for usage examples.
+**Note:** In v0.7.0, the transcribe command requires explicit engine selection via `--engine` flag. Available engines: local-whisper, openai-whisper, aws-transcribe, auto. The enrich command supports multiple LLM providers: openai, claude, bedrock, ollama, auto. See [cli-commands.md](cli-commands.md) for usage examples.
 
-**Test v0.6.5 engine selection:**
+**Test v0.7.0 engine selection and enrichment:**
 ```bash
 # Verify --engine option is available and required
 python -m cli transcribe --help
 # Should show --engine option as required with choices: local-whisper, openai-whisper, aws-transcribe, auto
+
+# Verify enrichment command is available
+python -m cli enrich --help
+# Should show enrichment options including --provider, --quality, --summarize, --tag, etc.
 ```
 
 ### Step 4: Verify Core Functionality
@@ -203,11 +215,45 @@ python -m cli transcribe --help
 python -c "
 from cli.extract import extract
 from cli.transcribe import transcribe
+from cli.enrich import enrich
 from pipeline.extractors.local.file_audio import extract_audio_from_file
 from pipeline.extractors.youtube.extractor import YouTubeExtractor
 print('✅ All core modules import successfully')
 "
 ```
+
+### Step 5: Verify Enrichment Functionality (Optional)
+
+The enrichment system requires provider-specific API keys. Test with your preferred provider:
+
+```bash
+# Test enrichment imports
+python -c "
+from cli.enrich import enrich
+from pipeline.enrichment.orchestrator import EnrichmentOrchestrator
+from pipeline.enrichment.agents.factory import AgentFactory
+print('✅ Enrichment modules import successfully')
+"
+
+# Test with OpenAI (requires OPENAI_API_KEY)
+# export OPENAI_API_KEY=your_key_here  # Linux/macOS
+# set OPENAI_API_KEY=your_key_here     # Windows CMD
+python -m cli enrich --help
+
+# Test with Anthropic (requires ANTHROPIC_API_KEY)
+# export ANTHROPIC_API_KEY=your_key_here  # Linux/macOS
+# set ANTHROPIC_API_KEY=your_key_here     # Windows CMD
+python -m cli enrich --help
+
+# Test with Ollama (requires local Ollama server)
+python -m cli enrich --help
+```
+
+**Note:** Enrichment providers are optional. You can use the pipeline without enrichment, or install only the providers you need:
+- OpenAI: `pip install openai tiktoken`
+- Anthropic: `pip install anthropic`
+- AWS Bedrock: `pip install boto3`
+- Ollama: No additional packages (uses local server)
 
 ---
 
@@ -391,6 +437,8 @@ def main():
         ('pydantic', 'Data validation'),
         ('whisper', 'Speech recognition'),
         ('ffmpeg', 'FFmpeg Python wrapper'),
+        ('yaml', 'YAML configuration'),
+        ('jinja2', 'Template rendering'),
     ]
     
     # System commands to check

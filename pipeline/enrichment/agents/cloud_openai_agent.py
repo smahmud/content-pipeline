@@ -1,8 +1,11 @@
 """
-OpenAI LLM Agent
+Cloud OpenAI LLM Agent
 
-Adapter for OpenAI's GPT models (GPT-3.5-turbo, GPT-4, GPT-4-turbo).
+Cloud-based adapter for OpenAI's GPT models (GPT-3.5-turbo, GPT-4, GPT-4-turbo).
 Handles authentication, API calls, token counting with tiktoken, and cost estimation.
+
+File naming follows pattern: cloud_{provider}_agent.py
+Provider ID: cloud-openai
 """
 
 import os
@@ -14,8 +17,8 @@ from pipeline.enrichment.retry import retry_with_backoff
 
 
 @dataclass
-class OpenAIAgentConfig:
-    """Configuration for OpenAI agent.
+class CloudOpenAIAgentConfig:
+    """Configuration for Cloud OpenAI agent.
     
     Attributes:
         api_key: OpenAI API key (can be loaded from environment)
@@ -31,12 +34,16 @@ class OpenAIAgentConfig:
     timeout: int = 60
 
 
-class OpenAIAgent(BaseLLMAgent):
-    """OpenAI LLM provider adapter.
+class CloudOpenAIAgent(BaseLLMAgent):
+    """Cloud OpenAI LLM provider adapter.
     
-    This agent integrates with OpenAI's API to provide LLM capabilities.
+    This agent integrates with OpenAI's cloud API to provide LLM capabilities.
     It supports GPT-3.5-turbo, GPT-4, and GPT-4-turbo models with accurate
     token counting using tiktoken and cost estimation based on current pricing.
+    
+    Deployment: Cloud (requires API key and internet connection)
+    Provider: OpenAI
+    Access Method: Direct API
     """
     
     # Pricing database (USD per 1K tokens) - Updated as of January 2026
@@ -55,11 +62,11 @@ class OpenAIAgent(BaseLLMAgent):
         "gpt-4-turbo-preview": 128000,
     }
     
-    def __init__(self, config: OpenAIAgentConfig):
-        """Initialize OpenAI agent.
+    def __init__(self, config: CloudOpenAIAgentConfig):
+        """Initialize Cloud OpenAI agent.
         
         Args:
-            config: Configuration for the OpenAI agent
+            config: Configuration for the Cloud OpenAI agent
         """
         self.config = config
         self._client = None
@@ -218,8 +225,8 @@ class OpenAIAgent(BaseLLMAgent):
             Dictionary with provider capabilities
         """
         return {
-            "provider": "openai",
-            "models": list(self.PRICING.keys()),
+            "provider": "cloud-openai",
+            "supported_models": list(self.PRICING.keys()),
             "max_tokens": max(self.CONTEXT_WINDOWS.values()),
             "supports_streaming": True,
             "supports_functions": True,

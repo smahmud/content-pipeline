@@ -32,6 +32,9 @@ The testing strategy ensures that all core components — extractors, CLI orches
 - **Transcript Normalization Tests**  
   Validate `TranscriptV1` schema compliance and adapter behavior across transcriber outputs.
 
+- **Enrichment Tests**  
+  Validate LLM-powered semantic enrichment including agent behavior, cost estimation, caching, and schema compliance.
+
 ---
 
 ## 3. Folder Layout
@@ -71,6 +74,18 @@ tests/
 │   ├── test_extract_pipeline_flow.py
 │   └── test_transcribe_pipeline_flow.py
 ├── pipeline/
+│   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
+│   │   ├── test_agents.py           # LLM agent tests (OpenAI, Claude, Bedrock, Ollama)
+│   │   ├── test_orchestrator.py     # Enrichment workflow coordination tests
+│   │   ├── test_cost_estimator.py   # Cost calculation and token counting tests
+│   │   ├── test_cache.py            # Caching system tests
+│   │   ├── test_chunking.py         # Long transcript handling tests
+│   │   ├── test_batch.py            # Batch processing tests
+│   │   ├── test_validate.py         # Schema validation and repair tests
+│   │   ├── test_retry.py            # Retry logic tests
+│   │   ├── test_output.py           # Output management tests
+│   │   ├── test_schemas.py          # Enrichment schema tests
+│   │   └── test_prompts.py          # Prompt loading and rendering tests
 │   ├── extractors/
 │   │   ├── local/
 │   │   │   └── test_file_audio.py
@@ -182,20 +197,29 @@ Each property test validates correctness across randomized input ranges, catchin
 
 The test strategy evolves with each milestone to ensure comprehensive coverage:
 
-#### **Current Testing Focus (v0.6.5)**
-- Engine selection and factory pattern validation
-- Configuration management and YAML parsing
-- Environment variable integration testing
-- Breaking change migration guidance verification
-- Multi-engine adapter protocol conformance
-- Output path management and resolution
-- Auto-selection logic and fallback mechanisms
+#### **Current Testing Focus (v0.7.0)**
+- LLM agent protocol conformance and multi-provider support
+- Cost estimation with provider-specific token counting
+- Enrichment workflow orchestration and validation
+- File-based caching with TTL expiration
+- Long transcript chunking and merging
+- Batch processing with progress tracking
+- Schema validation and automatic repair for LLM outputs
+- Prompt template loading and Jinja2 rendering
+- Retry logic with exponential backoff
+- Property-based testing for enrichment operations
+- Integration testing across all four LLM providers
 
-#### **Next Testing Phase (v0.7.0)**
-- LLM-based content enrichment testing
-- Semantic metadata generation validation
-- Transcript summarization quality assurance
-- Tag and highlight extraction verification
+#### **Previous Milestones**
+- **v0.6.5**: Engine selection, configuration management, output path management
+- **v0.6.0**: CLI refactoring with modular architecture
+- **v0.5.0**: Transcription with Whisper integration
+
+#### **Next Testing Phase (v0.8.0)**
+- Content formatting for multiple platforms (blogs, social media)
+- Template-based output generation
+- Platform-specific formatting validation
+- SEO metadata generation testing
 
 *For complete milestone details, see [docs/README.md](README.md#milestone-status)*
 

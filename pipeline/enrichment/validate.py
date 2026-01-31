@@ -39,7 +39,7 @@ class SchemaValidator:
         response_text: str,
         enrichment_type: str,
         attempt_repair: bool = True
-    ) -> Union[SummaryEnrichment, TagEnrichment, ChapterEnrichment, HighlightEnrichment]:
+    ) -> Union[SummaryEnrichment, TagEnrichment, list, list]:
         """Validate LLM response against the appropriate schema.
         
         Args:
@@ -48,7 +48,7 @@ class SchemaValidator:
             attempt_repair: Whether to attempt repairing malformed responses
             
         Returns:
-            Validated enrichment object
+            Validated enrichment object or list of objects (for chapters/highlights)
             
         Raises:
             SchemaValidationError: If validation fails and repair is unsuccessful
@@ -83,7 +83,44 @@ class SchemaValidator:
                     original_error=e
                 )
         
-        # Try to validate against schema
+        # Chapters and highlights return arrays, not single objects
+        if enrichment_type in ['chapter', 'highlight']:
+            if not isinstance(data, list):
+                raise SchemaValidationError(
+                    f"{enrichment_type} enrichment must return an array",
+                    enrichment_type=enrichment_type,
+                    response_text=response_text,
+                    original_error=None
+                )
+            
+            # Validate each item in the array
+            validated_items = []
+            for i, item in enumerate(data):
+                try:
+                    validated_item = schema_class(**item)
+                    validated_items.append(validated_item)
+                except ValidationError as e:
+                    if attempt_repair:
+                        # Try to repair this item
+                        repaired_item = self._repair_data(item, schema_class, e)
+                        if repaired_item is not None:
+                            try:
+                                validated_item = schema_class(**repaired_item)
+                                validated_items.append(validated_item)
+                                continue
+                            except ValidationError:
+                                pass
+                    
+                    raise SchemaValidationError(
+                        f"Schema validation failed for {enrichment_type} item {i}: {e}",
+                        enrichment_type=enrichment_type,
+                        response_text=response_text,
+                        original_error=e
+                    )
+            
+            return validated_items
+        
+        # Summary and tags return single objects
         try:
             return schema_class(**data)
         except ValidationError as e:
@@ -120,27 +157,50 @@ class SchemaValidator:
         Raises:
             json.JSONDecodeError: If JSON cannot be extracted
         """
+        # First, replace smart quotes with regular quotes
+        # AWS Bedrock (Claude) sometimes returns smart quotes which break JSON parsing
+        text = text.replace('"', '"').replace('"', '"').replace(''', "'").replace(''', "'")
+        
+        # Then, try to escape control characters in the entire text
+        # This handles LLM responses with unescaped newlines, tabs, etc.
+        try:
+            cleaned_text = self._escape_control_characters(text)
+        except Exception:
+            # If escaping fails, continue with original text
+            cleaned_text = text
+        
         # Try direct parsing first
         try:
-            return json.loads(text)
+            return json.loads(cleaned_text)
         except json.JSONDecodeError:
             pass
         
         # Try to extract JSON from markdown code blocks
         json_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
-        matches = re.findall(json_block_pattern, text, re.DOTALL)
+        matches = re.findall(json_block_pattern, cleaned_text, re.DOTALL)
         if matches:
-            try:
-                return json.loads(matches[0])
-            except json.JSONDecodeError:
-                pass
+            for match in matches:
+                try:
+                    # Also escape control characters in the extracted match
+                    try:
+                        escaped_match = self._escape_control_characters(match)
+                    except Exception:
+                        escaped_match = match
+                    return json.loads(escaped_match)
+                except json.JSONDecodeError:
+                    continue
         
         # Try to find JSON object in text
         json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-        matches = re.findall(json_pattern, text, re.DOTALL)
+        matches = re.findall(json_pattern, cleaned_text, re.DOTALL)
         for match in matches:
             try:
-                return json.loads(match)
+                # Also escape control characters in the extracted match
+                try:
+                    escaped_match = self._escape_control_characters(match)
+                except Exception:
+                    escaped_match = match
+                return json.loads(escaped_match)
             except json.JSONDecodeError:
                 continue
         
@@ -156,6 +216,10 @@ class SchemaValidator:
         Returns:
             Repaired JSON data, or None if repair failed
         """
+        # First, try to escape unescaped control characters within string values
+        # This is a common issue with LLM-generated JSON
+        repaired_text = self._escape_control_characters(text)
+        
         # Common JSON issues and fixes
         repairs = [
             # Fix single quotes to double quotes
@@ -167,7 +231,6 @@ class SchemaValidator:
             (r'(\w+):', r'"\1":'),
         ]
         
-        repaired_text = text
         for pattern, replacement in repairs:
             repaired_text = re.sub(pattern, replacement, repaired_text)
         
@@ -175,6 +238,65 @@ class SchemaValidator:
             return self._extract_json(repaired_text)
         except json.JSONDecodeError:
             return None
+    
+    def _escape_control_characters(self, text: str) -> str:
+        """Escape unescaped control characters in JSON string values.
+        
+        This handles cases where LLMs generate JSON with literal newlines,
+        tabs, or other control characters within string values, which are
+        invalid in JSON and must be escaped.
+        
+        The challenge is that JSON itself can have newlines for formatting
+        (e.g., between keys), which are valid. We only need to escape
+        control characters WITHIN quoted string values.
+        
+        Args:
+            text: JSON text with potentially unescaped control characters
+            
+        Returns:
+            JSON text with control characters properly escaped
+        """
+        result = []
+        in_string = False
+        escape_next = False
+        
+        for i, char in enumerate(text):
+            # Handle escape sequences
+            if escape_next:
+                result.append(char)
+                escape_next = False
+                continue
+            
+            if char == '\\':
+                result.append(char)
+                escape_next = True
+                continue
+            
+            # Track whether we're inside a string
+            if char == '"':
+                in_string = not in_string
+                result.append(char)
+                continue
+            
+            # If we're inside a string, escape control characters
+            if in_string:
+                if char == '\n':
+                    result.append('\\n')
+                elif char == '\r':
+                    result.append('\\r')
+                elif char == '\t':
+                    result.append('\\t')
+                elif char == '\b':
+                    result.append('\\b')
+                elif char == '\f':
+                    result.append('\\f')
+                else:
+                    result.append(char)
+            else:
+                # Outside strings, keep everything as-is
+                result.append(char)
+        
+        return ''.join(result)
     
     def _repair_data(
         self,
@@ -293,7 +415,7 @@ def validate_enrichment_response(
     response_text: str,
     enrichment_type: str,
     attempt_repair: bool = True
-) -> Union[SummaryEnrichment, TagEnrichment, ChapterEnrichment, HighlightEnrichment]:
+) -> Union[SummaryEnrichment, TagEnrichment, list, list]:
     """Convenience function to validate an enrichment response.
     
     Args:
@@ -302,7 +424,7 @@ def validate_enrichment_response(
         attempt_repair: Whether to attempt repairing malformed responses
         
     Returns:
-        Validated enrichment object
+        Validated enrichment object or list of objects (for chapters/highlights)
         
     Raises:
         SchemaValidationError: If validation fails
@@ -331,4 +453,10 @@ def validate_and_repair_enrichment(
         SchemaValidationError: If validation fails
     """
     validated = validate_enrichment_response(response_text, enrichment_type, attempt_repair=True)
+    
+    # Handle list responses (chapters, highlights)
+    if isinstance(validated, list):
+        return json.dumps([item.model_dump() for item in validated])
+    
+    # Handle single object responses (summary, tags)
     return json.dumps(validated.model_dump())

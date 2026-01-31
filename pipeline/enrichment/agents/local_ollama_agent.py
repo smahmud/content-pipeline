@@ -1,9 +1,12 @@
 """
-Ollama LLM Agent
+Local Ollama LLM Agent
 
-Adapter for local Ollama models (llama2, mistral, codellama, etc.).
+Local deployment adapter for Ollama models (llama2, mistral, codellama, etc.).
 Handles HTTP API calls to local Ollama service, service health checks,
 and model availability detection. Returns zero cost for all operations.
+
+File naming follows pattern: local_{provider}_agent.py
+Provider ID: local-ollama
 """
 
 import json
@@ -16,8 +19,8 @@ from pipeline.enrichment.errors import LLMProviderError
 
 
 @dataclass
-class OllamaAgentConfig:
-    """Configuration for Ollama agent.
+class LocalOllamaAgentConfig:
+    """Configuration for Local Ollama agent.
     
     Attributes:
         base_url: Base URL for Ollama API (default: http://localhost:11434)
@@ -33,12 +36,16 @@ class OllamaAgentConfig:
     timeout: int = 120  # Local models may be slower
 
 
-class OllamaAgent(BaseLLMAgent):
-    """Ollama LLM provider adapter.
+class LocalOllamaAgent(BaseLLMAgent):
+    """Local Ollama LLM provider adapter.
     
     This agent integrates with a local Ollama service to provide LLM capabilities
     without any API costs. It supports various open-source models like llama2,
     mistral, codellama, and others that can be run locally.
+    
+    Deployment: Local (runs on user's machine)
+    Provider: Ollama
+    Access Method: Local HTTP server
     
     Key features:
     - Zero cost (local processing)
@@ -63,11 +70,11 @@ class OllamaAgent(BaseLLMAgent):
         "neural-chat": 4096,
     }
     
-    def __init__(self, config: OllamaAgentConfig):
-        """Initialize Ollama agent.
+    def __init__(self, config: LocalOllamaAgentConfig):
+        """Initialize Local Ollama agent.
         
         Args:
-            config: Configuration for the Ollama agent
+            config: Configuration for the Local Ollama agent
         """
         self.config = config
     
@@ -211,8 +218,8 @@ class OllamaAgent(BaseLLMAgent):
             pass
         
         return {
-            "provider": "ollama",
-            "models": available_models or list(self.CONTEXT_WINDOWS.keys()),
+            "provider": "local-ollama",
+            "supported_models": available_models or list(self.CONTEXT_WINDOWS.keys()),
             "max_tokens": max(self.CONTEXT_WINDOWS.values()),
             "supports_streaming": True,
             "supports_functions": False,

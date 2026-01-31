@@ -189,12 +189,38 @@ class EnrichmentOrchestrator:
         for enrichment_type in request.enrichment_types:
             prompt = prompts[enrichment_type]
             
+            # DEBUG: Log enrichment execution
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(
+                f"Executing enrichment: {enrichment_type}",
+                extra={
+                    "enrichment_type": enrichment_type,
+                    "prompt_length": len(prompt),
+                    "multi_enrichment_mode": len(request.enrichment_types) > 1,
+                    "enrichment_order": request.enrichment_types,
+                    "current_index": request.enrichment_types.index(enrichment_type)
+                }
+            )
+            
             result = self._execute_enrichment(
                 enrichment_type=enrichment_type,
                 prompt=prompt,
                 agent=agent,
                 model=request.model,
                 transcript_text=request.transcript_text
+            )
+            
+            # DEBUG: Log result type
+            logger.debug(
+                f"Enrichment result for {enrichment_type}",
+                extra={
+                    "enrichment_type": enrichment_type,
+                    "content_length": len(result.content),
+                    "content_preview": result.content[:200],
+                    "tokens_used": result.tokens_used,
+                    "cost_usd": result.cost_usd
+                }
             )
             
             results[enrichment_type] = result
@@ -227,24 +253,24 @@ class EnrichmentOrchestrator:
         """
         prompts = {}
         
-        # Prepare context for rendering
+        # Prepare additional context for rendering
         word_count = len(request.transcript_text.split())
-        context = {
-            "transcript_text": request.transcript_text,
-            "language": request.language,
-            "duration": request.duration,
+        additional_context = {
             "word_count": word_count
         }
         
         for enrichment_type in request.enrichment_types:
-            # Load template
-            template = self.prompt_loader.load_prompt(
-                enrichment_type,
-                custom_dir=request.custom_prompts_dir
-            )
+            # Load template (custom_prompts_dir is already set in PromptLoader init)
+            template = self.prompt_loader.load_prompt(enrichment_type)
             
-            # Render with context
-            prompt = self.prompt_renderer.render(template, context)
+            # Render with proper arguments
+            prompt = self.prompt_renderer.render(
+                prompt_template=template,
+                transcript_text=request.transcript_text,
+                transcript_language=request.language,
+                transcript_duration=str(request.duration),
+                additional_context=additional_context
+            )
             prompts[enrichment_type] = prompt
         
         return prompts

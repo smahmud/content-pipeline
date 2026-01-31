@@ -190,8 +190,8 @@ class CacheSystem:
             True if successfully cached, False otherwise
         """
         try:
-            # Convert result to dict
-            result_dict = result.model_dump()
+            # Convert result to dict with JSON-serializable types
+            result_dict = result.model_dump(mode='json')
             
             # Calculate size
             result_json = json.dumps(result_dict)

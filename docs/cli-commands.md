@@ -96,6 +96,8 @@ content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-d
 **Status:** ✅ Implemented in v0.7.0  
 **Purpose:** Generates semantic metadata including summaries, tags, chapters, and key highlights using LLM processing with multi-provider support.
 
+**⚠️ Deprecation Notice**: The `--all` flag is deprecated and will be removed in v0.8.0. It has provider-specific reliability issues (only works with Anthropic Claude, fails with AWS Bedrock and OpenAI). Use separate commands for each enrichment type instead. See [deprecation notice](notes/all-flag-deprecation.md) for migration guide.
+
 **Usage:**
 ```bash
 content-pipeline enrich --input TRANSCRIPT_FILE [OPTIONS]
@@ -113,7 +115,7 @@ content-pipeline enrich --input TRANSCRIPT_FILE [OPTIONS]
 - `--tag`: Extract tags
 - `--chapterize`: Detect chapters
 - `--highlight`: Identify highlights
-- `--all`: Enable all enrichment types
+- `--all`: **[DEPRECATED]** Enable all enrichment types (will be removed in v0.8.0 - use separate flags instead)
 - `--max-cost`: Maximum cost limit in USD
 - `--dry-run`: Preview costs without making API calls
 - `--no-cache`: Bypass cache and generate fresh results
@@ -123,12 +125,22 @@ content-pipeline enrich --input TRANSCRIPT_FILE [OPTIONS]
 
 **Examples:**
 
-**Basic enrichment with all types:**
+**Recommended: Separate commands for each enrichment type:**
 ```bash
-content-pipeline enrich --input transcript.json --all
+# Generate summary
+content-pipeline enrich --input transcript.json --summarize
+
+# Generate tags
+content-pipeline enrich --input transcript.json --tag
+
+# Generate chapters
+content-pipeline enrich --input transcript.json --chapterize
+
+# Generate highlights
+content-pipeline enrich --input transcript.json --highlight
 ```
 
-**Specific enrichment types:**
+**Combine multiple enrichment types:**
 ```bash
 content-pipeline enrich --input transcript.json --summarize --tag
 ```
@@ -136,25 +148,25 @@ content-pipeline enrich --input transcript.json --summarize --tag
 **Provider selection:**
 ```bash
 # OpenAI (requires API key)
-content-pipeline enrich --input transcript.json --provider openai --all
+content-pipeline enrich --input transcript.json --provider openai --summarize
 
 # Local Ollama (free, privacy-first)
-content-pipeline enrich --input transcript.json --provider ollama --all
+content-pipeline enrich --input transcript.json --provider ollama --summarize
 
 # Auto-select best available
-content-pipeline enrich --input transcript.json --provider auto --all
+content-pipeline enrich --input transcript.json --provider auto --summarize
 ```
 
 **Quality presets:**
 ```bash
 # Fast and cheap
-content-pipeline enrich --input transcript.json --quality fast --all
+content-pipeline enrich --input transcript.json --quality fast --summarize
 
 # Balanced (default)
-content-pipeline enrich --input transcript.json --quality balanced --all
+content-pipeline enrich --input transcript.json --quality balanced --summarize
 
 # Best quality
-content-pipeline enrich --input transcript.json --quality best --all
+content-pipeline enrich --input transcript.json --quality best --summarize
 ```
 
 **Content profiles:**
@@ -172,25 +184,25 @@ content-pipeline enrich --input transcript.json --preset lecture
 **Cost control:**
 ```bash
 # Set maximum cost limit
-content-pipeline enrich --input transcript.json --all --max-cost 0.50
+content-pipeline enrich --input transcript.json --summarize --max-cost 0.50
 
 # Dry run to preview costs
-content-pipeline enrich --input transcript.json --all --dry-run
+content-pipeline enrich --input transcript.json --summarize --tag --dry-run
 ```
 
 **Batch processing:**
 ```bash
 # Process all transcripts in directory
-content-pipeline enrich --input "transcripts/*.json" --all --output-dir enriched/
+content-pipeline enrich --input "transcripts/*.json" --summarize --output-dir enriched/
 
 # Process with cost limit
-content-pipeline enrich --input "**/*.json" --all --max-cost 5.00 --output-dir enriched/
+content-pipeline enrich --input "**/*.json" --summarize --tag --max-cost 5.00 --output-dir enriched/
 ```
 
 **Custom prompts:**
 ```bash
 # Use custom prompt templates
-content-pipeline enrich --input transcript.json --all --custom-prompts ./my-prompts/
+content-pipeline enrich --input transcript.json --summarize --custom-prompts ./my-prompts/
 ```
 
 **Key Features in v0.7.0:**
@@ -204,6 +216,7 @@ content-pipeline enrich --input transcript.json --all --custom-prompts ./my-prom
 - ✅ Long transcript handling with automatic chunking
 - ✅ Custom YAML prompt templates
 - ✅ Retry logic with exponential backoff
+- ⚠️ **Note**: The `--all` flag is deprecated due to provider-specific reliability issues. Use separate flags (e.g., `--summarize --tag`) or run separate commands for each enrichment type. See [deprecation notice](notes/all-flag-deprecation.md) for details.
 
 ---
 

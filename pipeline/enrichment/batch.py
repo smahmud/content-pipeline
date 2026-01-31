@@ -350,9 +350,9 @@ class BatchProcessor:
         # Create output directory if needed
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         
-        # Convert to dict and save
+        # Convert to dict and save (use mode='json' for proper datetime serialization)
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(enrichment.dict(), f, indent=2, ensure_ascii=False)
+            json.dump(enrichment.model_dump(mode='json'), f, indent=2, ensure_ascii=False)
     
     def format_report(self, report: BatchReport) -> str:
         """Format batch report for display.

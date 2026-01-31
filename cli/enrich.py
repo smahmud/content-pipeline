@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import Optional, List
 
 from pipeline.enrichment.agents.factory import AgentFactory, AutoSelectionConfig
-from pipeline.enrichment.agents.openai_agent import OpenAIAgentConfig
-from pipeline.enrichment.agents.ollama_agent import OllamaAgentConfig
-from pipeline.enrichment.agents.bedrock_agent import BedrockAgentConfig
+from pipeline.enrichment.agents.cloud_openai_agent import CloudOpenAIAgentConfig
+from pipeline.enrichment.agents.local_ollama_agent import LocalOllamaAgentConfig
+from pipeline.enrichment.agents.cloud_aws_bedrock_agent import CloudAWSBedrockAgentConfig
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest, DryRunReport
 from pipeline.enrichment.prompts.loader import PromptLoader
 from pipeline.enrichment.errors import (
@@ -45,9 +45,16 @@ from pipeline.enrichment.errors import (
 )
 @click.option(
     "--provider", "-p",
-    type=click.Choice(["openai", "bedrock", "claude", "ollama", "auto"]),
+    type=click.Choice([
+        # New provider IDs (preferred)
+        "cloud-openai", "cloud-anthropic", "cloud-aws-bedrock", "local-ollama",
+        # Legacy names (deprecated but supported)
+        "openai", "claude", "bedrock", "ollama",
+        # Auto-selection
+        "auto"
+    ]),
     default="auto",
-    help="LLM provider to use (default: auto)"
+    help="LLM provider to use (default: auto). Legacy names (openai, claude, bedrock, ollama) are deprecated."
 )
 @click.option(
     "--model", "-m",
@@ -78,7 +85,7 @@ from pipeline.enrichment.errors import (
     "--all",
     "all_types",
     is_flag=True,
-    help="Enable all enrichment types"
+    help="[DEPRECATED] Enable all enrichment types. Use separate flags (--summarize --tag --chapterize --highlight) instead for better reliability."
 )
 @click.option(
     "--max-cost",
@@ -129,17 +136,20 @@ def enrich(
     multiple LLM providers with cost control and caching.
     
     Examples:
-        # Generate all enrichments with auto provider selection
-        content-pipeline enrich --input transcript.json --all
+        # Generate summary and tags (recommended approach)
+        content-pipeline enrich --input transcript.json --summarize --tag
         
-        # Generate only summary and tags with OpenAI
-        content-pipeline enrich --input transcript.json --provider openai --summarize --tag
+        # Generate all enrichments separately (recommended for production)
+        content-pipeline enrich --input transcript.json --summarize
+        content-pipeline enrich --input transcript.json --tag
+        content-pipeline enrich --input transcript.json --chapterize
+        content-pipeline enrich --input transcript.json --highlight
         
         # Estimate costs without executing
-        content-pipeline enrich --input transcript.json --all --dry-run
+        content-pipeline enrich --input transcript.json --summarize --tag --dry-run
         
         # Set cost limit
-        content-pipeline enrich --input transcript.json --all --max-cost 1.00
+        content-pipeline enrich --input transcript.json --summarize --max-cost 1.00
     """
     # Configure logging
     logging.basicConfig(
@@ -162,9 +172,20 @@ def enrich(
         )
         
         if not enrichment_types:
-            click.echo("Error: No enrichment types specified. Use --all or specify individual types.")
+            click.echo("Error: No enrichment types specified. Use --summarize, --tag, --chapterize, or --highlight.")
             click.echo("Run 'content-pipeline enrich --help' for usage information.")
             sys.exit(1)
+        
+        # Warn if using deprecated --all flag
+        if all_types:
+            click.echo("\n⚠️  WARNING: The --all flag is DEPRECATED and may be removed in a future release.", err=True)
+            click.echo("⚠️  Reason: Unreliable with some providers (AWS Bedrock, OpenAI).", err=True)
+            click.echo("⚠️  Recommendation: Use separate commands for each enrichment type:", err=True)
+            click.echo("     content-pipeline enrich --input transcript.json --summarize", err=True)
+            click.echo("     content-pipeline enrich --input transcript.json --tag", err=True)
+            click.echo("     content-pipeline enrich --input transcript.json --chapterize", err=True)
+            click.echo("     content-pipeline enrich --input transcript.json --highlight", err=True)
+            click.echo("⚠️  Separate commands provide better reliability, cost control, and debugging.\n", err=True)
         
         logger.info(f"Enrichment types: {', '.join(enrichment_types)}")
         
@@ -220,10 +241,10 @@ def enrich(
     except ConfigurationError as e:
         click.echo(f"\n❌ Configuration Error: {e}", err=True)
         click.echo("\nSetup instructions:")
-        click.echo("  - OpenAI: Set OPENAI_API_KEY environment variable")
-        click.echo("  - Bedrock: Configure AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)")
-        click.echo("  - Claude: Set ANTHROPIC_API_KEY environment variable")
-        click.echo("  - Ollama: Start local service with 'ollama serve'")
+        click.echo("  - cloud-openai: Set OPENAI_API_KEY environment variable")
+        click.echo("  - cloud-aws-bedrock: Configure AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)")
+        click.echo("  - cloud-anthropic: Set ANTHROPIC_API_KEY environment variable")
+        click.echo("  - local-ollama: Start local service with 'ollama serve'")
         sys.exit(1)
     
     except EnrichmentError as e:
@@ -244,10 +265,18 @@ def _load_transcript(path: str) -> dict:
         path: Path to transcript file
         
     Returns:
-        Transcript data dict
+        Transcript data dict with 'text' field extracted from segments
     """
     with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+    
+    # If transcript is in segments, combine into single text
+    if 'transcript' in data and isinstance(data['transcript'], list):
+        # Combine all segment texts
+        text = ' '.join(segment.get('text', '').strip() for segment in data['transcript'])
+        data['text'] = text
+    
+    return data
 
 
 def _determine_enrichment_types(
@@ -292,13 +321,13 @@ def _create_agent_factory() -> AgentFactory:
         Configured agent factory
     """
     # Create configs from environment
-    openai_config = OpenAIAgentConfig(
+    openai_config = CloudOpenAIAgentConfig(
         api_key=os.getenv("OPENAI_API_KEY", "")
     )
     
-    ollama_config = OllamaAgentConfig()
+    ollama_config = LocalOllamaAgentConfig()
     
-    bedrock_config = BedrockAgentConfig(
+    bedrock_config = CloudAWSBedrockAgentConfig(
         region=os.getenv("AWS_REGION", "us-east-1"),
         access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
@@ -306,7 +335,7 @@ def _create_agent_factory() -> AgentFactory:
     )
     
     auto_selection = AutoSelectionConfig(
-        priority_order=["openai", "claude", "bedrock", "ollama"],
+        priority_order=["cloud-openai", "cloud-anthropic", "cloud-aws-bedrock", "local-ollama"],
         fallback_enabled=True
     )
     
@@ -341,9 +370,9 @@ def _save_enrichment(enrichment, output_path: str):
     # Create output directory if needed
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     
-    # Convert to dict and save
+    # Convert to dict and save (use mode='json' for proper datetime serialization)
     with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(enrichment.dict(), f, indent=2, ensure_ascii=False)
+        json.dump(enrichment.model_dump(mode='json'), f, indent=2, ensure_ascii=False)
 
 
 def _display_dry_run_report(report: DryRunReport):
@@ -387,7 +416,7 @@ def _display_success_summary(enrichment, output_path: str):
     metadata = enrichment.metadata
     
     click.echo("\n" + "="*60)
-    click.echo("✓ Enrichment Completed Successfully")
+    click.echo("Enrichment Completed Successfully")
     click.echo("="*60)
     click.echo(f"\nProvider: {metadata.provider}")
     click.echo(f"Model: {metadata.model}")

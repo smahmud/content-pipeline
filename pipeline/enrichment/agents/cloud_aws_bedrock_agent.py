@@ -1,8 +1,12 @@
 """
-AWS Bedrock LLM Agent
+Cloud AWS Bedrock LLM Agent
 
-Integrates with AWS Bedrock service to access Claude and Titan models.
+Cloud-based integration with AWS Bedrock service to access multiple LLM models
+(Claude, Titan, etc.) through AWS's managed AI service.
 Handles AWS credential management and Bedrock-specific API formatting.
+
+File naming follows pattern: cloud_{provider}_{service}_agent.py
+Provider ID: cloud-aws-bedrock
 """
 
 import json
@@ -26,8 +30,8 @@ from pipeline.enrichment.errors import (
 
 
 @dataclass
-class BedrockAgentConfig:
-    """Configuration for AWS Bedrock agent.
+class CloudAWSBedrockAgentConfig:
+    """Configuration for Cloud AWS Bedrock agent.
     
     Attributes:
         region: AWS region (default: us-east-1)
@@ -40,7 +44,7 @@ class BedrockAgentConfig:
         timeout: Request timeout in seconds (default: 60)
     """
     region: str = "us-east-1"
-    default_model: str = "anthropic.claude-v2"
+    default_model: str = "anthropic.claude-3-haiku-20240307-v1:0"  # Updated to Claude 3 Haiku
     access_key_id: Optional[str] = None
     secret_access_key: Optional[str] = None
     session_token: Optional[str] = None
@@ -49,11 +53,16 @@ class BedrockAgentConfig:
     timeout: int = 60
 
 
-class BedrockAgent(BaseLLMAgent):
-    """AWS Bedrock LLM agent implementation.
+class CloudAWSBedrockAgent(BaseLLMAgent):
+    """Cloud AWS Bedrock LLM agent implementation.
     
-    Supports Claude and Titan models through AWS Bedrock service.
+    Supports multiple LLM models (Claude, Titan, etc.) through AWS Bedrock service.
     Handles AWS credential management and converts Bedrock response formats.
+    
+    Deployment: Cloud (requires AWS credentials and internet connection)
+    Provider: AWS
+    Service: Bedrock (gateway to multiple models)
+    Access Method: AWS API Gateway
     """
     
     # Model context windows (in tokens)
@@ -80,11 +89,11 @@ class BedrockAgent(BaseLLMAgent):
         "amazon.titan-text-lite-v1": {"input_per_1k": 0.0003, "output_per_1k": 0.0004},
     }
     
-    def __init__(self, config: BedrockAgentConfig):
-        """Initialize Bedrock agent.
+    def __init__(self, config: CloudAWSBedrockAgentConfig):
+        """Initialize Cloud AWS Bedrock agent.
         
         Args:
-            config: Bedrock agent configuration
+            config: Cloud AWS Bedrock agent configuration
             
         Raises:
             ImportError: If boto3 is not installed
@@ -356,8 +365,8 @@ class BedrockAgent(BaseLLMAgent):
             Capabilities dict
         """
         return {
-            "provider": "bedrock",
-            "models": list(self.CONTEXT_WINDOWS.keys()),
+            "provider": "cloud-aws-bedrock",
+            "supported_models": list(self.CONTEXT_WINDOWS.keys()),
             "supports_streaming": False,
             "supports_function_calling": False,
             "max_context_window": max(self.CONTEXT_WINDOWS.values()),

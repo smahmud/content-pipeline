@@ -4,12 +4,13 @@ This directory contains detailed release notes for each published version of the
 
 ## Current Release
 
-- **[v0.6.5](v0.6.5.md)** - Enhanced Transcription & Configuration (January 29, 2026)
+- **[v0.7.0](v0.7.0.md)** - LLM-Powered Enrichment (January 30, 2026)
 
 ## Previous Releases
 
-- **[v0.6.0](v0.6.0.md)** - Modular CLI Architecture (January 26, 2026)
-- **[v0.5.0](v0.5.0.md)** - Transcription Pipeline (November 11, 2025)
+- **[v0.6.5](v0.6.5.md)** - Enhanced Transcription & Configuration (January 29, 2026)
+
+For older releases (v0.6.0 and earlier), see [CHANGELOG.md](../../CHANGELOG.md) for brief release notes.
 
 ## Release Documentation Format
 
