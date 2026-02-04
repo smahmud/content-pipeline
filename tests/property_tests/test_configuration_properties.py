@@ -1010,8 +1010,8 @@ a working adapter that conforms to the TranscriberAdapter protocol.
 
 from hypothesis import given, strategies as st, assume, settings
 from unittest.mock import patch, Mock
-from pipeline.transcribers.factory import EngineFactory
-from pipeline.transcribers.adapters.base import TranscriberAdapter
+from pipeline.transcription.factory import TranscriptionProviderFactory
+from pipeline.transcription.providers.base import TranscriberProvider
 from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, WhisperModelSize
 
 
@@ -1032,12 +1032,12 @@ def test_factory_creates_valid_adapters(engine_type, model_size):
     **Property 10: Engine Factory Instantiation**
     *For any* valid engine type and configuration, the factory should create a working adapter.
     """
-    factory = EngineFactory()
-    
     config = TranscriptionConfig(
         engine=engine_type,
         whisper_local=WhisperLocalConfig(model=model_size)
     )
+    
+    factory = TranscriptionProviderFactory(config)
     
     # Mock the requirements validation to avoid actual model loading
     with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
@@ -1069,12 +1069,12 @@ def test_factory_passes_configuration_correctly(engine_type, model_size):
     **Property 10: Engine Factory Instantiation**
     *For any* valid configuration, the factory should pass the configuration to the adapter correctly.
     """
-    factory = EngineFactory()
-    
     config = TranscriptionConfig(
         engine=engine_type,
         whisper_local=WhisperLocalConfig(model=model_size)
     )
+    
+    factory = TranscriptionProviderFactory(config)
     
     with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
          patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
@@ -1093,8 +1093,8 @@ def test_factory_rejects_invalid_engines(invalid_engine):
     """
     assume(invalid_engine.strip() != "")  # Skip empty strings
     
-    factory = EngineFactory()
     config = TranscriptionConfig(engine=invalid_engine)
+    factory = TranscriptionProviderFactory(config)
     
     with pytest.raises(ValueError, match="Unsupported engine type"):
         factory.create_engine(invalid_engine, config)
@@ -1105,8 +1105,8 @@ def test_factory_validates_requirements_before_creation():
     **Property 10: Engine Factory Instantiation**
     *For any* engine with unmet requirements, the factory should raise a clear error.
     """
-    factory = EngineFactory()
     config = TranscriptionConfig(engine='local-whisper')
+    factory = TranscriptionProviderFactory(config)
     
     # Mock requirements validation to return errors
     mock_errors = ['Whisper not installed', 'Model not available']
@@ -1121,7 +1121,8 @@ def test_factory_available_engines_consistency():
     **Property 10: Engine Factory Instantiation**
     *For any* engine returned by get_available_engines(), the factory should be able to create it.
     """
-    factory = EngineFactory()
+    config = TranscriptionConfig()
+    factory = TranscriptionProviderFactory(config)
     available_engines = factory.get_available_engines()
     
     assert len(available_engines) > 0, "Factory should have at least one available engine"
@@ -1141,7 +1142,8 @@ def test_factory_registration_consistency():
     **Property 10: Engine Factory Instantiation**
     *For any* newly registered adapter, the factory should be able to create and use it.
     """
-    factory = EngineFactory()
+    config = TranscriptionConfig()
+    factory = TranscriptionProviderFactory(config)
     
     # Create a mock adapter class
     mock_adapter = Mock()
@@ -1173,7 +1175,8 @@ def test_factory_engine_info_accuracy(engine_type, model_size):
     **Property 10: Engine Factory Instantiation**
     *For any* available engine, get_engine_info should return accurate information.
     """
-    factory = EngineFactory()
+    config = TranscriptionConfig()
+    factory = TranscriptionProviderFactory(config)
     
     info = factory.get_engine_info(engine_type)
     
@@ -1195,8 +1198,8 @@ def test_factory_requirement_validation_consistency():
     **Property 10: Engine Factory Instantiation**
     *For any* engine, validate_engine_requirements should return the same errors as the adapter.
     """
-    factory = EngineFactory()
     config = TranscriptionConfig(engine='local-whisper')
+    factory = TranscriptionProviderFactory(config)
     
     expected_errors = ['Test error 1', 'Test error 2']
     
@@ -1237,7 +1240,7 @@ def test_factory_handles_all_configuration_combinations(data):
         )
     )
     
-    factory = EngineFactory()
+    factory = TranscriptionProviderFactory(config)
     
     with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
          patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):

@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import Mock, patch
 
 from pipeline.enrichment.cost_estimator import CostEstimator
-from pipeline.enrichment.agents.base import LLMRequest
+from pipeline.llm.providers.base import LLMRequest
 
 
 class TestCostEstimator:

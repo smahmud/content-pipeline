@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 import re
 import json
 
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest
 
 
 @dataclass
@@ -47,13 +47,13 @@ class ChunkingStrategy:
     # Minimum chunk size to avoid too many small chunks
     MIN_CHUNK_SIZE = 1000  # characters
     
-    def __init__(self, agent: BaseLLMAgent):
+    def __init__(self, provider: BaseLLMProvider):
         """Initialize chunking strategy.
         
         Args:
-            agent: LLM agent to use for token counting and context window detection
+            provider: LLM provider to use for token counting and context window detection
         """
-        self.agent = agent
+        self.provider = provider
     
     def needs_chunking(
         self,
@@ -72,7 +72,7 @@ class ChunkingStrategy:
             True if chunking is needed
         """
         # Get context window for model
-        context_window = self.agent.get_context_window(model)
+        context_window = self.provider.get_context_window(model)
         
         # Estimate tokens in text (rough approximation)
         estimated_tokens = len(text.split()) * 1.3 + prompt_overhead
@@ -98,7 +98,7 @@ class ChunkingStrategy:
             List of text chunks
         """
         # Get context window and calculate target chunk size
-        context_window = self.agent.get_context_window(model)
+        context_window = self.provider.get_context_window(model)
         safe_limit = int(context_window * self.SAFETY_MARGIN) - prompt_overhead
         
         # Convert token limit to approximate character limit
@@ -218,14 +218,14 @@ class ChunkingStrategy:
     def merge_summaries(
         self,
         chunk_summaries: List[Dict[str, str]],
-        agent: BaseLLMAgent,
+        provider: BaseLLMProvider,
         model: Optional[str] = None
     ) -> Dict[str, str]:
         """Merge summaries from multiple chunks.
         
         Args:
             chunk_summaries: List of summary dicts from each chunk
-            agent: LLM agent to use for merging
+            provider: LLM provider to use for merging
             model: Optional specific model
             
         Returns:
@@ -262,7 +262,7 @@ Provide your response in JSON format:
         )
         
         try:
-            response = agent.generate(request)
+            response = provider.generate(request)
             merged = json.loads(response.content)
             return merged
         except Exception:

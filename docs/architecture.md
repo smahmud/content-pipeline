@@ -2,6 +2,8 @@
 
 This document outlines the high-level architecture of the **Content Pipeline**, designed for scalable, multi-agent audio and metadata extraction. The current implementation supports YouTube, with a modular design that enables future integration of platforms like Vimeo and TikTok. It supports CLI orchestration, schema enforcement, and agent-based modularity.
 
+> **Note on v0.7.5 Infrastructure Refactoring**: This document reflects the infrastructure refactoring completed in v0.7.5, which introduced enterprise-grade provider architecture for LLM and transcription services. This was an unplanned technical release to establish a solid foundation before continuing with planned feature development in v0.8.0. See [infrastructure-migration-guide.md](infrastructure-migration-guide.md) for migration details.
+
 ---
 
 ## 🧩 Core Components
@@ -116,6 +118,130 @@ Flexible output path management introduced in v0.6.5, replacing hardcoded output
 - Supports absolute paths, relative paths, and directory-based output
 - Automatic directory creation and unique filename generation
 - Integration with configuration system for default output directories
+
+---
+
+### 2.7 Infrastructure Layer
+
+Enterprise-grade provider architecture introduced in v0.7.5 for unified LLM and transcription service management.
+
+#### `pipeline/llm/` — LLM Provider Infrastructure
+
+Unified infrastructure for all LLM providers with consistent interface and configuration management:
+
+- **Base Protocol**: `BaseLLMProvider` defines the contract for all LLM providers
+  - `generate()` — Generate text from prompts
+  - `estimate_cost()` — Calculate cost before generation
+  - `validate_requirements()` — Check provider availability
+
+- **Providers**: Standardized naming pattern `{Deployment}{Service}Provider`
+  - `LocalOllamaProvider` — Local Ollama models (zero cost)
+  - `CloudOpenAIProvider` — OpenAI GPT models
+  - `CloudAnthropicProvider` — Anthropic Claude models
+  - `CloudAWSBedrockProvider` — AWS Bedrock (Claude and Titan)
+
+- **Factory Pattern**: `LLMProviderFactory` with caching and auto-selection
+  - Provider instantiation by name
+  - Automatic provider selection based on availability
+  - Provider caching to prevent redundant instantiation
+  - Configuration validation before provider creation
+
+- **Configuration**: `LLMConfig` with environment variable substitution
+  - Configuration precedence: Explicit params > Environment vars > Project config > User config > Defaults
+  - Environment variable substitution: `${VAR_NAME:-default}`
+  - Provider-specific configs: `OllamaConfig`, `OpenAIConfig`, `BedrockConfig`, `AnthropicConfig`
+  - YAML configuration support with validation
+
+- **Error Hierarchy**: Comprehensive error classes
+  - `LLMError` — Base exception for all LLM errors
+  - `ConfigurationError` — Configuration validation failures
+  - `ProviderError` — Provider-specific errors
+  - `ProviderNotAvailableError` — Provider unavailable errors
+
+#### `pipeline/transcription/` — Transcription Provider Infrastructure
+
+Unified infrastructure for all transcription providers with consistent interface and configuration management:
+
+- **Base Protocol**: `TranscriberProvider` defines the contract for all transcription providers
+  - `transcribe()` — Convert audio to text
+  - `validate_requirements()` — Check provider availability
+
+- **Providers**: Standardized naming pattern `{Deployment}{Service}Provider`
+  - `LocalWhisperProvider` — Local Whisper models (privacy-first)
+  - `CloudOpenAIWhisperProvider` — OpenAI Whisper API
+  - `CloudAWSTranscribeProvider` — AWS Transcribe (enterprise-grade)
+
+- **Factory Pattern**: `TranscriptionProviderFactory` with caching and validation
+  - Provider instantiation by name
+  - Provider caching to prevent redundant instantiation
+  - Configuration validation before provider creation
+  - Requirement validation (API keys, credentials)
+
+- **Configuration**: `TranscriptionConfig` with environment variable substitution
+  - Configuration precedence: Explicit params > Environment vars > Project config > User config > Defaults
+  - Environment variable substitution: `${VAR_NAME:-default}`
+  - Provider-specific configs: `WhisperLocalConfig`, `WhisperAPIConfig`, `AWSTranscribeConfig`
+  - YAML configuration support with validation
+
+- **Error Hierarchy**: Comprehensive error classes
+  - `TranscriptionError` — Base exception for all transcription errors
+  - `ConfigurationError` — Configuration validation failures
+  - `ProviderError` — Provider-specific errors
+  - `ProviderNotAvailableError` — Provider unavailable errors
+  - `AudioFileError` — Audio file processing errors
+  - `TranscriptionTimeoutError` — Timeout errors
+
+**Key Design Principles**:
+- **Separation of Concerns**: LLM and transcription infrastructure are completely separate
+- **Consistent Interface**: All providers implement the same protocol
+- **Configuration Objects**: No individual parameters, only configuration objects
+- **No Hardcoded Values**: All configuration externalized to YAML or environment variables
+- **Factory Pattern**: Centralized provider instantiation with caching
+- **Error Handling**: Comprehensive error hierarchy for debugging
+
+#### Pricing Configuration
+
+Configurable pricing system introduced in v0.7.5 for accurate cost estimation with custom pricing agreements.
+
+**Transcription Provider Pricing**:
+- Simple per-minute pricing model
+- Configurable via `cost_per_minute_usd` field in provider configs
+- Environment variable support: `WHISPER_API_COST_PER_MINUTE`, `AWS_TRANSCRIBE_COST_PER_MINUTE`
+- Default values: OpenAI Whisper ($0.006/min), AWS Transcribe ($0.024/min)
+- Use cases: Volume discounts, regional pricing, custom enterprise agreements
+
+**LLM Provider Pricing**:
+- Complex per-model, per-token pricing
+- Configurable via `pricing_override` field (optional dictionary)
+- Format: `{"model-name": {"input_per_1k": 0.01, "output_per_1k": 0.03}}`
+- Falls back to built-in pricing database if not overridden
+- Supports all models across OpenAI, Anthropic, and AWS Bedrock providers
+
+**Configuration Methods**:
+1. **YAML Configuration** (`.content-pipeline/config.yaml`):
+   ```yaml
+   whisper_api:
+     cost_per_minute_usd: 0.005  # Custom rate
+   
+   llm:
+     openai:
+       pricing_override:
+         gpt-4: {input_per_1k: 0.025, output_per_1k: 0.05}
+   ```
+
+2. **Environment Variables** (for transcription only):
+   ```bash
+   export WHISPER_API_COST_PER_MINUTE=0.005
+   export AWS_TRANSCRIBE_COST_PER_MINUTE=0.020
+   ```
+
+3. **Configuration Precedence**: Environment > YAML > Default
+
+**Benefits**:
+- Enterprise customers can reflect negotiated pricing
+- Easy updates when providers change rates
+- No code changes required for pricing updates
+- Maintains backward compatibility with default values
 
 ---
 

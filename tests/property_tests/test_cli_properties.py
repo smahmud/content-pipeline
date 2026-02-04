@@ -133,7 +133,7 @@ class TestCommandRoutingAndRegistration:
         
         result = runner.invoke(main, ['--version'])
         assert result.exit_code == 0
-        assert '0.6.0' in result.output
+        assert '0.7.0' in result.output
     
     def test_main_group_structure(self):
         """Test that main group has proper Click structure."""
@@ -530,7 +530,7 @@ class TestBackwardCompatibility:
         # Verify version option works
         result = runner.invoke(main, ['--version'])
         assert result.exit_code == 0
-        assert '0.6.0' in result.output
+        assert '0.7.0' in result.output
     
     def test_error_handling_compatibility(self):
         """Test that error handling matches v0.5.0 behavior."""
@@ -1321,7 +1321,7 @@ class TestMigrationValidation:
         # Should contain version information
         result = runner.invoke(main, ['--version'])
         assert result.exit_code == 0
-        assert '0.6.0' in result.output
+        assert '0.7.0' in result.output
     
     def test_extract_command_behavior_identical(self):
         """Test that extract command behavior is identical to original."""
@@ -1601,7 +1601,7 @@ class TestEntryPointEquivalence:
         result = subprocess.run([sys.executable, '-m', 'cli', '--version'], 
                               capture_output=True, text=True)
         assert result.returncode == 0
-        assert '0.6.0' in result.stdout
+        assert '0.7.0' in result.stdout
         
         # Test extract help
         result = subprocess.run([sys.executable, '-m', 'cli', 'extract', '--help'], 
@@ -1651,8 +1651,8 @@ class TestEntryPointEquivalence:
         
         assert module_version.exit_code == 0
         assert subprocess_version.returncode == 0
-        assert '0.6.0' in module_version.output
-        assert '0.6.0' in subprocess_version.stdout
+        assert '0.7.0' in module_version.output
+        assert '0.7.0' in subprocess_version.stdout
     
     def test_subcommand_help_identical_across_entry_points(self):
         """Test that subcommand help is identical across entry points."""
@@ -1876,14 +1876,14 @@ class TestEntryPointEquivalence:
                               capture_output=True, text=True)
         
         assert result.returncode == 0
-        assert '0.6.0' in result.stdout
+        assert '0.7.0' in result.stdout
         
         # Test that it produces same output as direct function call
         runner = CliRunner()
         direct_result = runner.invoke(main, ['--version'])
         
         assert direct_result.exit_code == 0
-        assert '0.6.0' in direct_result.output
+        assert '0.7.0' in direct_result.output
     
     def test_entry_point_configuration_correct(self):
         """Test that setup.py entry point configuration is correct."""

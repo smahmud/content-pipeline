@@ -2,7 +2,7 @@
 Enrichment Orchestrator
 
 Coordinates the complete enrichment workflow across all components.
-Handles prompt loading, cost estimation, agent selection, execution,
+Handles prompt loading, cost estimation, provider selection, execution,
 caching, and result aggregation.
 """
 
@@ -11,8 +11,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 import json
 
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
-from pipeline.enrichment.agents.factory import AgentFactory
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
+from pipeline.llm.factory import LLMProviderFactory
 from pipeline.enrichment.cost_estimator import CostEstimator, CostEstimate
 from pipeline.enrichment.prompts.loader import PromptLoader
 from pipeline.enrichment.prompts.renderer import PromptRenderer
@@ -80,19 +80,19 @@ class EnrichmentOrchestrator:
     This class coordinates:
     - Prompt loading and rendering
     - Cost estimation and limit enforcement
-    - Agent selection and execution
+    - Provider selection and execution
     - Result validation and aggregation
     - Caching (when implemented)
     
     Example:
-        >>> orchestrator = EnrichmentOrchestrator(agent_factory)
+        >>> orchestrator = EnrichmentOrchestrator(provider_factory)
         >>> request = EnrichmentRequest(...)
         >>> result = orchestrator.enrich(request)
     """
     
     def __init__(
         self,
-        agent_factory: AgentFactory,
+        provider_factory: LLMProviderFactory,
         prompt_loader: Optional[PromptLoader] = None,
         prompt_renderer: Optional[PromptRenderer] = None,
         cache_system: Optional[CacheSystem] = None
@@ -100,12 +100,12 @@ class EnrichmentOrchestrator:
         """Initialize orchestrator.
         
         Args:
-            agent_factory: Factory for creating LLM agents
+            provider_factory: Factory for creating LLM providers
             prompt_loader: Optional prompt loader (creates default if not provided)
             prompt_renderer: Optional prompt renderer (creates default if not provided)
             cache_system: Optional cache system (creates default if not provided)
         """
-        self.agent_factory = agent_factory
+        self.provider_factory = provider_factory
         self.prompt_loader = prompt_loader or PromptLoader()
         self.prompt_renderer = prompt_renderer or PromptRenderer()
         self.cache_system = cache_system or CacheSystem()
@@ -123,14 +123,14 @@ class EnrichmentOrchestrator:
             CostLimitExceededError: If estimated cost exceeds max_cost
             EnrichmentError: If enrichment fails
         """
-        # 1. Create agent
-        agent = self.agent_factory.create_agent(request.provider)
+        # 1. Create provider
+        provider = self.provider_factory.create_provider(request.provider)
         
         # 2. Load and render prompts
         prompts = self._prepare_prompts(request)
         
         # 3. Estimate costs
-        cost_estimator = CostEstimator(agent)
+        cost_estimator = CostEstimator(provider)
         estimate = cost_estimator.estimate(
             transcript_text=request.transcript_text,
             enrichment_types=request.enrichment_types,
@@ -206,7 +206,7 @@ class EnrichmentOrchestrator:
             result = self._execute_enrichment(
                 enrichment_type=enrichment_type,
                 prompt=prompt,
-                agent=agent,
+                provider=provider,
                 model=request.model,
                 transcript_text=request.transcript_text
             )
@@ -230,7 +230,7 @@ class EnrichmentOrchestrator:
         # 8. Aggregate results into EnrichmentV1
         enrichment = self._aggregate_results(
             results=results,
-            agent=agent,
+            provider=provider,
             total_cost=total_cost,
             total_tokens=total_tokens
         )
@@ -279,7 +279,7 @@ class EnrichmentOrchestrator:
         self,
         enrichment_type: str,
         prompt: str,
-        agent: BaseLLMAgent,
+        provider: BaseLLMProvider,
         model: Optional[str],
         transcript_text: str
     ) -> LLMResponse:
@@ -288,7 +288,7 @@ class EnrichmentOrchestrator:
         Args:
             enrichment_type: Type of enrichment
             prompt: Rendered prompt
-            agent: LLM agent to use
+            provider: LLM provider to use
             model: Optional specific model
             transcript_text: Original transcript text
             
@@ -315,12 +315,12 @@ class EnrichmentOrchestrator:
             model=model
         )
         
-        # TODO: Check if chunking is needed (Phase 4, task 5.5)
-        # For now, assume transcript fits in context window
+        # Note: Current implementation assumes transcript fits in context window.
+        # For very long transcripts, chunking may be needed in future versions.
         
         try:
             # Execute LLM call
-            response = agent.generate(llm_request)
+            response = provider.generate(llm_request)
             
             # Validate and repair response
             validated_content = validate_and_repair_enrichment(
@@ -345,7 +345,7 @@ class EnrichmentOrchestrator:
     def _aggregate_results(
         self,
         results: Dict[str, LLMResponse],
-        agent: BaseLLMAgent,
+        provider: BaseLLMProvider,
         total_cost: float,
         total_tokens: int
     ) -> EnrichmentV1:
@@ -353,14 +353,14 @@ class EnrichmentOrchestrator:
         
         Args:
             results: Dict mapping enrichment type to LLM response
-            agent: LLM agent used
+            provider: LLM provider used
             total_cost: Total cost across all enrichments
             total_tokens: Total tokens used
             
         Returns:
             EnrichmentV1 container
         """
-        capabilities = agent.get_capabilities()
+        capabilities = provider.get_capabilities()
         
         # Create metadata
         metadata = EnrichmentMetadata(

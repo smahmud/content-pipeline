@@ -8,7 +8,7 @@ import pytest
 import time
 from unittest.mock import Mock, patch
 
-from pipeline.enrichment.retry import (
+from pipeline.llm.retry import (
     is_transient_error,
     is_permanent_error,
     calculate_backoff_delay,
@@ -16,7 +16,7 @@ from pipeline.enrichment.retry import (
     RetryContext,
     retry_llm_call
 )
-from pipeline.enrichment.errors import (
+from pipeline.llm.errors import (
     RateLimitError,
     TimeoutError,
     NetworkError,

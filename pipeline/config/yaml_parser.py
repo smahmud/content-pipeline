@@ -141,7 +141,8 @@ class ConfigurationYAMLParser:
         # Check for unknown top-level keys
         expected_keys = {
             'engine', 'output_dir', 'log_level', 'language',
-            'whisper_local', 'whisper_api', 'aws_transcribe', 'auto_selection'
+            'whisper_local', 'whisper_api', 'aws_transcribe', 'auto_selection',
+            'llm'  # LLM configuration for enrichment workflows (v0.7.5)
         }
         
         unknown_keys = set(config_dict.keys()) - expected_keys

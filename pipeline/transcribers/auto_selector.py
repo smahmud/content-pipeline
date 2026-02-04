@@ -8,6 +8,8 @@ Enhanced in v0.6.5 to support:
 - Configuration-driven preferences
 - Availability checking with requirement validation
 - Selection reasoning and logging
+
+DEPRECATED: This module is deprecated. Use pipeline.transcription.TranscriptionProviderFactory instead.
 """
 import logging
 from typing import Tuple, List, Optional
@@ -24,6 +26,8 @@ class AutoSelector:
     
     Evaluates available engines in priority order and selects the best option
     based on user preferences, engine availability, and system capabilities.
+    
+    DEPRECATED: Use pipeline.transcription.TranscriptionProviderFactory instead.
     """
     
     def __init__(self, factory: EngineFactory, config: TranscriptionConfig):

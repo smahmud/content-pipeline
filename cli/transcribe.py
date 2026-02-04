@@ -25,10 +25,10 @@ from typing import Optional
 # Import new v0.6.5 components
 from pipeline.config.manager import ConfigurationManager
 from pipeline.config.schema import TranscriptionConfig, EngineType, EngineConfig
-from pipeline.transcribers.factory import EngineFactory
-from pipeline.transcribers.auto_selector import AutoSelector
+from pipeline.transcribers.factory import EngineFactory  # DEPRECATED: Use pipeline.transcription.TranscriptionProviderFactory
+from pipeline.transcribers.auto_selector import AutoSelector  # DEPRECATED: Use pipeline.transcription
 from pipeline.output.manager import OutputManager
-from pipeline.transcribers.normalize import normalize_transcript_v1
+from pipeline.transcribers.normalize import normalize_transcript_v1  # DEPRECATED: Use pipeline.transcription
 from pipeline.transcribers.persistence import LocalFilePersistence
 from pipeline.utils.logging_config import logging_config
 from pipeline.utils.error_messages import ErrorMessages, ErrorCategory

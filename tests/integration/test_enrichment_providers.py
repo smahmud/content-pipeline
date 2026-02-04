@@ -11,12 +11,13 @@ from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest
-from pipeline.enrichment.agents.factory import AgentFactory, AutoSelectionConfig
-from pipeline.enrichment.agents.cloud_openai_agent import CloudOpenAIAgent, CloudOpenAIAgentConfig
-from pipeline.enrichment.agents.cloud_anthropic_agent import CloudAnthropicAgent
-from pipeline.enrichment.agents.cloud_aws_bedrock_agent import CloudAWSBedrockAgent, CloudAWSBedrockAgentConfig
-from pipeline.enrichment.agents.local_ollama_agent import LocalOllamaAgent, LocalOllamaAgentConfig
-from pipeline.enrichment.agents.base import LLMResponse
+from pipeline.llm.factory import LLMProviderFactory
+from pipeline.llm.providers.cloud_openai import CloudOpenAIProvider
+from pipeline.llm.providers.cloud_anthropic import CloudAnthropicProvider
+from pipeline.llm.providers.cloud_aws_bedrock import CloudAWSBedrockProvider
+from pipeline.llm.providers.local_ollama import LocalOllamaProvider
+from pipeline.llm.config import LLMConfig, OpenAIConfig, AnthropicConfig, BedrockConfig, OllamaConfig
+from pipeline.llm.providers.base import LLMResponse
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1
 from tests.fixtures.mock_llm_responses import (
     MOCK_SUMMARY_RESPONSE,
@@ -43,7 +44,7 @@ def sample_request():
 class TestOpenAIProvider:
     """Integration tests for OpenAI provider."""
     
-    @patch('pipeline.enrichment.agents.cloud_openai_agent.OpenAI')
+    @patch('pipeline.llm.providers.cloud_openai.OpenAI')
     def test_openai_enrichment_workflow(self, mock_openai_class, sample_request):
         """Test complete enrichment workflow with OpenAI."""
         # Setup mock OpenAI client
@@ -58,9 +59,9 @@ class TestOpenAIProvider:
         mock_response.usage.total_tokens = 1000
         mock_client.chat.completions.create.return_value = mock_response
         
-        # Create agent and orchestrator
-        config = CloudOpenAIAgentConfig(api_key="test_key")
-        agent = CloudOpenAIAgent(config)
+        # Create provider and orchestrator
+        config = OpenAIConfig(api_key="test_key")
+        provider = CloudOpenAIProvider(config)
         
         factory = Mock()
         factory.create_agent.return_value = agent

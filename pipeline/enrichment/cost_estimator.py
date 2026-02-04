@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 import tiktoken
 
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest
 
 
 @dataclass
@@ -56,13 +56,13 @@ class CostEstimator:
     # Prompt overhead tokens (system prompt + formatting)
     PROMPT_OVERHEAD = 300
     
-    def __init__(self, agent: BaseLLMAgent):
+    def __init__(self, provider: BaseLLMProvider):
         """Initialize cost estimator.
         
         Args:
-            agent: LLM agent to use for cost estimation
+            provider: LLM provider to use for cost estimation
         """
-        self.agent = agent
+        self.provider = provider
         self._tokenizer_cache: Dict[str, tiktoken.Encoding] = {}
     
     def estimate(
@@ -84,7 +84,7 @@ class CostEstimator:
             Cost estimation with breakdown
         """
         # Get model info
-        capabilities = self.agent.get_capabilities()
+        capabilities = self.provider.get_capabilities()
         model_used = model or capabilities.get("default_model", "")
         provider = capabilities.get("provider", "unknown")
         
@@ -114,8 +114,8 @@ class CostEstimator:
                 model=model_used
             )
             
-            # Get cost estimate from agent
-            etype_cost = self.agent.estimate_cost(request)
+            # Get cost estimate from provider
+            etype_cost = self.provider.estimate_cost(request)
             breakdown[etype] = etype_cost
             
             # Accumulate costs (rough approximation)

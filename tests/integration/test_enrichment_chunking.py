@@ -12,7 +12,7 @@ from datetime import datetime
 
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest
 from pipeline.enrichment.chunking import ChunkingStrategy, TextChunk
-from pipeline.enrichment.agents.base import LLMResponse, LLMRequest
+from pipeline.llm.providers.base import LLMResponse, LLMRequest
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1, EnrichmentMetadata
 from tests.fixtures.mock_llm_responses import (
     MOCK_SUMMARY_RESPONSE,

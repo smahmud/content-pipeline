@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 
 from pipeline.enrichment.batch import BatchProcessor, BatchReport, BatchResult
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest
-from pipeline.enrichment.agents.base import LLMResponse
+from pipeline.llm.providers.base import LLMResponse
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1, EnrichmentMetadata
 from pipeline.enrichment.errors import CostLimitExceededError
 from tests.fixtures.mock_llm_responses import (

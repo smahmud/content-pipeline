@@ -9,6 +9,104 @@ All notable changes to this project will be documented in this file.
 - **v0.9.0 Validation** - Quality assurance and schema validation (planned)
 - **v0.10.0 Publishing** - External platform publishing (planned)
 
+## [0.7.5] - 2026-02-03
+
+> **📖 Migration Guide**: See [docs/infrastructure-migration-guide.md](docs/infrastructure-migration-guide.md) for detailed migration instructions and code examples.
+
+### Infrastructure Refactoring Release
+
+This is an **unplanned technical release** focused on architectural cleanup and enterprise-grade infrastructure improvements. This refactoring was necessary to establish a solid foundation before continuing with planned feature development in v0.8.0.
+
+### Added
+- **New Infrastructure Layer** - Enterprise-grade provider architecture
+  - `pipeline/llm/` - Unified LLM provider infrastructure
+    - `BaseLLMProvider` protocol for consistent provider interface
+    - `LocalOllamaProvider`, `CloudOpenAIProvider`, `CloudAnthropicProvider`, `CloudAWSBedrockProvider`
+    - `LLMProviderFactory` with caching and auto-selection
+    - `LLMConfig` with environment variable substitution and precedence
+  - `pipeline/transcription/` - Unified transcription provider infrastructure
+    - `TranscriberProvider` protocol for consistent provider interface
+    - `LocalWhisperProvider`, `CloudOpenAIWhisperProvider`, `CloudAWSTranscribeProvider`
+    - `TranscriptionProviderFactory` with caching and validation
+    - `TranscriptionConfig` with environment variable substitution and precedence
+  - Configuration management with YAML support and environment variable substitution
+  - Comprehensive error hierarchy for both LLM and transcription domains
+
+- **Configuration System Enhancements**
+  - LLM configuration section in `.content-pipeline/config.yaml`
+  - Environment variable substitution syntax: `${VAR_NAME:-default}`
+  - Configuration precedence: Explicit params > Environment vars > Project config > User config > Defaults
+  - Security warnings and best practices documentation
+  - **Configurable pricing for all cloud providers** (allows enterprise customers to configure custom rates)
+    - Transcription providers: `cost_per_minute_usd` field in `WhisperAPIConfig` and `AWSTranscribeConfig`
+      - Default: $0.006/min for OpenAI Whisper API, $0.024/min for AWS Transcribe
+      - Environment variables: `WHISPER_API_COST_PER_MINUTE`, `AWS_TRANSCRIBE_COST_PER_MINUTE`
+      - Supports custom negotiated rates and volume discounts
+    - LLM providers: `pricing_override` field for per-model pricing in `OpenAIConfig`, `BedrockConfig`, `AnthropicConfig`
+      - Format: `{"model-name": {"input_per_1k": 0.01, "output_per_1k": 0.03}}`
+      - Overrides default pricing database for specific models
+      - Supports regional pricing differences and enterprise agreements
+    - Configuration via YAML or environment variables
+    - Maintains backward compatibility with default pricing values
+
+- **Comprehensive Testing**
+  - 360+ unit tests for new infrastructure
+  - Property-based tests for architectural compliance
+  - Integration tests for complete workflows
+  - 97% test pass rate across all modules
+
+### Changed
+- **BREAKING**: Renamed all LLM classes from `*Agent` to `*Provider`
+  - `BaseLLMAgent` → `BaseLLMProvider`
+  - `LocalOllamaAgent` → `LocalOllamaProvider`
+  - `CloudOpenAIAgent` → `CloudOpenAIProvider`
+  - `CloudAnthropicAgent` → `CloudAnthropicProvider`
+  - `CloudAWSBedrockAgent` → `CloudAWSBedrockProvider`
+  - `AgentFactory` → `LLMProviderFactory`
+
+- **BREAKING**: Renamed all transcription classes from `*Adapter` to `*Provider`
+  - `TranscriberAdapter` → `TranscriberProvider`
+  - `LocalWhisperAdapter` → `LocalWhisperProvider`
+  - `OpenAIWhisperAdapter` → `CloudOpenAIWhisperProvider`
+  - `AWSTranscribeAdapter` → `CloudAWSTranscribeProvider`
+  - `EngineFactory` → `TranscriptionProviderFactory`
+
+- **BREAKING**: Changed import paths for LLM infrastructure
+  - `pipeline.enrichment.agents` → `pipeline.llm`
+  - All enrichment, formatting, and CLI code updated
+
+- **BREAKING**: Changed import paths for transcription infrastructure
+  - `pipeline.transcribers.adapters` → `pipeline.transcription.providers`
+  - All transcribers, extractors, and CLI code updated
+
+- **BREAKING**: All providers now require configuration objects
+  - No individual parameters accepted
+  - Configuration objects enforce validation and type safety
+  - Removed all hardcoded configuration values
+
+- **BREAKING**: Standardized provider naming pattern
+  - File naming: `{deployment}_{service}.py` (e.g., `cloud_openai.py`, `local_ollama.py`)
+  - Class naming: `{Deployment}{Service}Provider` (e.g., `CloudOpenAIProvider`, `LocalOllamaProvider`)
+
+### Removed
+- **BREAKING**: Deleted old infrastructure directories
+  - `pipeline/enrichment/agents/` (replaced by `pipeline/llm/`)
+  - `pipeline/transcribers/adapters/` (replaced by `pipeline/transcription/providers/`)
+  - All legacy adapter and agent code removed
+
+### Migration Required
+This release contains breaking changes that require code updates. See [docs/infrastructure-migration-guide.md](docs/infrastructure-migration-guide.md) for:
+- Import path changes
+- Class name changes
+- Configuration object usage
+- Before/after code examples
+
+### Notes
+- No backward compatibility maintained - development-phase refactoring
+- Focus on clean architecture and enterprise-level code quality
+- All tests passing (360+ unit tests, property-based tests, integration tests)
+- Foundation established for v0.8.0 formatter development
+
 ## [0.7.0] - 2026-01-29
 
 > **📖 Detailed Release Notes**: See [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) for comprehensive usage guide, configuration examples, and migration instructions.

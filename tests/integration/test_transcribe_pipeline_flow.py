@@ -12,7 +12,7 @@ Covers:
 import json
 from shutil import copyfile
 import pytest
-from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
+from pipeline.transcription.providers.local_whisper import LocalWhisperProvider
 from pipeline.transcribers.normalize import normalize_transcript_v1
 from pipeline.transcribers.persistence import LocalFilePersistence
 from pipeline.transcribers.validate import validate_transcript_v1
