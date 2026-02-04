@@ -6,7 +6,7 @@ This document outlines the folder and file layout of the Content Pipeline. It re
 
 ## 📂 `pipeline/` — Core Modules
 
-This folder contains the core logic for extraction, transcription, and orchestration. Each submodule is milestone-aligned and semantically scoped.
+This folder contains the core logic for extraction, transcription, enrichment, and orchestration. Each submodule is milestone-aligned and semantically scoped.
 
 ```text
 pipeline/
@@ -14,24 +14,34 @@ pipeline/
 │   ├── base.py              # Shared interface for platform-specific extractors
 │   ├── youtube/             # YouTube audio and metadata extraction
 │   ├── local/               # Local file-based extraction
-├── transcribers/            # Audio-to-text transcription modules
-│   ├── adapters/            # Transcriber engine wrappers (v0.6.5 enhanced)
-│   │   ├── base.py          # Enhanced adapter protocol with cost estimation
-│   │   ├── local_whisper.py # Local Whisper adapter for privacy-first transcription
-│   │   ├── openai_whisper.py # OpenAI Whisper API adapter for cloud transcription
-│   │   ├── aws_transcribe.py # AWS Transcribe adapter for enterprise transcription
-│   │   ├── whisper.py       # Backward compatibility adapter (deprecated)
-│   │   └── auto_selector.py # Smart engine selection with intelligent fallback
-│   ├── factory.py           # Engine factory pattern for adapter instantiation (v0.6.5)
-│   ├── schemas/             # Transcript normalization models (e.g. transcript_v1)
-├── enrichment/              # LLM-powered semantic enrichment (NEW in v0.7.0)
-│   ├── agents/              # LLM provider adapters
-│   │   ├── base.py          # BaseLLMAgent protocol
-│   │   ├── openai_agent.py  # OpenAI GPT models
-│   │   ├── claude_agent.py  # Anthropic Claude models
-│   │   ├── bedrock_agent.py # AWS Bedrock (Claude and Titan)
-│   │   ├── ollama_agent.py  # Local Ollama models
-│   │   └── factory.py       # Agent factory with auto-selection
+├── llm/                     # LLM provider infrastructure (NEW in v0.7.5)
+│   ├── providers/           # LLM provider implementations
+│   │   ├── base.py          # BaseLLMProvider protocol
+│   │   ├── local_ollama.py  # Local Ollama provider
+│   │   ├── cloud_openai.py  # OpenAI GPT provider
+│   │   ├── cloud_anthropic.py # Anthropic Claude provider
+│   │   └── cloud_aws_bedrock.py # AWS Bedrock provider
+│   ├── factory.py           # LLMProviderFactory with caching
+│   ├── config.py            # LLMConfig and provider-specific configs
+│   ├── errors.py            # LLM error hierarchy
+│   └── retry.py             # Retry logic with exponential backoff
+├── transcription/           # Transcription provider infrastructure (NEW in v0.7.5)
+│   ├── providers/           # Transcription provider implementations
+│   │   ├── base.py          # TranscriberProvider protocol
+│   │   ├── local_whisper.py # Local Whisper provider
+│   │   ├── cloud_openai_whisper.py # OpenAI Whisper API provider
+│   │   └── cloud_aws_transcribe.py # AWS Transcribe provider
+│   ├── factory.py           # TranscriptionProviderFactory with caching
+│   ├── config.py            # TranscriptionConfig and provider-specific configs
+│   └── errors.py            # Transcription error hierarchy
+├── transcribers/            # Legacy transcription utilities (deprecated)
+│   ├── factory.py           # Legacy EngineFactory (compatibility layer)
+│   ├── auto_selector.py     # Legacy auto-selection (uses new providers)
+│   ├── normalize.py         # Transcript normalization
+│   ├── validate.py          # Transcript validation
+│   ├── persistence.py       # Transcript persistence
+│   └── schemas/             # Transcript normalization models (e.g. transcript_v1)
+├── enrichment/              # LLM-powered semantic enrichment (v0.7.0)
 │   ├── schemas/             # Enrichment output models
 │   │   ├── enrichment_v1.py # EnrichmentV1 container
 │   │   ├── summary.py       # Summary enrichment schema
@@ -48,22 +58,21 @@ pipeline/
 │   ├── presets/             # Quality and content profiles
 │   │   ├── quality.py       # Quality presets (FAST, BALANCED, BEST)
 │   │   └── content.py       # Content profiles (PODCAST, MEETING, LECTURE)
-│   ├── orchestrator.py      # Enrichment workflow coordinator
-│   ├── cost_estimator.py    # Pre-flight cost calculation
+│   ├── orchestrator.py      # Enrichment workflow coordinator (uses pipeline.llm)
+│   ├── cost_estimator.py    # Pre-flight cost calculation (uses pipeline.llm)
 │   ├── cache.py             # File-based caching system
 │   ├── chunking.py          # Long transcript handling
 │   ├── batch.py             # Batch processing
 │   ├── validate.py          # Schema validation and repair
-│   ├── retry.py             # Exponential backoff retry logic
 │   ├── output.py            # Output file management
 │   └── errors.py            # Error hierarchy
-├── config/                  # Configuration management (NEW in v0.6.5)
+├── config/                  # Configuration management (v0.6.5)
 │   ├── manager.py           # ConfigurationManager for loading and merging configs
 │   ├── schema.py            # Pydantic models for configuration validation
 │   ├── environment.py       # Environment variable definitions
 │   ├── yaml_parser.py       # YAML parsing with enhanced error reporting
 │   └── pretty_printer.py    # Configuration template generation
-├── output/                  # Output path management (NEW in v0.6.5)
+├── output/                  # Output path management (v0.6.5)
 │   └── manager.py           # OutputManager for resolving and managing output paths
 ├── utils/                   # Reusable helpers (e.g., retry logic)
 ```

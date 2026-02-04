@@ -21,7 +21,7 @@ from pipeline.llm.errors import (
     TimeoutError,
     NetworkError
 )
-from pipeline.enrichment.retry import retry_with_backoff
+from pipeline.llm.retry import retry_with_backoff
 
 
 class CloudOpenAIProvider(BaseLLMProvider):
@@ -145,6 +145,22 @@ class CloudOpenAIProvider(BaseLLMProvider):
         encoding = self._get_tiktoken_encoding(model)
         return len(encoding.encode(text))
     
+    def _get_pricing(self, model: str) -> Dict[str, float]:
+        """Get pricing for a model, checking override first.
+        
+        Args:
+            model: Model identifier
+            
+        Returns:
+            Pricing dictionary with input_per_1k and output_per_1k
+        """
+        # Check for pricing override first
+        if self.config.pricing_override and model in self.config.pricing_override:
+            return self.config.pricing_override[model]
+        
+        # Fall back to default pricing
+        return self.PRICING.get(model, self.PRICING["gpt-4-turbo"])
+    
     @retry_with_backoff(max_attempts=3, base_delay=1.0)
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate completion from OpenAI.
@@ -188,8 +204,8 @@ class CloudOpenAIProvider(BaseLLMProvider):
             output_tokens = self._count_tokens(content, model)
             total_tokens = input_tokens + output_tokens
             
-            # Calculate cost
-            pricing = self.PRICING.get(model, self.PRICING["gpt-4-turbo"])
+            # Calculate cost using pricing override if available
+            pricing = self._get_pricing(model)
             input_cost = (input_tokens / 1000) * pricing["input_per_1k"]
             output_cost = (output_tokens / 1000) * pricing["output_per_1k"]
             total_cost = input_cost + output_cost
@@ -241,8 +257,8 @@ class CloudOpenAIProvider(BaseLLMProvider):
         # Estimate output tokens (use max_tokens as upper bound)
         output_tokens = request.max_tokens
         
-        # Get pricing
-        pricing = self.PRICING.get(model, self.PRICING["gpt-4-turbo"])
+        # Get pricing (with override support)
+        pricing = self._get_pricing(model)
         
         # Calculate cost
         input_cost = (input_tokens / 1000) * pricing["input_per_1k"]

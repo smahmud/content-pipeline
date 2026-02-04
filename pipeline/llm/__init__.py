@@ -19,21 +19,70 @@ Key Components:
     - errors.py: LLM-specific error classes
 
 Usage:
-    >>> from pipeline.llm.factory import LLMProviderFactory
-    >>> from pipeline.llm.config import LLMConfig
-    >>> from pipeline.config.manager import ConfigManager
+    >>> from pipeline.llm import LLMProviderFactory, LLMConfig
     >>> 
-    >>> config_manager = ConfigManager()
-    >>> llm_config = LLMConfig.load_from_config(config_manager)
+    >>> # Load configuration from YAML
+    >>> llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
+    >>> 
+    >>> # Create factory and instantiate provider
     >>> factory = LLMProviderFactory(llm_config)
     >>> provider = factory.create_provider("cloud-openai")
+    >>> 
+    >>> # Make a request
+    >>> from pipeline.llm import LLMRequest
+    >>> request = LLMRequest(prompt="Hello", max_tokens=100, temperature=0.7)
+    >>> response = provider.generate(request)
 """
 
-# Export main components for convenient imports
+# Export base classes and data structures
 from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
 
+# Export factory
+from pipeline.llm.factory import LLMProviderFactory, AutoSelectionConfig
+
+# Export configuration classes
+from pipeline.llm.config import (
+    LLMConfig,
+    OllamaConfig,
+    OpenAIConfig,
+    BedrockConfig,
+    AnthropicConfig,
+)
+
+# Export error classes
+from pipeline.llm.errors import (
+    LLMError,
+    ConfigurationError,
+    ProviderError,
+    ProviderNotAvailableError,
+    RateLimitError,
+    AuthenticationError,
+    InvalidRequestError,
+)
+
 __all__ = [
+    # Base classes and data structures
     "BaseLLMProvider",
     "LLMRequest",
     "LLMResponse",
+    
+    # Factory
+    "LLMProviderFactory",
+    "AutoSelectionConfig",
+    
+    # Configuration
+    "LLMConfig",
+    "OllamaConfig",
+    "OpenAIConfig",
+    "BedrockConfig",
+    "AnthropicConfig",
+    
+    # Errors
+    "LLMError",
+    "ConfigurationError",
+    "ProviderError",
+    "ProviderNotAvailableError",
+    "RateLimitError",
+    "AuthenticationError",
+    "InvalidRequestError",
 ]

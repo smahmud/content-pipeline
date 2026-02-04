@@ -12,10 +12,16 @@ Tests:
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pipeline.transcribers.factory import EngineFactory
-from pipeline.transcribers.adapters.base import TranscriberAdapter
-from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
-from pipeline.transcribers.adapters.openai_whisper import OpenAIWhisperAdapter
+from pipeline.transcription import TranscriberProvider
+from pipeline.transcription.providers.local_whisper import LocalWhisperProvider
+from pipeline.transcription.providers.cloud_openai_whisper import CloudOpenAIWhisperProvider
 from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, WhisperAPIConfig
+
+
+# Create aliases for backward compatibility with test code
+LocalWhisperAdapter = LocalWhisperProvider
+OpenAIWhisperAdapter = CloudOpenAIWhisperProvider
+TranscriberAdapter = TranscriberProvider
 
 
 class MockAdapter:
@@ -65,7 +71,7 @@ class TestEngineFactory:
             adapter = factory.create_engine('local-whisper', config)
             
             assert isinstance(adapter, LocalWhisperAdapter)
-            assert adapter.model_name == 'base'
+            assert adapter.config.model == 'base'
     
     def test_create_engine_with_requirements_failure(self):
         """Test that engine creation fails when requirements are not met."""
@@ -159,8 +165,8 @@ class TestEngineFactory:
         info = factory.get_engine_info('local-whisper')
         
         assert info['engine_type'] == 'local-whisper'
-        assert info['adapter_class'] == 'LocalWhisperAdapter'
-        assert 'pipeline.transcribers.adapters.local_whisper' in info['module']
+        assert info['adapter_class'] == 'LocalWhisperProvider'
+        assert 'pipeline.transcription.providers.local_whisper' in info['module']
         assert info['is_available'] is True
     
     def test_get_engine_info_unsupported(self):
@@ -182,7 +188,7 @@ class TestEngineFactory:
         
         with patch.object(LocalWhisperAdapter, 'validate_requirements', return_value=[]):
             adapter = factory.create_engine('local-whisper', config)
-            assert adapter.model_name == 'large'
+            assert adapter.config.model == 'large'
 
     def test_create_whisper_api_engine(self):
         """Test creating a Whisper API engine with configuration."""
@@ -202,22 +208,13 @@ class TestEngineFactory:
             adapter = factory.create_engine('openai-whisper', config)
             
             assert isinstance(adapter, OpenAIWhisperAdapter)
-            assert adapter.api_key == 'sk-test123'
-            assert adapter.model == 'gpt-4o-transcribe'
-            assert adapter.temperature == 0.1
-            assert adapter.response_format == 'verbose_json'
+            assert adapter.config.api_key == 'sk-test123'
+            assert adapter.config.model == 'gpt-4o-transcribe'
+            assert adapter.config.temperature == 0.1
+            assert adapter.config.response_format == 'verbose_json'
     
-    def test_get_api_key_from_env(self):
-        """Test getting API key from environment variables."""
-        factory = EngineFactory()
-        
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-            api_key = factory._get_api_key_from_env()
-            assert api_key == 'test-key'
-        
-        with patch.dict('os.environ', {}, clear=True):
-            api_key = factory._get_api_key_from_env()
-            assert api_key is None
+    # Removed test_get_api_key_from_env - method no longer exists in refactored factory
+    # API key handling is now done in the provider configuration classes
 
 
 class TestEngineFactoryErrorHandling:

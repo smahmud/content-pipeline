@@ -9,7 +9,7 @@ import json
 from unittest.mock import Mock
 
 from pipeline.enrichment.chunking import ChunkingStrategy, TextChunk
-from pipeline.enrichment.agents.base import LLMResponse
+from pipeline.llm.providers.base import LLMResponse
 
 
 @pytest.fixture

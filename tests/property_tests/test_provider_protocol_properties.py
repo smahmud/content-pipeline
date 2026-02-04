@@ -1,8 +1,8 @@
 """
-Property-based tests for engine adapter protocol conformance.
+Property-based tests for transcription provider protocol conformance.
 
-**Property 4: Engine Adapter Protocol Conformance**
-*For any* engine adapter implementation, it should conform to the base TranscriberAdapter 
+**Property 4: Transcription Provider Protocol Conformance**
+*For any* transcription provider implementation, it should conform to the base TranscriberProvider 
 protocol and return standardized transcript formats.
 **Validates: Requirements 2.5, 3.6, 10.3**
 """
@@ -14,26 +14,29 @@ from typing import List, Tuple, Optional
 from unittest.mock import Mock, patch, MagicMock
 from hypothesis import given, strategies as st, assume, settings
 
-from pipeline.transcribers.adapters.base import TranscriberAdapter
-from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
-from pipeline.transcribers.adapters.openai_whisper import OpenAIWhisperAdapter
-from pipeline.transcribers.factory import EngineFactory
-from pipeline.config.schema import TranscriptionConfig, WhisperLocalConfig, WhisperAPIConfig
+from pipeline.transcription.providers.base import TranscriberProvider
+from pipeline.transcription.providers.local_whisper import LocalWhisperProvider
+from pipeline.transcription.providers.cloud_openai_whisper import CloudOpenAIWhisperProvider
+from pipeline.transcription.factory import TranscriptionProviderFactory
+from pipeline.transcription.config import WhisperLocalConfig, WhisperAPIConfig
+from pipeline.config.schema import TranscriptionConfig
 
 
-# Strategy for generating valid adapter instances
-def create_whisper_local_adapter():
-    """Create a LocalWhisperAdapter for testing."""
-    return LocalWhisperAdapter(model_name="base")
+# Strategy for generating valid provider instances
+def create_whisper_local_provider():
+    """Create a LocalWhisperProvider for testing."""
+    config = WhisperLocalConfig(model="base", device="cpu")
+    return LocalWhisperProvider(config)
 
-def create_whisper_api_adapter():
-    """Create a OpenAIWhisperAdapter for testing."""
-    return OpenAIWhisperAdapter(api_key="sk-test123", model="whisper-1")
+def create_whisper_api_provider():
+    """Create a CloudOpenAIWhisperProvider for testing."""
+    config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+    return CloudOpenAIWhisperProvider(config)
 
-# Strategy for adapter instances
+# Strategy for provider instances
 adapter_strategies = st.one_of(
-    st.just(create_whisper_local_adapter()),
-    st.just(create_whisper_api_adapter())
+    st.just(create_whisper_local_provider()),
+    st.just(create_whisper_api_provider())
 )
 
 # Strategy for valid audio file extensions
@@ -46,15 +49,16 @@ language_codes = st.sampled_from(['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja'
 audio_durations = st.floats(min_value=0.1, max_value=3600.0)  # 0.1 seconds to 1 hour
 
 
-class TestAdapterProtocolConformance:
-    """Test that all adapters conform to the TranscriberAdapter protocol."""
+class TestProviderProtocolConformance:
+    """Test that all providers conform to the TranscriberProvider protocol."""
 
-    def test_whisper_local_adapter_protocol_conformance(self):
+    def test_whisper_local_provider_protocol_conformance(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        LocalWhisperAdapter should implement all required protocol methods.
+        **Property 4: Transcription Provider Protocol Conformance**
+        LocalWhisperProvider should implement all required protocol methods.
         """
-        adapter = LocalWhisperAdapter(model_name="base")
+        config = WhisperLocalConfig(model="base", device="cpu")
+        adapter = LocalWhisperProvider(config)
         
         # Check that all protocol methods exist
         assert hasattr(adapter, 'transcribe')
@@ -70,12 +74,13 @@ class TestAdapterProtocolConformance:
         assert callable(adapter.get_supported_formats)
         assert callable(adapter.estimate_cost)
 
-    def test_whisper_api_adapter_protocol_conformance(self):
+    def test_whisper_api_provider_protocol_conformance(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        OpenAIWhisperAdapter should implement all required protocol methods.
+        **Property 4: Transcription Provider Protocol Conformance**
+        CloudOpenAIWhisperProvider should implement all required protocol methods.
         """
-        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        adapter = CloudOpenAIWhisperProvider(config)
         
         # Check that all protocol methods exist
         assert hasattr(adapter, 'transcribe')
@@ -93,11 +98,12 @@ class TestAdapterProtocolConformance:
 
     def test_get_engine_info_returns_correct_format(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, get_engine_info should return a tuple of (engine_name, model_variant).
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, get_engine_info should return a tuple of (engine_name, model_variant).
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_info = local_adapter.get_engine_info()
         
         assert isinstance(local_info, tuple)
@@ -107,31 +113,34 @@ class TestAdapterProtocolConformance:
         assert local_info[0] == "local-whisper"
         assert local_info[1] == "base"
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123", model="whisper-1")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_info = api_adapter.get_engine_info()
         
         assert isinstance(api_info, tuple)
         assert len(api_info) == 2
         assert isinstance(api_info[0], str)  # engine_name
         assert isinstance(api_info[1], str)  # model_variant
-        assert api_info[0] == "openai-whisper"
+        assert api_info[0] == "cloud-openai-whisper"
         assert api_info[1] == "whisper-1"
 
     def test_validate_requirements_returns_list_of_strings(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, validate_requirements should return a list of error strings.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, validate_requirements should return a list of error strings.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_errors = local_adapter.validate_requirements()
         
         assert isinstance(local_errors, list)
         assert all(isinstance(error, str) for error in local_errors)
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_errors = api_adapter.validate_requirements()
         
         assert isinstance(api_errors, list)
@@ -139,19 +148,21 @@ class TestAdapterProtocolConformance:
 
     def test_get_supported_formats_returns_list_of_strings(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, get_supported_formats should return a list of format strings.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, get_supported_formats should return a list of format strings.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_formats = local_adapter.get_supported_formats()
         
         assert isinstance(local_formats, list)
         assert len(local_formats) > 0
         assert all(isinstance(fmt, str) for fmt in local_formats)
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_formats = api_adapter.get_supported_formats()
         
         assert isinstance(api_formats, list)
@@ -161,19 +172,21 @@ class TestAdapterProtocolConformance:
     @given(duration=audio_durations)
     def test_estimate_cost_returns_valid_number_or_none(self, duration):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
+        **Property 4: Transcription Provider Protocol Conformance**
         *For any* valid audio duration, estimate_cost should return a number or None.
         """
-        # Test LocalWhisperAdapter (should return None for free engines)
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider (should return None for free engines)
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_cost = local_adapter.estimate_cost(duration)
         
         assert local_cost is None or isinstance(local_cost, (int, float))
         if local_cost is not None:
             assert local_cost >= 0
         
-        # Test OpenAIWhisperAdapter (should return a positive number)
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider (should return a positive number)
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_cost = api_adapter.estimate_cost(duration)
         
         assert isinstance(api_cost, (int, float))
@@ -186,39 +199,43 @@ class TestAdapterProtocolConformance:
 
     def test_estimate_cost_zero_duration(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, zero duration should result in zero cost.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, zero duration should result in zero cost.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_cost = local_adapter.estimate_cost(0.0)
         assert local_cost is None or local_cost == 0.0
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_cost = api_adapter.estimate_cost(0.0)
         assert api_cost == 0.0
 
     def test_estimate_cost_negative_duration(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, negative duration should result in zero cost.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, negative duration should result in zero cost.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_cost = local_adapter.estimate_cost(-10.0)
         assert local_cost is None or local_cost == 0.0
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_cost = api_adapter.estimate_cost(-10.0)
         assert api_cost == 0.0
 
-    @patch('pipeline.transcribers.adapters.local_whisper.whisper.load_model')
+    @patch('pipeline.transcription.providers.local_whisper.whisper.load_model')
     def test_transcribe_returns_standardized_format_local(self, mock_load_model):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* successful transcription, LocalWhisperAdapter should return standardized format.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* successful transcription, LocalWhisperProvider should return standardized format.
         """
         # Mock the Whisper model and transcription result
         mock_model = Mock()
@@ -230,7 +247,8 @@ class TestAdapterProtocolConformance:
         mock_model.transcribe.return_value = mock_result
         mock_load_model.return_value = mock_model
         
-        adapter = LocalWhisperAdapter(model_name="base")
+        config = WhisperLocalConfig(model="base", device="cpu")
+        adapter = LocalWhisperProvider(config)
         
         # Create a temporary audio file
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
@@ -256,8 +274,8 @@ class TestAdapterProtocolConformance:
     @patch('openai.OpenAI')
     def test_transcribe_returns_standardized_format_api(self, mock_openai):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* successful transcription, OpenAIWhisperAdapter should return standardized format.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* successful transcription, CloudOpenAIWhisperProvider should return standardized format.
         """
         # Mock OpenAI client and response
         mock_client = MagicMock()
@@ -269,7 +287,8 @@ class TestAdapterProtocolConformance:
         mock_client.audio.transcriptions.create.return_value = mock_response
         mock_openai.return_value = mock_client
         
-        adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        adapter = CloudOpenAIWhisperProvider(config)
         
         # Create a temporary audio file
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
@@ -294,27 +313,32 @@ class TestAdapterProtocolConformance:
 
     def test_transcribe_file_not_found_error(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, transcribing a non-existent file should raise FileNotFoundError.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, transcribing a non-existent file should raise AudioFileError.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
-        with pytest.raises(FileNotFoundError):
+        from pipeline.transcription.errors import AudioFileError
+        
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
+        with pytest.raises(AudioFileError):
             local_adapter.transcribe("nonexistent_file.mp3")
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
-        with pytest.raises(FileNotFoundError):
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
+        with pytest.raises(AudioFileError):
             api_adapter.transcribe("nonexistent_file.mp3")
 
     @given(extension=valid_audio_extensions)
     def test_supported_formats_include_common_formats(self, extension):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, supported formats should include common audio formats.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, supported formats should include common audio formats.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         local_formats = local_adapter.get_supported_formats()
         
         # Should support common formats
@@ -322,8 +346,9 @@ class TestAdapterProtocolConformance:
         for fmt in common_formats:
             assert fmt in local_formats
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_formats = api_adapter.get_supported_formats()
         
         # Should support OpenAI API formats
@@ -333,11 +358,12 @@ class TestAdapterProtocolConformance:
 
     def test_supported_formats_immutability(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, get_supported_formats should return a new list each time.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, get_supported_formats should return a new list each time.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
         formats1 = local_adapter.get_supported_formats()
         formats2 = local_adapter.get_supported_formats()
         
@@ -349,8 +375,9 @@ class TestAdapterProtocolConformance:
         assert "fake_format" not in formats2
         assert "fake_format" not in local_adapter.get_supported_formats()
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         api_formats1 = api_adapter.get_supported_formats()
         api_formats2 = api_adapter.get_supported_formats()
         
@@ -362,42 +389,42 @@ class TestAdapterProtocolConformance:
         assert "fake_format" not in api_formats2
         assert "fake_format" not in api_adapter.get_supported_formats()
 
-    def test_factory_creates_protocol_compliant_adapters(self):
+    def test_factory_creates_protocol_compliant_providers(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter created by the factory, it should be protocol compliant.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider created by the factory, it should be protocol compliant.
         """
-        factory = EngineFactory()
-        
         # Test local-whisper
         local_config = TranscriptionConfig(
             engine='local-whisper',
-            whisper_local=WhisperLocalConfig(model='base')
+            whisper_local=WhisperLocalConfig(model='base', device='cpu')
         )
+        factory = TranscriptionProviderFactory(local_config)
         
-        with patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter.validate_requirements', return_value=[]), \
-             patch('pipeline.transcribers.adapters.local_whisper.LocalWhisperAdapter._load_model'):
-            local_adapter = factory.create_engine('local-whisper', local_config)
+        with patch('pipeline.transcription.providers.local_whisper.LocalWhisperProvider.validate_requirements', return_value=[]), \
+             patch('pipeline.transcription.providers.local_whisper.LocalWhisperProvider._load_model'):
+            local_adapter = factory.create_provider('local-whisper')
             
             # Should be protocol compliant
-            assert isinstance(local_adapter, TranscriberAdapter)
+            assert isinstance(local_adapter, TranscriberProvider)
             assert hasattr(local_adapter, 'transcribe')
             assert hasattr(local_adapter, 'get_engine_info')
             assert hasattr(local_adapter, 'validate_requirements')
             assert hasattr(local_adapter, 'get_supported_formats')
             assert hasattr(local_adapter, 'estimate_cost')
         
-        # Test openai-whisper
+        # Test cloud-openai-whisper
         api_config = TranscriptionConfig(
-            engine='openai-whisper',
+            engine='cloud-openai-whisper',
             whisper_api=WhisperAPIConfig(api_key='sk-test123', model='whisper-1')
         )
+        factory = TranscriptionProviderFactory(api_config)
         
-        with patch('pipeline.transcribers.adapters.openai_whisper.OpenAIWhisperAdapter.validate_requirements', return_value=[]):
-            api_adapter = factory.create_engine('openai-whisper', api_config)
+        with patch('pipeline.transcription.providers.cloud_openai_whisper.CloudOpenAIWhisperProvider.validate_requirements', return_value=[]):
+            api_adapter = factory.create_provider('cloud-openai-whisper')
             
             # Should be protocol compliant
-            assert isinstance(api_adapter, TranscriberAdapter)
+            assert isinstance(api_adapter, TranscriberProvider)
             assert hasattr(api_adapter, 'transcribe')
             assert hasattr(api_adapter, 'get_engine_info')
             assert hasattr(api_adapter, 'validate_requirements')
@@ -407,14 +434,14 @@ class TestAdapterProtocolConformance:
     @given(language=st.one_of(st.none(), language_codes))
     def test_transcribe_language_parameter_handling(self, language):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* language parameter (including None), adapters should handle it gracefully.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* language parameter (including None), providers should handle it gracefully.
         """
         # This test verifies that the language parameter is properly handled
         # We'll mock the actual transcription to avoid dependencies
         
-        # Test LocalWhisperAdapter
-        with patch('pipeline.transcribers.adapters.local_whisper.whisper.load_model') as mock_load_model:
+        # Test LocalWhisperProvider
+        with patch('pipeline.transcription.providers.local_whisper.whisper.load_model') as mock_load_model:
             mock_model = Mock()
             mock_result = {
                 'text': 'Hello world',
@@ -424,7 +451,8 @@ class TestAdapterProtocolConformance:
             mock_model.transcribe.return_value = mock_result
             mock_load_model.return_value = mock_model
             
-            local_adapter = LocalWhisperAdapter(model_name="base")
+            local_config = WhisperLocalConfig(model="base", device="cpu")
+            local_adapter = LocalWhisperProvider(local_config)
             
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
                 temp_file.write(b"fake audio data")
@@ -439,7 +467,7 @@ class TestAdapterProtocolConformance:
             finally:
                 os.unlink(temp_file_path)
         
-        # Test OpenAIWhisperAdapter
+        # Test CloudOpenAIWhisperProvider
         with patch('openai.OpenAI') as mock_openai:
             mock_client = MagicMock()
             mock_response = MagicMock()
@@ -450,7 +478,8 @@ class TestAdapterProtocolConformance:
             mock_client.audio.transcriptions.create.return_value = mock_response
             mock_openai.return_value = mock_client
             
-            api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+            api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+            api_adapter = CloudOpenAIWhisperProvider(api_config)
             
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
                 temp_file.write(b"fake audio data")
@@ -467,25 +496,32 @@ class TestAdapterProtocolConformance:
 
     def test_adapter_protocol_type_checking(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, it should be recognized as implementing TranscriberAdapter.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, it should be recognized as implementing TranscriberProvider.
         """
-        # Test LocalWhisperAdapter
-        local_adapter = LocalWhisperAdapter(model_name="base")
-        assert isinstance(local_adapter, TranscriberAdapter)
+        # Test LocalWhisperProvider
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
+        assert isinstance(local_adapter, TranscriberProvider)
         
-        # Test OpenAIWhisperAdapter
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
-        assert isinstance(api_adapter, TranscriberAdapter)
+        # Test CloudOpenAIWhisperProvider
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
+        assert isinstance(api_adapter, TranscriberProvider)
 
     def test_error_handling_consistency(self):
         """
-        **Property 4: Engine Adapter Protocol Conformance**
-        *For any* adapter, error handling should be consistent and informative.
+        **Property 4: Transcription Provider Protocol Conformance**
+        *For any* provider, error handling should be consistent and informative.
         """
-        # Test that both adapters handle invalid file formats consistently
-        local_adapter = LocalWhisperAdapter(model_name="base")
-        api_adapter = OpenAIWhisperAdapter(api_key="sk-test123")
+        from pipeline.transcription.errors import AudioFileError
+        
+        # Test that both providers handle invalid file formats consistently
+        local_config = WhisperLocalConfig(model="base", device="cpu")
+        local_adapter = LocalWhisperProvider(local_config)
+        
+        api_config = WhisperAPIConfig(api_key="sk-test123", model="whisper-1")
+        api_adapter = CloudOpenAIWhisperProvider(api_config)
         
         # Create a temporary file with unsupported extension
         with tempfile.NamedTemporaryFile(suffix=".xyz", delete=False) as temp_file:
@@ -493,11 +529,11 @@ class TestAdapterProtocolConformance:
             temp_file_path = temp_file.name
         
         try:
-            # Both should raise ValueError for unsupported formats
-            with pytest.raises(ValueError):
+            # Both should raise AudioFileError for unsupported formats
+            with pytest.raises(AudioFileError):
                 local_adapter.transcribe(temp_file_path)
             
-            with pytest.raises(ValueError):
+            with pytest.raises(AudioFileError):
                 api_adapter.transcribe(temp_file_path)
                 
         finally:

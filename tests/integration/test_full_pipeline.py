@@ -29,13 +29,13 @@ from datetime import datetime
 
 # Import pipeline components
 from pipeline.extractors.youtube.extractor import YouTubeExtractor
-from pipeline.transcribers.factory import EngineFactory
+from pipeline.transcription.factory import TranscriptionProviderFactory
 from pipeline.transcribers.normalize import normalize_transcript_v1
 from pipeline.transcribers.persistence import LocalFilePersistence
 from pipeline.config.schema import TranscriptionConfig, EngineType
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest
-from pipeline.enrichment.agents.factory import AgentFactory, AutoSelectionConfig
-from pipeline.enrichment.agents.cloud_anthropic_agent import CloudAnthropicAgent
+from pipeline.llm.factory import LLMProviderFactory
+from pipeline.llm.config import LLMConfig
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1
 
 
@@ -141,7 +141,7 @@ class TestFullPipeline:
         )
         
         # Create engine factory and select engine
-        factory = EngineFactory()
+        factory = TranscriptionProviderFactory()
         
         # Try to use local-whisper, fall back to openai-whisper if not available
         try:
@@ -195,20 +195,12 @@ class TestFullPipeline:
         # ===================================================================
         print("\nSTAGE 3: Enriching transcript with Claude API...")
         
-        # Create Claude agent (using cheapest model for testing)
-        print("  Creating Claude agent...")
-        agent = ClaudeAgent(
-            api_key=check_api_keys,
-            default_model="claude-3-haiku-20240307"  # Cheapest model
-        )
-        
-        # Create agent factory
-        agent_factory = AgentFactory(
-            claude_api_key=check_api_keys
-        )
+        # Create LLM provider factory
+        llm_config = LLMConfig.load_from_config()
+        provider_factory = LLMProviderFactory(llm_config)
         
         # Create orchestrator
-        orchestrator = EnrichmentOrchestrator(agent_factory=agent_factory)
+        orchestrator = EnrichmentOrchestrator(provider_factory=provider_factory)
         
         # Create enrichment request (only summary to minimize cost)
         enrichment_request = EnrichmentRequest(
@@ -349,9 +341,10 @@ def test_pipeline_cost_estimation_only(temp_workspace, check_api_keys):
         }
     }
     
-    # Create agent factory
-    agent_factory = AgentFactory(claude_api_key=check_api_keys)
-    orchestrator = EnrichmentOrchestrator(agent_factory=agent_factory)
+    # Create LLM provider factory
+    llm_config = LLMConfig.load_from_config()
+    provider_factory = LLMProviderFactory(llm_config)
+    orchestrator = EnrichmentOrchestrator(provider_factory=provider_factory)
     
     # Create dry-run request
     request = EnrichmentRequest(

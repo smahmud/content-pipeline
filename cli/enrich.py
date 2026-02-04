@@ -18,10 +18,8 @@ import click
 from pathlib import Path
 from typing import Optional, List
 
-from pipeline.enrichment.agents.factory import AgentFactory, AutoSelectionConfig
-from pipeline.enrichment.agents.cloud_openai_agent import CloudOpenAIAgentConfig
-from pipeline.enrichment.agents.local_ollama_agent import LocalOllamaAgentConfig
-from pipeline.enrichment.agents.cloud_aws_bedrock_agent import CloudAWSBedrockAgentConfig
+from pipeline.llm.factory import LLMProviderFactory
+from pipeline.llm.config import OpenAIConfig, OllamaConfig, BedrockConfig
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest, DryRunReport
 from pipeline.enrichment.prompts.loader import PromptLoader
 from pipeline.enrichment.errors import (
@@ -189,14 +187,14 @@ def enrich(
         
         logger.info(f"Enrichment types: {', '.join(enrichment_types)}")
         
-        # Step 3: Create agent factory
+        # Step 3: Create provider factory
         logger.info(f"Initializing LLM provider: {provider}")
-        agent_factory = _create_agent_factory()
+        provider_factory = _create_provider_factory()
         
         # Step 4: Create orchestrator
         prompt_loader = PromptLoader(custom_prompts_dir=custom_prompts)
         orchestrator = EnrichmentOrchestrator(
-            agent_factory=agent_factory,
+            provider_factory=provider_factory,
             prompt_loader=prompt_loader
         )
         
@@ -314,37 +312,35 @@ def _determine_enrichment_types(
     return types
 
 
-def _create_agent_factory() -> AgentFactory:
-    """Create agent factory with default configurations.
+def _create_provider_factory() -> LLMProviderFactory:
+    """Create provider factory with default configurations.
     
     Returns:
-        Configured agent factory
+        Configured provider factory
     """
     # Create configs from environment
-    openai_config = CloudOpenAIAgentConfig(
+    openai_config = OpenAIConfig(
         api_key=os.getenv("OPENAI_API_KEY", "")
     )
     
-    ollama_config = LocalOllamaAgentConfig()
+    ollama_config = OllamaConfig()
     
-    bedrock_config = CloudAWSBedrockAgentConfig(
+    bedrock_config = BedrockConfig(
         region=os.getenv("AWS_REGION", "us-east-1"),
         access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         session_token=os.getenv("AWS_SESSION_TOKEN")
     )
     
-    auto_selection = AutoSelectionConfig(
-        priority_order=["cloud-openai", "cloud-anthropic", "cloud-aws-bedrock", "local-ollama"],
-        fallback_enabled=True
+    # Create LLMConfig with all provider configs
+    from pipeline.llm.config import LLMConfig
+    llm_config = LLMConfig(
+        openai=openai_config,
+        ollama=ollama_config,
+        bedrock=bedrock_config
     )
     
-    return AgentFactory(
-        openai_config=openai_config,
-        ollama_config=ollama_config,
-        bedrock_config=bedrock_config,
-        auto_selection=auto_selection
-    )
+    return LLMProviderFactory(config=llm_config)
 
 
 def _generate_output_path(input_path: str) -> str:

@@ -1,34 +1,35 @@
 """
-Cloud Anthropic Claude Agent
+Cloud Anthropic Claude Provider
 
-Cloud-based LLM agent implementation for Anthropic's Claude models via the Anthropic API.
+Cloud-based LLM provider implementation for Anthropic's Claude models via the Anthropic API.
 Supports Claude 2, Claude 3 (Opus, Sonnet, Haiku) with proper prompt formatting
 and cost estimation.
 
-File naming follows pattern: cloud_{provider}_agent.py
+File naming follows pattern: cloud_{provider}.py
 Provider ID: cloud-anthropic
 """
 
-from typing import Dict, Any, Optional
-import os
+from typing import Dict, Any
 
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
-from pipeline.enrichment.retry import retry_with_backoff
-from pipeline.enrichment.errors import (
-    LLMProviderError,
+from pipeline.llm.config import AnthropicConfig
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
+from pipeline.llm.errors import (
+    ProviderError,
     AuthenticationError,
     RateLimitError,
-    InvalidRequestError
+    InvalidRequestError,
+    ProviderNotAvailableError,
 )
 
 
-class CloudAnthropicAgent(BaseLLMAgent):
-    """Cloud Anthropic Claude LLM agent.
+class CloudAnthropicProvider(BaseLLMProvider):
+    """Cloud Anthropic Claude LLM provider.
     
-    This agent interfaces with Anthropic's cloud API, supporting:
+    This provider interfaces with Anthropic's cloud API, supporting:
     - Claude 2 (claude-2.1, claude-2.0)
     - Claude 3 Opus (claude-3-opus-20240229)
     - Claude 3 Sonnet (claude-3-sonnet-20240229)
+    - Claude 3.5 Sonnet (claude-3-5-sonnet-20241022, claude-3-5-sonnet-20240620)
     - Claude 3 Haiku (claude-3-haiku-20240307)
     
     Deployment: Cloud (requires API key and internet connection)
@@ -42,9 +43,11 @@ class CloudAnthropicAgent(BaseLLMAgent):
     - Error handling with retry logic
     
     Example:
-        >>> agent = CloudAnthropicAgent(api_key="sk-ant-...")
-        >>> request = LLMRequest(prompt="Summarize this text", max_tokens=500)
-        >>> response = agent.generate(request)
+        >>> from pipeline.llm.config import AnthropicConfig
+        >>> config = AnthropicConfig(api_key="sk-ant-...")
+        >>> provider = CloudAnthropicProvider(config)
+        >>> request = LLMRequest(prompt="Summarize this text", max_tokens=500, temperature=0.7)
+        >>> response = provider.generate(request)
     """
     
     # Pricing per 1M tokens (as of January 2026)
@@ -78,42 +81,33 @@ class CloudAnthropicAgent(BaseLLMAgent):
         "claude-3-haiku-20240307": 200_000,
     }
     
-    # Default model (updated to Claude 3 Haiku for reliability)
-    DEFAULT_MODEL = "claude-3-haiku-20240307"
-    
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        default_model: Optional[str] = None
-    ):
-        """Initialize Cloud Anthropic agent.
+    def __init__(self, config: AnthropicConfig):
+        """Initialize Cloud Anthropic provider.
         
         Args:
-            api_key: Anthropic API key (reads from ANTHROPIC_API_KEY env var if not provided)
-            default_model: Default model to use (default: claude-3-sonnet-20240229)
+            config: Anthropic configuration from pipeline.llm.config
             
         Raises:
             AuthenticationError: If API key is not provided or invalid
+            ProviderNotAvailableError: If anthropic package is not installed
         """
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        if not self.api_key:
+        if not config.api_key:
             raise AuthenticationError(
                 "Anthropic API key not found. Set ANTHROPIC_API_KEY environment "
-                "variable or pass api_key parameter."
+                "variable or provide api_key in configuration."
             )
         
-        self.default_model = default_model or self.DEFAULT_MODEL
+        self.config = config
         
         # Initialize Anthropic client
         try:
             import anthropic
-            self.client = anthropic.Anthropic(api_key=self.api_key)
+            self.client = anthropic.Anthropic(api_key=self.config.api_key)
         except ImportError:
-            raise LLMProviderError(
+            raise ProviderNotAvailableError(
                 "anthropic package not installed. Install with: pip install anthropic"
             )
     
-    @retry_with_backoff(max_attempts=3, base_delay=1.0)
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate completion using Claude.
         
@@ -124,11 +118,11 @@ class CloudAnthropicAgent(BaseLLMAgent):
             LLM response with generated content
             
         Raises:
-            LLMProviderError: If API call fails
+            ProviderError: If API call fails
             RateLimitError: If rate limit is exceeded
             InvalidRequestError: If request is invalid
         """
-        model = request.model or self.default_model
+        model = request.model or self.config.default_model
         
         # Validate model
         if model not in self.PRICING:
@@ -149,9 +143,10 @@ class CloudAnthropicAgent(BaseLLMAgent):
             # Make API call
             response = self.client.messages.create(
                 model=model,
-                max_tokens=request.max_tokens,
+                max_tokens=request.max_tokens or self.config.max_tokens,
                 temperature=request.temperature,
-                messages=messages
+                messages=messages,
+                timeout=self.config.timeout
             )
             
             # Extract content
@@ -166,7 +161,12 @@ class CloudAnthropicAgent(BaseLLMAgent):
                 content=content,
                 model_used=model,
                 tokens_used=input_tokens + output_tokens,
-                cost_usd=cost
+                cost_usd=cost,
+                metadata={
+                    "provider": "anthropic",
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                }
             )
         
         except Exception as e:
@@ -180,7 +180,7 @@ class CloudAnthropicAgent(BaseLLMAgent):
             elif "invalid" in error_msg.lower():
                 raise InvalidRequestError(f"Invalid Claude request: {error_msg}")
             else:
-                raise LLMProviderError(f"Claude API error: {error_msg}")
+                raise ProviderError(f"Claude API error: {error_msg}")
     
     def estimate_cost(self, request: LLMRequest) -> float:
         """Estimate cost for a request.
@@ -191,76 +191,15 @@ class CloudAnthropicAgent(BaseLLMAgent):
         Returns:
             Estimated cost in USD
         """
-        model = request.model or self.default_model
+        model = request.model or self.config.default_model
         
         # Estimate input tokens (rough approximation: 1 token ≈ 0.75 words)
         input_tokens = int(len(request.prompt.split()) * 1.3)
         
         # Use max_tokens as output estimate
-        output_tokens = request.max_tokens
+        output_tokens = request.max_tokens or self.config.max_tokens
         
         return self._calculate_cost(model, input_tokens, output_tokens)
-    
-    def get_capabilities(self) -> Dict[str, Any]:
-        """Get agent capabilities.
-        
-        Returns:
-            Dict with provider info, supported models, and features
-        """
-        return {
-            "provider": "cloud-anthropic",
-            "default_model": self.default_model,
-            "supported_models": list(self.PRICING.keys()),
-            "max_context_window": max(self.CONTEXT_WINDOWS.values()),
-            "supports_streaming": True,
-            "supports_function_calling": False,
-            "supports_vision": True  # Claude 3 models support vision
-        }
-    
-    def validate_requirements(self, request: LLMRequest) -> bool:
-        """Validate that request meets agent requirements.
-        
-        Args:
-            request: LLM request to validate
-            
-        Returns:
-            True if valid
-            
-        Raises:
-            InvalidRequestError: If request is invalid
-        """
-        model = request.model or self.default_model
-        
-        # Check if model is supported
-        if model not in self.PRICING:
-            raise InvalidRequestError(
-                f"Unsupported Claude model: {model}"
-            )
-        
-        # Check context window
-        context_window = self.CONTEXT_WINDOWS.get(model, 200_000)
-        estimated_tokens = int(len(request.prompt.split()) * 1.3)
-        
-        if estimated_tokens + request.max_tokens > context_window:
-            raise InvalidRequestError(
-                f"Request exceeds context window for {model}. "
-                f"Estimated tokens: {estimated_tokens + request.max_tokens}, "
-                f"Context window: {context_window}"
-            )
-        
-        return True
-    
-    def get_context_window(self, model: Optional[str] = None) -> int:
-        """Get context window size for model.
-        
-        Args:
-            model: Model identifier (uses default if not specified)
-            
-        Returns:
-            Context window size in tokens
-        """
-        model = model or self.default_model
-        return self.CONTEXT_WINDOWS.get(model, 200_000)
     
     def _calculate_cost(
         self,
@@ -278,7 +217,12 @@ class CloudAnthropicAgent(BaseLLMAgent):
         Returns:
             Cost in USD
         """
-        pricing = self.PRICING.get(model)
+        # Check for pricing override first
+        if self.config.pricing_override and model in self.config.pricing_override:
+            pricing = self.config.pricing_override[model]
+        else:
+            pricing = self.PRICING.get(model)
+        
         if not pricing:
             return 0.0
         
@@ -287,3 +231,43 @@ class CloudAnthropicAgent(BaseLLMAgent):
         output_cost = (output_tokens / 1_000_000) * pricing["output"]
         
         return input_cost + output_cost
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get provider capabilities.
+        
+        Returns:
+            Dict with provider info, supported models, and features
+        """
+        return {
+            "provider": "cloud-anthropic",
+            "default_model": self.config.default_model,
+            "supported_models": list(self.PRICING.keys()),
+            "max_context_window": max(self.CONTEXT_WINDOWS.values()),
+            "supports_streaming": True,
+            "supports_function_calling": False,
+            "supports_vision": True  # Claude 3 models support vision
+        }
+    
+    def validate_requirements(self) -> bool:
+        """Check if provider is available and credentials are valid.
+        
+        Returns:
+            True if provider is ready to use
+        """
+        try:
+            # Try to make a minimal API call to validate credentials
+            # We'll just check if the client is initialized properly
+            return self.client is not None and self.config.api_key is not None
+        except Exception:
+            return False
+    
+    def get_context_window(self, model: str) -> int:
+        """Get context window size for model.
+        
+        Args:
+            model: Model identifier
+            
+        Returns:
+            Context window size in tokens
+        """
+        return self.CONTEXT_WINDOWS.get(model, 200_000)

@@ -1,21 +1,23 @@
 """
 File: test_normalize.py
 
-Unit tests for transcript normalization logic across adapters.
+Unit tests for transcript normalization logic across providers.
 
 Covers:
-- Conversion of raw adapter output to TranscriptV1 format
+- Conversion of raw provider output to TranscriptV1 format
 - Metadata construction and segment transformation
-- Adapter-specific normalization edge cases
+- Provider-specific normalization edge cases
 """
 import pytest
 from pipeline.transcribers.normalize import normalize_transcript_v1
-from pipeline.transcribers.adapters.local_whisper import LocalWhisperAdapter
+from pipeline.transcription.providers.local_whisper import LocalWhisperProvider
+from pipeline.transcription.config import WhisperLocalConfig
 from pipeline.transcribers.schemas.transcript_v1 import TranscriptV1
 
 @pytest.fixture
-def adapter():
-    return LocalWhisperAdapter(model_name="base")
+def provider():
+    config = WhisperLocalConfig(model="base")
+    return LocalWhisperProvider(config)
 
 @pytest.fixture
 def raw_basic():
@@ -53,37 +55,37 @@ def raw_empty_segments():
         "segments": []
     }
 
-def test_normalize_transcript_v1_basic(adapter, raw_basic):
-    transcript = normalize_transcript_v1(raw_basic, adapter)
+def test_normalize_transcript_v1_basic(provider, raw_basic):
+    transcript = normalize_transcript_v1(raw_basic, provider)
     assert isinstance(transcript, TranscriptV1)
     assert transcript.metadata.language == "en"
     assert transcript.metadata.confidence_avg == 0.925
     assert transcript.transcript[0].timestamp == "00:00:00.000"
     assert transcript.transcript[1].timestamp == "00:00:02.500"
 
-def test_normalize_transcript_v1_missing_confidence(adapter, raw_missing_confidence):
-    transcript = normalize_transcript_v1(raw_missing_confidence, adapter)
+def test_normalize_transcript_v1_missing_confidence(provider, raw_missing_confidence):
+    transcript = normalize_transcript_v1(raw_missing_confidence, provider)
     assert transcript.metadata.confidence_avg is None
     assert all(s.confidence is None for s in transcript.transcript)
 
-def test_normalize_transcript_v1_malformed_timestamp(adapter, raw_malformed_timestamp):
-    transcript = normalize_transcript_v1(raw_malformed_timestamp, adapter)
+def test_normalize_transcript_v1_malformed_timestamp(provider, raw_malformed_timestamp):
+    transcript = normalize_transcript_v1(raw_malformed_timestamp, provider)
     assert transcript.transcript[0].timestamp == "00:00:00.000"  # Should clamp or format safely
 
-def test_normalize_transcript_v1_empty_segments(adapter, raw_empty_segments):
-    transcript = normalize_transcript_v1(raw_empty_segments, adapter)
+def test_normalize_transcript_v1_empty_segments(provider, raw_empty_segments):
+    transcript = normalize_transcript_v1(raw_empty_segments, provider)
     assert transcript.transcript == []
     assert transcript.metadata.language == "en"
 
-def test_normalize_transcript_v1_missing_language(adapter, raw_basic):
+def test_normalize_transcript_v1_missing_language(provider, raw_basic):
     raw = raw_basic.copy()
     raw.pop("language", None)
 
-    transcript = normalize_transcript_v1(raw, adapter)
+    transcript = normalize_transcript_v1(raw, provider)
     assert transcript.metadata.language is None
 
-def test_normalize_transcript_v1_no_segments_key(adapter):
+def test_normalize_transcript_v1_no_segments_key(provider):
     raw = {"language": "en"}  # no "segments" key
 
-    transcript = normalize_transcript_v1(raw, adapter)
+    transcript = normalize_transcript_v1(raw, provider)
     assert transcript.transcript == []

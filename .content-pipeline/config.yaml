@@ -101,6 +101,12 @@ whisper_api:
   
   # Delay between retry attempts in seconds
   retry_delay: 2.0
+  
+  # Cost per minute in USD (for cost estimation)
+  # Default: 0.006 (OpenAI's standard pricing as of 2024)
+  # Override this if you have custom pricing or volume discounts
+  # Can also be set via WHISPER_API_COST_PER_MINUTE environment variable
+  cost_per_minute_usd: 0.006
 
 # AWS Transcribe Configuration (if using aws-transcribe engine)
 aws_transcribe:
@@ -133,6 +139,12 @@ aws_transcribe:
   
   # Delay between retry attempts in seconds
   retry_delay: 2.0
+  
+  # Cost per minute in USD (for cost estimation)
+  # Default: 0.024 (AWS standard pricing as of 2024)
+  # Override this if you have custom pricing, volume discounts, or regional pricing
+  # Can also be set via AWS_TRANSCRIBE_COST_PER_MINUTE environment variable
+  cost_per_minute_usd: 0.024
 
 # =============================================================================
 # AUTO-SELECTION PREFERENCES
@@ -150,6 +162,123 @@ auto_selection:
   fallback_enabled: true
 
 # =============================================================================
+# LLM CONFIGURATION (for enrichment workflows)
+# =============================================================================
+
+# LLM (Large Language Model) configuration for semantic enrichment
+# Used by the 'enrich' command to generate summaries, tags, chapters, and highlights
+# Supports multiple providers: Ollama (local), OpenAI, AWS Bedrock, Anthropic
+
+llm:
+  # Local Ollama Configuration
+  # Ollama runs models locally on your machine (privacy-focused, zero cost)
+  # Install Ollama from: https://ollama.ai
+  ollama:
+    # Base URL for Ollama API
+    # Default: http://localhost:11434 (standard Ollama installation)
+    # For remote Ollama: http://remote-host:11434
+    base_url: ${OLLAMA_BASE_URL:-http://localhost:11434}
+    
+    # Default model to use if not specified in request
+    # Popular models: llama2, llama2:13b, llama2:70b, mistral, mixtral
+    # List available models: ollama list
+    default_model: ${OLLAMA_MODEL:-llama2}
+    
+    # Maximum tokens for responses
+    # Larger values allow longer outputs but take more time
+    max_tokens: ${OLLAMA_MAX_TOKENS:-4096}
+    
+    # Sampling temperature (0.0 to 1.0)
+    # Lower values (0.1-0.3): More focused and deterministic
+    # Higher values (0.7-1.0): More creative and varied
+    temperature: ${OLLAMA_TEMPERATURE:-0.3}
+    
+    # Request timeout in seconds
+    # Local models may be slower, especially on CPU
+    timeout: ${OLLAMA_TIMEOUT:-120}
+  
+  # OpenAI Configuration
+  # OpenAI provides GPT models via cloud API (highest quality, requires API key)
+  # Get your API key at: https://platform.openai.com/api-keys
+  openai:
+    # OpenAI API key (required for cloud-openai provider)
+    # SECURITY: Use environment variable instead of hardcoding
+    # Set OPENAI_API_KEY environment variable
+    api_key: ${OPENAI_API_KEY:-}
+    
+    # Default model to use if not specified in request
+    # Options: gpt-4, gpt-4-turbo, gpt-3.5-turbo
+    # - gpt-4: Best quality, highest cost
+    # - gpt-4-turbo: Good balance of quality and speed
+    # - gpt-3.5-turbo: Fastest, lowest cost
+    default_model: ${OPENAI_MODEL:-gpt-4}
+    
+    # Maximum tokens for responses
+    max_tokens: ${OPENAI_MAX_TOKENS:-4096}
+    
+    # Sampling temperature (0.0 to 1.0)
+    temperature: ${OPENAI_TEMPERATURE:-0.7}
+    
+    # API request timeout in seconds
+    timeout: ${OPENAI_TIMEOUT:-60}
+  
+  # AWS Bedrock Configuration
+  # AWS Bedrock provides access to Claude and Titan models (enterprise-grade)
+  # Requires AWS credentials and appropriate IAM permissions
+  bedrock:
+    # AWS region to use
+    # Common regions: us-east-1, us-west-2, eu-west-1
+    region: ${AWS_REGION:-us-east-1}
+    
+    # AWS credentials (optional if using IAM roles or AWS CLI configuration)
+    # SECURITY: Use environment variables or IAM roles instead of hardcoding
+    # Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+    # Or configure them here (not recommended for production)
+    access_key_id: ${AWS_ACCESS_KEY_ID:-}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY:-}
+    
+    # AWS session token (optional, for temporary credentials)
+    session_token: ${AWS_SESSION_TOKEN:-}
+    
+    # Default model to use if not specified in request
+    # Options: amazon.nova-lite-v1:0, anthropic.claude-v2, anthropic.claude-3-sonnet
+    # - amazon.nova-lite-v1:0: AWS native model, good balance
+    # - anthropic.claude-v2: High quality, good for analysis
+    # - anthropic.claude-3-sonnet: Latest Claude model, best quality
+    default_model: ${BEDROCK_MODEL:-amazon.nova-lite-v1:0}
+    
+    # Maximum tokens for responses
+    max_tokens: ${BEDROCK_MAX_TOKENS:-4096}
+    
+    # Sampling temperature (0.0 to 1.0)
+    temperature: ${BEDROCK_TEMPERATURE:-0.7}
+  
+  # Anthropic Configuration
+  # Anthropic provides Claude models via cloud API (high quality, requires API key)
+  # Get your API key at: https://console.anthropic.com/
+  anthropic:
+    # Anthropic API key (required for cloud-anthropic provider)
+    # SECURITY: Use environment variable instead of hardcoding
+    # Set ANTHROPIC_API_KEY environment variable
+    api_key: ${ANTHROPIC_API_KEY:-}
+    
+    # Default model to use if not specified in request
+    # Options: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+    # - claude-3-opus: Best quality, highest cost
+    # - claude-3-sonnet: Good balance of quality and speed
+    # - claude-3-haiku: Fastest, lowest cost
+    default_model: ${ANTHROPIC_MODEL:-claude-3-opus-20240229}
+    
+    # Maximum tokens for responses
+    max_tokens: ${ANTHROPIC_MAX_TOKENS:-4096}
+    
+    # Sampling temperature (0.0 to 1.0)
+    temperature: ${ANTHROPIC_TEMPERATURE:-0.7}
+    
+    # API request timeout in seconds
+    timeout: ${ANTHROPIC_TIMEOUT:-60}
+
+# =============================================================================
 # EXAMPLES AND COMMON CONFIGURATIONS
 # =============================================================================
 
@@ -163,6 +292,10 @@ auto_selection:
 # auto_selection:
 #   prefer_local: true
 #   fallback_enabled: false
+# llm:
+#   ollama:
+#     base_url: http://localhost:11434
+#     default_model: llama2:13b
 
 # Quality-focused (cloud services):
 # engine: openai-whisper
@@ -170,9 +303,25 @@ auto_selection:
 #   temperature: 0.0
 # auto_selection:
 #   prefer_local: false
+# llm:
+#   openai:
+#     default_model: gpt-4
+#     temperature: 0.7
 
 # Development/testing:
 # engine: auto
 # log_level: debug
 # whisper_local:
 #   model: tiny  # Fastest for testing
+# llm:
+#   ollama:
+#     default_model: llama2  # Fast local model for testing
+
+# Enterprise (AWS):
+# engine: aws-transcribe
+# aws_transcribe:
+#   region: us-east-1
+# llm:
+#   bedrock:
+#     region: us-east-1
+#     default_model: anthropic.claude-3-sonnet

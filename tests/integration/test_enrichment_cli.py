@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch, MagicMock
 from click.testing import CliRunner
 
 from cli.enrich import enrich
-from pipeline.enrichment.agents.base import LLMResponse
+from pipeline.llm.providers.base import LLMResponse
 from tests.fixtures.mock_llm_responses import (
     MOCK_SUMMARY_RESPONSE,
     MOCK_TAG_RESPONSE,

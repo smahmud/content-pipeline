@@ -14,7 +14,7 @@ from pipeline.enrichment.orchestrator import (
     EnrichmentRequest,
     DryRunReport
 )
-from pipeline.enrichment.agents.base import LLMResponse
+from pipeline.llm.providers.base import LLMResponse
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1, EnrichmentMetadata
 from pipeline.enrichment.cost_estimator import CostEstimate
 from pipeline.enrichment.errors import CostLimitExceededError, EnrichmentError
@@ -25,30 +25,30 @@ from tests.fixtures.mock_llm_responses import (
 
 
 @pytest.fixture
-def mock_agent_factory():
-    """Create mock agent factory."""
+def mock_provider_factory():
+    """Create mock provider factory."""
     factory = Mock()
-    agent = Mock()
+    provider = Mock()
     
-    # Configure agent capabilities
-    agent.get_capabilities.return_value = {
+    # Configure provider capabilities
+    provider.get_capabilities.return_value = {
         "provider": "openai",
         "models": ["gpt-4-turbo"],
         "max_tokens": 128000
     }
     
-    # Configure agent generate method
-    agent.generate.return_value = LLMResponse(
+    # Configure provider generate method
+    provider.generate.return_value = LLMResponse(
         content=json.dumps(MOCK_SUMMARY_RESPONSE),
         model_used="gpt-4-turbo",
         tokens_used=500,
         cost_usd=0.015
     )
     
-    # Configure agent estimate_cost to return float
-    agent.estimate_cost.return_value = 0.015
+    # Configure provider estimate_cost to return float
+    provider.estimate_cost.return_value = 0.015
     
-    factory.create_agent.return_value = agent
+    factory.create_provider.return_value = provider
     return factory
 
 
@@ -81,10 +81,10 @@ def mock_cache_system():
 
 
 @pytest.fixture
-def orchestrator(mock_agent_factory, mock_prompt_loader, mock_prompt_renderer, mock_cache_system):
+def orchestrator(mock_provider_factory, mock_prompt_loader, mock_prompt_renderer, mock_cache_system):
     """Create orchestrator with mocked dependencies."""
     return EnrichmentOrchestrator(
-        agent_factory=mock_agent_factory,
+        provider_factory=mock_provider_factory,
         prompt_loader=mock_prompt_loader,
         prompt_renderer=mock_prompt_renderer,
         cache_system=mock_cache_system
@@ -107,16 +107,16 @@ def basic_request():
 class TestEnrichmentOrchestrator:
     """Test suite for EnrichmentOrchestrator."""
     
-    def test_initialization(self, mock_agent_factory):
+    def test_initialization(self, mock_provider_factory):
         """Test orchestrator initialization."""
-        orchestrator = EnrichmentOrchestrator(agent_factory=mock_agent_factory)
+        orchestrator = EnrichmentOrchestrator(provider_factory=mock_provider_factory)
         
-        assert orchestrator.agent_factory == mock_agent_factory
+        assert orchestrator.provider_factory == mock_provider_factory
         assert orchestrator.prompt_loader is not None
         assert orchestrator.prompt_renderer is not None
         assert orchestrator.cache_system is not None
     
-    def test_enrich_basic_workflow(self, orchestrator, basic_request, mock_agent_factory):
+    def test_enrich_basic_workflow(self, orchestrator, basic_request, mock_provider_factory):
         """Test basic enrichment workflow."""
         result = orchestrator.enrich(basic_request)
         
@@ -130,14 +130,14 @@ class TestEnrichmentOrchestrator:
         assert result.metadata.tokens_used > 0
         assert "summary" in result.metadata.enrichment_types
         
-        # Verify agent was called
-        mock_agent_factory.create_agent.assert_called_once_with("openai")
+        # Verify provider was called
+        mock_provider_factory.create_provider.assert_called_once_with("openai")
     
-    def test_enrich_multiple_types(self, orchestrator, mock_agent_factory):
+    def test_enrich_multiple_types(self, orchestrator, mock_provider_factory):
         """Test enrichment with multiple types."""
-        # Configure agent to return different responses
-        agent = mock_agent_factory.create_agent.return_value
-        agent.generate.side_effect = [
+        # Configure provider to return different responses
+        provider = mock_provider_factory.create_provider.return_value
+        provider.generate.side_effect = [
             LLMResponse(
                 content=json.dumps(MOCK_SUMMARY_RESPONSE),
                 model_used="gpt-4-turbo",
@@ -192,7 +192,7 @@ class TestEnrichmentOrchestrator:
         assert result.enrichment_types == ["summary"]
         assert isinstance(result.estimate, CostEstimate)
     
-    def test_cache_hit(self, orchestrator, basic_request, mock_cache_system, mock_agent_factory):
+    def test_cache_hit(self, orchestrator, basic_request, mock_cache_system, mock_provider_factory):
         """Test cache hit returns cached result without LLM call."""
         # Configure cache to return a result
         cached_result = EnrichmentV1(
@@ -215,9 +215,9 @@ class TestEnrichmentOrchestrator:
         # Verify cached result was returned
         assert result == cached_result
         
-        # Verify agent was NOT called
-        agent = mock_agent_factory.create_agent.return_value
-        agent.generate.assert_not_called()
+        # Verify provider was NOT called
+        provider = mock_provider_factory.create_provider.return_value
+        provider.generate.assert_not_called()
     
     def test_cache_miss_stores_result(self, orchestrator, basic_request, mock_cache_system):
         """Test cache miss executes enrichment and stores result."""
@@ -257,14 +257,14 @@ class TestEnrichmentOrchestrator:
         # Verify renderer was called
         mock_prompt_renderer.render.assert_called_once()
     
-    def test_execute_enrichment(self, orchestrator, mock_agent_factory):
+    def test_execute_enrichment(self, orchestrator, mock_provider_factory):
         """Test single enrichment execution."""
-        agent = mock_agent_factory.create_agent.return_value
+        provider = mock_provider_factory.create_provider.return_value
         
         response = orchestrator._execute_enrichment(
             enrichment_type="summary",
             prompt="Test prompt",
-            agent=agent,
+            provider=provider,
             model="gpt-4-turbo",
             transcript_text="Test transcript"
         )
@@ -273,12 +273,12 @@ class TestEnrichmentOrchestrator:
         assert isinstance(response, LLMResponse)
         assert response.model_used == "gpt-4-turbo"
         
-        # Verify agent was called
-        agent.generate.assert_called_once()
+        # Verify provider was called
+        provider.generate.assert_called_once()
     
-    def test_aggregate_results(self, orchestrator, mock_agent_factory):
+    def test_aggregate_results(self, orchestrator, mock_provider_factory):
         """Test result aggregation."""
-        agent = mock_agent_factory.create_agent.return_value
+        provider = mock_provider_factory.create_provider.return_value
         
         results = {
             "summary": LLMResponse(
@@ -291,7 +291,7 @@ class TestEnrichmentOrchestrator:
         
         enrichment = orchestrator._aggregate_results(
             results=results,
-            agent=agent,
+            provider=provider,
             total_cost=0.015,
             total_tokens=500
         )
@@ -319,7 +319,7 @@ class TestEnrichmentOrchestrator:
         # Verify key is returned
         assert cache_key == "test_cache_key"
     
-    def test_custom_prompts_directory(self, mock_agent_factory, mock_prompt_renderer, mock_cache_system):
+    def test_custom_prompts_directory(self, mock_provider_factory, mock_prompt_renderer, mock_cache_system):
         """Test custom prompts directory is passed to loader during initialization."""
         # Create a new prompt loader mock
         custom_prompt_loader = Mock()
@@ -330,7 +330,7 @@ class TestEnrichmentOrchestrator:
         
         # Create orchestrator with custom prompts directory
         orchestrator = EnrichmentOrchestrator(
-            agent_factory=mock_agent_factory,
+            provider_factory=mock_provider_factory,
             prompt_loader=custom_prompt_loader,
             prompt_renderer=mock_prompt_renderer,
             cache_system=mock_cache_system
@@ -350,11 +350,11 @@ class TestEnrichmentOrchestrator:
         # Verify loader was called (custom_dir is set during PromptLoader init, not per-call)
         custom_prompt_loader.load_prompt.assert_called_once_with("summary")
     
-    def test_validation_error_handling(self, orchestrator, basic_request, mock_agent_factory):
+    def test_validation_error_handling(self, orchestrator, basic_request, mock_provider_factory):
         """Test handling of validation errors."""
-        # Configure agent to return invalid JSON
-        agent = mock_agent_factory.create_agent.return_value
-        agent.generate.return_value = LLMResponse(
+        # Configure provider to return invalid JSON
+        provider = mock_provider_factory.create_provider.return_value
+        provider.generate.return_value = LLMResponse(
             content="Invalid JSON",
             model_used="gpt-4-turbo",
             tokens_used=100,

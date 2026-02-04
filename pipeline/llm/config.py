@@ -11,11 +11,13 @@ All providers accept configuration objects instead of hardcoded values,
 enabling flexible deployment across different environments.
 
 Usage:
-    >>> from pipeline.config.manager import ConfigManager
     >>> from pipeline.llm.config import LLMConfig
     >>> 
-    >>> config_manager = ConfigManager()
-    >>> llm_config = LLMConfig.load_from_config(config_manager)
+    >>> # Load from config file (when llm section exists)
+    >>> llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
+    >>> 
+    >>> # Or create directly with defaults
+    >>> llm_config = LLMConfig()
     >>> 
     >>> # Access provider-specific config
     >>> print(llm_config.ollama.base_url)
@@ -23,10 +25,10 @@ Usage:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 import os
-
-from pipeline.config.manager import ConfigManager
+import yaml
+from pathlib import Path
 
 
 @dataclass
@@ -57,12 +59,15 @@ class OpenAIConfig:
         max_tokens: Default maximum tokens for responses
         temperature: Default sampling temperature
         timeout: Request timeout in seconds
+        pricing_override: Optional pricing override for enterprise customers
+            Format: {"model_name": {"input_per_1k": float, "output_per_1k": float}}
     """
     api_key: str = ""
     default_model: str = "gpt-4"
     max_tokens: int = 4096
     temperature: float = 0.7
     timeout: int = 60
+    pricing_override: Optional[Dict[str, Dict[str, float]]] = None
 
 
 @dataclass
@@ -77,6 +82,8 @@ class BedrockConfig:
         default_model: Default model to use if not specified in request
         max_tokens: Default maximum tokens for responses
         temperature: Default sampling temperature
+        pricing_override: Optional pricing override for enterprise customers
+            Format: {"model_name": {"input_per_1k": float, "output_per_1k": float}}
     """
     region: str = "us-east-1"
     access_key_id: Optional[str] = None
@@ -85,6 +92,7 @@ class BedrockConfig:
     default_model: str = "amazon.nova-lite-v1:0"
     max_tokens: int = 4096
     temperature: float = 0.7
+    pricing_override: Optional[Dict[str, Dict[str, float]]] = None
 
 
 @dataclass
@@ -97,12 +105,15 @@ class AnthropicConfig:
         max_tokens: Default maximum tokens for responses
         temperature: Default sampling temperature
         timeout: Request timeout in seconds
+        pricing_override: Optional pricing override for enterprise customers
+            Format: {"model_name": {"input": float, "output": float}} (per 1M tokens)
     """
     api_key: str = ""
     default_model: str = "claude-3-opus-20240229"
     max_tokens: int = 4096
     temperature: float = 0.7
     timeout: int = 60
+    pricing_override: Optional[Dict[str, Dict[str, float]]] = None
 
 
 @dataclass
@@ -124,8 +135,8 @@ class LLMConfig:
     anthropic: AnthropicConfig = field(default_factory=AnthropicConfig)
     
     @classmethod
-    def load_from_config(cls, config_manager: ConfigManager) -> 'LLMConfig':
-        """Load LLM configuration from config manager.
+    def load_from_yaml(cls, config_path: Optional[str] = None) -> 'LLMConfig':
+        """Load LLM configuration from YAML file.
         
         Configuration precedence (highest to lowest):
         1. Environment variables
@@ -133,17 +144,46 @@ class LLMConfig:
         3. Default values
         
         Args:
-            config_manager: ConfigManager instance with loaded configuration
+            config_path: Path to config YAML file (default: .content-pipeline/config.yaml)
             
         Returns:
             LLMConfig instance with all provider configurations loaded
             
         Example:
-            >>> from pipeline.config.manager import ConfigManager
-            >>> config_manager = ConfigManager()
-            >>> llm_config = LLMConfig.load_from_config(config_manager)
+            >>> llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
         """
-        llm_section = config_manager.get('llm', {})
+        # Load config file if it exists
+        llm_section = {}
+        if config_path is None:
+            config_path = '.content-pipeline/config.yaml'
+        
+        config_file = Path(config_path)
+        if config_file.exists():
+            with open(config_file, 'r') as f:
+                config_data = yaml.safe_load(f) or {}
+                llm_section = config_data.get('llm', {})
+        
+        return cls.load_from_dict(llm_section)
+    
+    @classmethod
+    def load_from_dict(cls, llm_section: Dict[str, Any]) -> 'LLMConfig':
+        """Load LLM configuration from dictionary.
+        
+        Configuration precedence (highest to lowest):
+        1. Environment variables
+        2. Config dict values
+        3. Default values
+        
+        Args:
+            llm_section: Dictionary containing llm configuration
+            
+        Returns:
+            LLMConfig instance with all provider configurations loaded
+            
+        Example:
+            >>> config_dict = {'ollama': {'base_url': 'http://localhost:11434'}}
+            >>> llm_config = LLMConfig.load_from_dict(config_dict)
+        """
         
         # Load Ollama config
         ollama_config = OllamaConfig(

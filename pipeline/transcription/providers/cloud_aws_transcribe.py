@@ -1,24 +1,55 @@
 """
-File: aws_transcribe.py
+Cloud AWS Transcribe Transcription Provider
 
-Implements the AWSTranscribeAdapter using AWS Transcribe service.
-Conforms to the enhanced TranscriberAdapter protocol.
+Implements the CloudAWSTranscribeProvider using AWS Transcribe service.
+Conforms to the TranscriberProvider protocol.
 
-This adapter processes audio using AWS Transcribe cloud service.
+This provider processes audio using AWS Transcribe cloud service with automatic S3 integration.
+Migrated from pipeline.transcribers.adapters.aws_transcribe as part of the infrastructure
+refactoring to establish clean separation between infrastructure and domain layers.
+
+**Validates: Requirements 2.2, 2.3**
 """
 from typing import Optional, List, Tuple
 import os
 from pathlib import Path
+
 from pipeline.utils.retry import retry
-from pipeline.transcribers.adapters.base import TranscriberAdapter
+from pipeline.transcription.providers.base import TranscriberProvider
+from pipeline.transcription.config import AWSTranscribeConfig
+from pipeline.transcription.errors import (
+    AudioFileError,
+    ProviderError,
+    ProviderNotAvailableError,
+    ConfigurationError
+)
 
 
-class AWSTranscribeAdapter(TranscriberAdapter):
+class CloudAWSTranscribeProvider(TranscriberProvider):
     """
     Transcribes audio using AWS Transcribe service.
     
-    This adapter provides cloud-based transcription using AWS Transcribe.
-    Enhanced in v0.6.5 to support requirement validation, format checking, and cost estimation.
+    This provider provides cloud-based transcription using AWS Transcribe with automatic
+    S3 file management. Supports requirement validation, format checking, and cost estimation.
+    
+    Configuration is provided via AWSTranscribeConfig, which supports:
+    - AWS credentials (access key ID, secret access key)
+    - Region selection
+    - Language code configuration
+    - S3 bucket configuration
+    - Timeout and retry configuration
+    
+    Example:
+        >>> from pipeline.transcription.config import AWSTranscribeConfig
+        >>> config = AWSTranscribeConfig(
+        ...     access_key_id="AKIA...",
+        ...     secret_access_key="...",
+        ...     region="us-east-1",
+        ...     language_code="en-US"
+        ... )
+        >>> provider = CloudAWSTranscribeProvider(config)
+        >>> result = provider.transcribe("audio.mp3")
+        >>> print(result['results']['transcripts'][0]['transcript'])
     """
     
     # Supported audio formats by AWS Transcribe
@@ -30,34 +61,24 @@ class AWSTranscribeAdapter(TranscriberAdapter):
     # Maximum file size (2 GB)
     MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB in bytes
     
-    def __init__(self, access_key_id: Optional[str] = None, secret_access_key: Optional[str] = None,
-                 region: str = "us-east-1", language_code: str = "en-US", **kwargs):
+    def __init__(self, config: AWSTranscribeConfig):
         """
-        Initialize the AWS Transcribe adapter.
+        Initialize the AWS Transcribe provider with configuration.
         
         Args:
-            access_key_id: AWS access key ID (if None, will try to get from environment)
-            secret_access_key: AWS secret access key (if None, will try to get from environment)
-            region: AWS region for Transcribe service
-            language_code: Language code for transcription (e.g., 'en-US', 'es-ES')
-            **kwargs: Additional configuration options
+            config: AWSTranscribeConfig instance with provider configuration
+            
+        Raises:
+            ConfigurationError: If configuration is invalid
         """
-        self.access_key_id = access_key_id or self._get_access_key_from_env()
-        self.secret_access_key = secret_access_key or self._get_secret_key_from_env()
-        self.region = region
-        self.language_code = language_code
-        self.client = None
+        if not isinstance(config, AWSTranscribeConfig):
+            raise ConfigurationError(
+                f"Expected AWSTranscribeConfig, got {type(config).__name__}"
+            )
         
-        # Store additional configuration
-        self.config = kwargs
-
-    def _get_access_key_from_env(self) -> Optional[str]:
-        """Get AWS access key from environment variables."""
-        return os.getenv('AWS_ACCESS_KEY_ID') or os.getenv('CONTENT_PIPELINE_AWS_ACCESS_KEY_ID')
-
-    def _get_secret_key_from_env(self) -> Optional[str]:
-        """Get AWS secret key from environment variables."""
-        return os.getenv('AWS_SECRET_ACCESS_KEY') or os.getenv('CONTENT_PIPELINE_AWS_SECRET_ACCESS_KEY')
+        self.config = config
+        self.client = None
+        self.s3_client = None
 
     def _ensure_client_initialized(self):
         """Ensure the AWS Transcribe client is initialized."""
@@ -67,19 +88,21 @@ class AWSTranscribeAdapter(TranscriberAdapter):
                 
                 # Build client kwargs - only include credentials if explicitly provided
                 # This allows boto3 to use its credential chain (env vars, AWS CLI config, IAM roles)
-                transcribe_kwargs = {'region_name': self.region}
-                s3_kwargs = {'region_name': self.region}
+                transcribe_kwargs = {'region_name': self.config.region}
+                s3_kwargs = {'region_name': self.config.region}
                 
-                if self.access_key_id and self.secret_access_key:
-                    transcribe_kwargs['aws_access_key_id'] = self.access_key_id
-                    transcribe_kwargs['aws_secret_access_key'] = self.secret_access_key
-                    s3_kwargs['aws_access_key_id'] = self.access_key_id
-                    s3_kwargs['aws_secret_access_key'] = self.secret_access_key
+                if self.config.access_key_id and self.config.secret_access_key:
+                    transcribe_kwargs['aws_access_key_id'] = self.config.access_key_id
+                    transcribe_kwargs['aws_secret_access_key'] = self.config.secret_access_key
+                    s3_kwargs['aws_access_key_id'] = self.config.access_key_id
+                    s3_kwargs['aws_secret_access_key'] = self.config.secret_access_key
                 
                 self.client = boto3.client('transcribe', **transcribe_kwargs)
                 self.s3_client = boto3.client('s3', **s3_kwargs)
             except ImportError:
-                raise RuntimeError("boto3 package not installed. Install with: pip install boto3")
+                raise ProviderNotAvailableError(
+                    "boto3 package not installed. Install with: pip install boto3"
+                )
     
     def _convert_language_code(self, iso_code: str) -> str:
         """
@@ -106,13 +129,14 @@ class AWSTranscribeAdapter(TranscriberAdapter):
             'hi': 'hi-IN',
             'ru': 'ru-RU',
         }
-        return language_map.get(iso_code.lower(), self.language_code)
+        return language_map.get(iso_code.lower(), self.config.language_code)
     
     def _get_s3_bucket_name(self) -> str:
         """Get or create S3 bucket name for transcription files."""
-        # Use a bucket name from config or create a default one
-        bucket_name = self.config.get('s3_bucket', f'content-pipeline-transcribe-{self.region}')
-        return bucket_name
+        # Use configured bucket name or create a default one
+        if self.config.s3_bucket:
+            return self.config.s3_bucket
+        return f'content-pipeline-transcribe-{self.config.region}'
     
     def _upload_to_s3(self, audio_path: str, job_name: str) -> str:
         """
@@ -134,12 +158,12 @@ class AWSTranscribeAdapter(TranscriberAdapter):
             self.s3_client.head_bucket(Bucket=bucket_name)
         except:
             # Create bucket if it doesn't exist
-            if self.region == 'us-east-1':
+            if self.config.region == 'us-east-1':
                 self.s3_client.create_bucket(Bucket=bucket_name)
             else:
                 self.s3_client.create_bucket(
                     Bucket=bucket_name,
-                    CreateBucketConfiguration={'LocationConstraint': self.region}
+                    CreateBucketConfiguration={'LocationConstraint': self.config.region}
                 )
         
         # Upload file
@@ -179,42 +203,55 @@ class AWSTranscribeAdapter(TranscriberAdapter):
         """
         Run transcription on the given audio file using AWS Transcribe.
         
+        This method uploads the audio file to S3, starts a transcription job,
+        waits for completion, downloads the transcript, and cleans up resources.
+        
         Args:
             audio_path: Path to the audio file to transcribe
-            language: Optional language hint for transcription (ISO 639-1 code)
+            language: Optional language hint for transcription (ISO 639-1 code, e.g., 'en', 'es')
             
         Returns:
-            Raw transcript dictionary from AWS Transcribe
-            
+            Raw transcript dictionary from AWS Transcribe containing:
+                - results: Transcription results with transcripts and items
+                - status: Job status
+                
         Raises:
-            FileNotFoundError: If audio file doesn't exist
-            ValueError: If audio format is not supported or file is too large
-            RuntimeError: If transcription fails
+            AudioFileError: If audio file doesn't exist, format is not supported, or file is too large
+            ProviderError: If transcription fails
+            ProviderNotAvailableError: If client is not initialized
         """
         import time
         import uuid
         
         if not os.path.exists(audio_path):
-            raise FileNotFoundError(f"Audio file not found: {audio_path}")
+            raise AudioFileError(f"Audio file not found: {audio_path}")
             
         # Check if file format is supported
         file_ext = Path(audio_path).suffix.lower().lstrip('.')
         if file_ext not in self.SUPPORTED_FORMATS:
-            raise ValueError(f"Unsupported audio format: {file_ext}. Supported formats: {self.SUPPORTED_FORMATS}")
+            raise AudioFileError(
+                f"Unsupported audio format: {file_ext}. "
+                f"Supported formats: {', '.join(self.SUPPORTED_FORMATS)}"
+            )
         
         # Check file size
         file_size = os.path.getsize(audio_path)
         if file_size > self.MAX_FILE_SIZE:
-            raise ValueError(f"File too large: {file_size / (1024*1024*1024):.1f}GB. Maximum size: {self.MAX_FILE_SIZE / (1024*1024*1024)}GB")
+            raise AudioFileError(
+                f"File too large: {file_size / (1024*1024*1024):.1f}GB. "
+                f"Maximum size: {self.MAX_FILE_SIZE / (1024*1024*1024)}GB"
+            )
         
         # Ensure client is initialized
         self._ensure_client_initialized()
         
         if self.client is None:
-            raise RuntimeError("AWS Transcribe client not initialized. Check credentials and validate_requirements().")
+            raise ProviderNotAvailableError(
+                "AWS Transcribe client not initialized. Check credentials and validate_requirements()."
+            )
         
         # Convert ISO 639-1 language code to AWS language code if provided
-        aws_language_code = self._convert_language_code(language) if language else self.language_code
+        aws_language_code = self._convert_language_code(language) if language else self.config.language_code
         
         # Generate unique job name
         job_name = f"content-pipeline-{uuid.uuid4().hex[:8]}-{int(time.time())}"
@@ -243,7 +280,7 @@ class AWSTranscribeAdapter(TranscriberAdapter):
             
             if job_status == 'FAILED':
                 failure_reason = status['TranscriptionJob'].get('FailureReason', 'Unknown error')
-                raise RuntimeError(f"AWS Transcribe job failed: {failure_reason}")
+                raise ProviderError(f"AWS Transcribe job failed: {failure_reason}")
             
             # Get transcript
             transcript_uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
@@ -266,19 +303,38 @@ class AWSTranscribeAdapter(TranscriberAdapter):
 
     def get_engine_info(self) -> Tuple[str, str]:
         """
-        Return the engine name and model variant.
+        Return the provider name and configuration variant.
         
         Returns:
-            Tuple of (engine_name, model_variant)
+            Tuple of (provider_name, configuration_variant)
+            
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> name, version = provider.get_engine_info()
+            >>> print(f"{name} using {version}")
+            "cloud-aws-transcribe using en-US-us-east-1"
         """
-        return ("aws-transcribe", f"{self.language_code}-{self.region}")
+        return ("cloud-aws-transcribe", f"{self.config.language_code}-{self.config.region}")
 
     def validate_requirements(self) -> List[str]:
         """
         Validate that AWS Transcribe is accessible and properly configured.
         
+        This method checks:
+        - boto3 package is installed
+        - AWS credentials are available (explicit, env vars, AWS CLI, or IAM roles)
+        - Credentials are valid and can access AWS Transcribe
+        
         Returns:
             List of error messages. Empty list means all requirements are met.
+            
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> errors = provider.validate_requirements()
+            >>> if errors:
+            ...     print("Provider not ready:", errors)
+            ... else:
+            ...     print("Provider ready to use")
         """
         errors = []
         
@@ -321,6 +377,12 @@ class AWSTranscribeAdapter(TranscriberAdapter):
         
         Returns:
             List of supported file extensions
+            
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> formats = provider.get_supported_formats()
+            >>> print("Supported:", ", ".join(formats))
+            "Supported: mp3, mp4, wav, flac, ogg, amr, webm"
         """
         return self.SUPPORTED_FORMATS.copy()
 
@@ -332,31 +394,58 @@ class AWSTranscribeAdapter(TranscriberAdapter):
             audio_duration: Duration of audio in seconds
             
         Returns:
-            Estimated cost in USD (or 0.0 if using credits)
+            Estimated cost in USD (or 0.0 if using AWS credits)
+            
+        Note:
+            Cost is calculated using the configured cost_per_minute_usd rate.
+            Default rate is $0.024/minute but can be overridden in configuration
+            for enterprise customers with custom pricing or regional differences.
+            If you have AWS credits, the actual cost may be $0.
+            
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> cost = provider.estimate_cost(300.0)  # 5 minutes
+            >>> print(f"Estimated cost: ${cost:.4f}")
+            "Estimated cost: $0.1200"
         """
         if audio_duration <= 0:
             return 0.0
         
-        # Convert seconds to minutes and calculate cost
+        # Convert seconds to minutes and calculate cost using config value
         duration_minutes = audio_duration / 60.0
         
         # Note: If user has AWS credits, this would be $0
-        # For now, return the standard pricing
-        return round(duration_minutes * self.COST_PER_MINUTE, 4)
+        # For now, return the configured pricing
+        return round(duration_minutes * self.config.cost_per_minute_usd, 4)
     
     def get_model_info(self) -> dict:
         """
-        Get information about the current model and configuration.
+        Get information about the current configuration.
+        
+        This is a provider-specific method that provides additional information
+        about the provider configuration.
         
         Returns:
-            Dictionary with model information
+            Dictionary with configuration information:
+                - language_code: AWS language code
+                - region: AWS region
+                - max_file_size_gb: Maximum file size in GB
+                - cost_per_minute_usd: Cost per minute in USD
+                - credentials_configured: Whether explicit credentials are configured
+                - implementation_status: Implementation status
+                
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> info = provider.get_model_info()
+            >>> print(f"Region: {info['region']}, Cost: ${info['cost_per_minute_usd']}/min")
+            "Region: us-east-1, Cost: $0.024/min"
         """
         return {
-            'language_code': self.language_code,
-            'region': self.region,
+            'language_code': self.config.language_code,
+            'region': self.config.region,
             'max_file_size_gb': self.MAX_FILE_SIZE / (1024 * 1024 * 1024),
-            'cost_per_minute_usd': self.COST_PER_MINUTE,
-            'credentials_configured': bool(self.access_key_id and self.secret_access_key),
+            'cost_per_minute_usd': self.config.cost_per_minute_usd,
+            'credentials_configured': bool(self.config.access_key_id and self.config.secret_access_key),
             'implementation_status': 'fully_implemented'
         }
     
@@ -364,7 +453,16 @@ class AWSTranscribeAdapter(TranscriberAdapter):
         """
         Get the maximum file size limit in bytes.
         
+        This is a provider-specific method that returns the maximum file size
+        that can be processed by AWS Transcribe.
+        
         Returns:
             Maximum file size in bytes
+            
+        Example:
+            >>> provider = CloudAWSTranscribeProvider(config)
+            >>> limit = provider.get_file_size_limit()
+            >>> print(f"Max file size: {limit / (1024*1024*1024)}GB")
+            "Max file size: 2.0GB"
         """
         return self.MAX_FILE_SIZE

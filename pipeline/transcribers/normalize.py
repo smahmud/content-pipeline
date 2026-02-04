@@ -2,13 +2,17 @@
 File: normalize.py
 
 Provides normalization utilities to convert raw transcript output into TranscriptV1 format.
+
+DEPRECATED: This module is deprecated. Use pipeline.transcription providers directly.
 """
-from pipeline.transcribers.adapters.base import TranscriberAdapter
+from pipeline.transcription import TranscriberProvider
 from pipeline.transcribers.schemas.transcript_v1 import TranscriptV1, TranscriptSegment, build_transcript_metadata
 
-def normalize_transcript_v1(raw: dict, adapter: TranscriberAdapter) -> TranscriptV1:
+def normalize_transcript_v1(raw: dict, adapter: TranscriberProvider) -> TranscriptV1:
     """
     Normalize a raw transcript dictionary into a TranscriptV1 object using adapter metadata.
+    
+    DEPRECATED: Use provider methods directly instead.
     """
     engine, version = adapter.get_engine_info()
 

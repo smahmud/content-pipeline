@@ -42,6 +42,9 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 - Enhanced transcription and configuration with multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto), explicit engine selection, YAML configuration management, environment variable support, and user-controlled output paths
 - LLM-powered enrichment with semantic analysis for summaries, tags, chapters, and highlights; multi-provider support (OpenAI, Claude, Bedrock, Ollama); cost control and dry-run mode; quality presets and content profiles
 
+### 🔧 Technical Releases
+- **v0.7.5 Infrastructure Refactoring** - Enterprise-grade provider architecture, unified LLM and transcription infrastructure, configuration management system, comprehensive testing framework (unplanned technical cleanup)
+
 ### 🧭 Upcoming
 - 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
 - 📦 Archive and index enriched content in a searchable store

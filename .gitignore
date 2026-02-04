@@ -38,6 +38,8 @@ docs/strategy/
 docs/tools/
 docs/code_review/
 docs/notes/
+docs/others/
+docs/logs/
 
 # Configuration examples (personal reference)
 examples/
@@ -57,13 +59,13 @@ examples/
 # Hypothesis testing artifacts
 .hypothesis/
 
+# Content pipeline cache (runtime data)
+.content-pipeline/cache/
+
 
 # Temporary development files
 .out
-COMMIT_CHECKLIST.md
-add_test_isolation.py
-final_test_fixes.py
-fix_all_tests.py
-fix_mock_paths.py
-fix_remaining_tests.py
 TEST_FIX_SUMMARY.md
+
+# Development scripts (not versioned)
+scripts/

@@ -1,18 +1,16 @@
 """
-Cloud AWS Bedrock LLM Agent
+Cloud AWS Bedrock LLM Provider
 
 Cloud-based integration with AWS Bedrock service to access multiple LLM models
-(Claude, Titan, etc.) through AWS's managed AI service.
+(Claude, Titan, Amazon Nova, etc.) through AWS's managed AI service.
 Handles AWS credential management and Bedrock-specific API formatting.
 
-File naming follows pattern: cloud_{provider}_{service}_agent.py
+File naming follows pattern: cloud_{provider}_{service}.py
 Provider ID: cloud-aws-bedrock
 """
 
 import json
-import os
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 try:
     import boto3
@@ -21,43 +19,22 @@ try:
 except ImportError:
     BOTO3_AVAILABLE = False
 
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
-from pipeline.enrichment.errors import (
-    LLMProviderError,
-    AuthenticationError,
+from pipeline.llm.config import BedrockConfig
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
+from pipeline.llm.errors import (
+    ProviderError,
+    ProviderNotAvailableError,
     RateLimitError,
+    AuthenticationError,
 )
 
 
-@dataclass
-class CloudAWSBedrockAgentConfig:
-    """Configuration for Cloud AWS Bedrock agent.
+class CloudAWSBedrockProvider(BaseLLMProvider):
+    """Cloud AWS Bedrock LLM provider.
     
-    Attributes:
-        region: AWS region (default: us-east-1)
-        default_model: Default model ID (default: anthropic.claude-v2)
-        access_key_id: AWS access key ID (optional, uses default credentials if not provided)
-        secret_access_key: AWS secret access key (optional)
-        session_token: AWS session token for temporary credentials (optional)
-        max_tokens: Maximum tokens for completion (default: 4096)
-        temperature: Sampling temperature (default: 0.3)
-        timeout: Request timeout in seconds (default: 60)
-    """
-    region: str = "us-east-1"
-    default_model: str = "anthropic.claude-3-haiku-20240307-v1:0"  # Updated to Claude 3 Haiku
-    access_key_id: Optional[str] = None
-    secret_access_key: Optional[str] = None
-    session_token: Optional[str] = None
-    max_tokens: int = 4096
-    temperature: float = 0.3
-    timeout: int = 60
-
-
-class CloudAWSBedrockAgent(BaseLLMAgent):
-    """Cloud AWS Bedrock LLM agent implementation.
-    
-    Supports multiple LLM models (Claude, Titan, etc.) through AWS Bedrock service.
-    Handles AWS credential management and converts Bedrock response formats.
+    Supports multiple LLM models (Claude, Titan, Amazon Nova, etc.) through
+    AWS Bedrock service. Handles AWS credential management and converts
+    Bedrock response formats.
     
     Deployment: Cloud (requires AWS credentials and internet connection)
     Provider: AWS
@@ -75,6 +52,9 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         "anthropic.claude-instant-v1": 100000,
         "amazon.titan-text-express-v1": 8000,
         "amazon.titan-text-lite-v1": 4000,
+        "amazon.nova-lite-v1:0": 300000,
+        "amazon.nova-micro-v1:0": 128000,
+        "amazon.nova-pro-v1:0": 300000,
     }
     
     # Pricing per 1K tokens (input, output) in USD
@@ -87,13 +67,16 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         "anthropic.claude-instant-v1": {"input_per_1k": 0.0008, "output_per_1k": 0.0024},
         "amazon.titan-text-express-v1": {"input_per_1k": 0.0008, "output_per_1k": 0.0016},
         "amazon.titan-text-lite-v1": {"input_per_1k": 0.0003, "output_per_1k": 0.0004},
+        "amazon.nova-lite-v1:0": {"input_per_1k": 0.00006, "output_per_1k": 0.00024},
+        "amazon.nova-micro-v1:0": {"input_per_1k": 0.000035, "output_per_1k": 0.00014},
+        "amazon.nova-pro-v1:0": {"input_per_1k": 0.0008, "output_per_1k": 0.0032},
     }
     
-    def __init__(self, config: CloudAWSBedrockAgentConfig):
-        """Initialize Cloud AWS Bedrock agent.
+    def __init__(self, config: BedrockConfig):
+        """Initialize Cloud AWS Bedrock provider.
         
         Args:
-            config: Cloud AWS Bedrock agent configuration
+            config: Bedrock configuration from pipeline.llm.config
             
         Raises:
             ImportError: If boto3 is not installed
@@ -101,7 +84,7 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         """
         if not BOTO3_AVAILABLE:
             raise ImportError(
-                "boto3 is required for AWS Bedrock agent. "
+                "boto3 is required for AWS Bedrock provider. "
                 "Install it with: pip install boto3"
             )
         
@@ -146,6 +129,7 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             raise AuthenticationError(
                 f"Failed to create AWS Bedrock client: {e}"
             )
+
     
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate completion from Bedrock model.
@@ -157,7 +141,7 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             Standardized LLM response
             
         Raises:
-            LLMProviderError: If API call fails
+            ProviderError: If API call fails
             RateLimitError: If rate limit is exceeded
         """
         model = request.model or self.config.default_model
@@ -167,8 +151,10 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             body = self._build_claude_request(request, model)
         elif model.startswith("amazon.titan"):
             body = self._build_titan_request(request, model)
+        elif model.startswith("amazon.nova"):
+            body = self._build_nova_request(request, model)
         else:
-            raise LLMProviderError(f"Unsupported Bedrock model: {model}")
+            raise ProviderError(f"Unsupported Bedrock model: {model}")
         
         try:
             # Invoke model
@@ -187,8 +173,10 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
                 content, tokens_used = self._parse_claude_response(response_body)
             elif model.startswith("amazon.titan"):
                 content, tokens_used = self._parse_titan_response(response_body)
+            elif model.startswith("amazon.nova"):
+                content, tokens_used = self._parse_nova_response(response_body)
             else:
-                raise LLMProviderError(f"Unknown model family: {model}")
+                raise ProviderError(f"Unknown model family: {model}")
             
             # Calculate cost
             cost = self._calculate_cost(model, request.prompt, tokens_used)
@@ -213,10 +201,10 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             elif error_code in ['AccessDeniedException', 'UnauthorizedException']:
                 raise AuthenticationError(f"Bedrock authentication failed: {error_message}")
             else:
-                raise LLMProviderError(f"Bedrock API error: {error_message}")
+                raise ProviderError(f"Bedrock API error: {error_message}")
         
         except Exception as e:
-            raise LLMProviderError(f"Unexpected Bedrock error: {e}")
+            raise ProviderError(f"Unexpected Bedrock error: {e}")
     
     def _build_claude_request(self, request: LLMRequest, model: str) -> Dict[str, Any]:
         """Build request body for Claude models.
@@ -269,6 +257,29 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             }
         }
     
+    def _build_nova_request(self, request: LLMRequest, model: str) -> Dict[str, Any]:
+        """Build request body for Amazon Nova models.
+        
+        Args:
+            request: LLM request
+            model: Model ID
+            
+        Returns:
+            Request body dict
+        """
+        return {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [{"text": request.prompt}]
+                }
+            ],
+            "inferenceConfig": {
+                "max_new_tokens": request.max_tokens or self.config.max_tokens,
+                "temperature": request.temperature,
+            }
+        }
+    
     def _parse_claude_response(self, response_body: Dict[str, Any]) -> tuple[str, int]:
         """Parse Claude model response.
         
@@ -310,6 +321,28 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         
         return content, tokens_used
     
+    def _parse_nova_response(self, response_body: Dict[str, Any]) -> tuple[str, int]:
+        """Parse Amazon Nova model response.
+        
+        Args:
+            response_body: Response body dict
+            
+        Returns:
+            Tuple of (content, tokens_used)
+        """
+        output = response_body.get("output", {})
+        message = output.get("message", {})
+        content_list = message.get("content", [])
+        
+        if not content_list:
+            return "", 0
+        
+        content = content_list[0].get("text", "")
+        usage = response_body.get("usage", {})
+        tokens_used = usage.get("inputTokens", 0) + usage.get("outputTokens", 0)
+        
+        return content, tokens_used
+    
     def _calculate_cost(self, model: str, prompt: str, tokens_used: int) -> float:
         """Calculate cost for the request.
         
@@ -321,7 +354,12 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         Returns:
             Cost in USD
         """
-        pricing = self.PRICING.get(model)
+        # Check for pricing override first
+        if self.config.pricing_override and model in self.config.pricing_override:
+            pricing = self.config.pricing_override[model]
+        else:
+            pricing = self.PRICING.get(model)
+        
         if not pricing:
             return 0.0
         
@@ -344,7 +382,12 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
             Estimated cost in USD
         """
         model = request.model or self.config.default_model
-        pricing = self.PRICING.get(model)
+        
+        # Check for pricing override first
+        if self.config.pricing_override and model in self.config.pricing_override:
+            pricing = self.config.pricing_override[model]
+        else:
+            pricing = self.PRICING.get(model)
         
         if not pricing:
             return 0.0
@@ -359,7 +402,7 @@ class CloudAWSBedrockAgent(BaseLLMAgent):
         return input_cost + output_cost
     
     def get_capabilities(self) -> Dict[str, Any]:
-        """Get Bedrock agent capabilities.
+        """Get Bedrock provider capabilities.
         
         Returns:
             Capabilities dict

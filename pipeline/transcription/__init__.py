@@ -19,19 +19,58 @@ Key Components:
     - errors.py: Transcription-specific error classes
 
 Usage:
-    >>> from pipeline.transcription.factory import TranscriptionProviderFactory
-    >>> from pipeline.transcription.config import TranscriptionConfig
-    >>> from pipeline.config.manager import ConfigManager
+    >>> from pipeline.transcription import TranscriptionProviderFactory, TranscriptionConfig
     >>> 
-    >>> config_manager = ConfigManager()
-    >>> trans_config = TranscriptionConfig.load_from_config(config_manager)
+    >>> trans_config = TranscriptionConfig.load_from_yaml('.content-pipeline/config.yaml')
     >>> factory = TranscriptionProviderFactory(trans_config)
     >>> provider = factory.create_provider("local-whisper")
+    >>> result = provider.transcribe("audio.mp3")
+
+**Validates: Requirement 5.8**
 """
 
-# Export main components for convenient imports
+# Export base protocol
 from pipeline.transcription.providers.base import TranscriberProvider
 
+# Export factory
+from pipeline.transcription.factory import TranscriptionProviderFactory
+
+# Export configuration classes
+from pipeline.transcription.config import (
+    TranscriptionConfig,
+    WhisperLocalConfig,
+    WhisperAPIConfig,
+    AWSTranscribeConfig
+)
+
+# Export error classes
+from pipeline.transcription.errors import (
+    TranscriptionError,
+    ConfigurationError,
+    ProviderError,
+    ProviderNotAvailableError,
+    AudioFileError,
+    TranscriptionTimeoutError
+)
+
 __all__ = [
+    # Base protocol
     "TranscriberProvider",
+    
+    # Factory
+    "TranscriptionProviderFactory",
+    
+    # Configuration
+    "TranscriptionConfig",
+    "WhisperLocalConfig",
+    "WhisperAPIConfig",
+    "AWSTranscribeConfig",
+    
+    # Errors
+    "TranscriptionError",
+    "ConfigurationError",
+    "ProviderError",
+    "ProviderNotAvailableError",
+    "AudioFileError",
+    "TranscriptionTimeoutError",
 ]

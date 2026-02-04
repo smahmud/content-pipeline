@@ -12,7 +12,7 @@ import pytest
 import json
 import time
 from pathlib import Path
-from hypothesis import given, strategies as st, assume, settings
+from hypothesis import given, strategies as st, assume, settings, HealthCheck
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
@@ -311,7 +311,7 @@ class TestCostEstimationProperties:
         text=medium_text,
         provider=valid_providers
     )
-    @settings(max_examples=50)
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_property_12_preflight_cost_estimation(self, text, provider):
         """
         **Property 12: Pre-Flight Cost Estimation**
@@ -320,7 +320,7 @@ class TestCostEstimationProperties:
         **Validates: Requirements 4.1**
         """
         from pipeline.enrichment.cost_estimator import CostEstimator
-        from pipeline.enrichment.agents.base import LLMRequest
+        from pipeline.llm.providers.base import LLMRequest
         
         # Create mock agent
         mock_agent = Mock()
@@ -332,7 +332,7 @@ class TestCostEstimationProperties:
         # Mock estimate_cost to return a float
         mock_agent.estimate_cost.return_value = 0.0 if provider == "ollama" else 0.01
         
-        estimator = CostEstimator(agent=mock_agent)
+        estimator = CostEstimator(provider=mock_agent)
         
         # Cost estimation should complete without making API calls
         cost_estimate = estimator.estimate(
@@ -352,7 +352,7 @@ class TestCostEstimationProperties:
         text=medium_text,
         provider=st.sampled_from(["openai", "claude", "bedrock"])
     )
-    @settings(max_examples=30)
+    @settings(max_examples=30, suppress_health_check=[HealthCheck.too_slow])
     def test_property_13_provider_specific_token_counting(self, text, provider):
         """
         **Property 13: Provider-Specific Token Counting**
@@ -370,7 +370,7 @@ class TestCostEstimationProperties:
             "max_tokens": 4096
         }
         
-        estimator = CostEstimator(agent=mock_agent)
+        estimator = CostEstimator(provider=mock_agent)
         
         # Count tokens using provider-specific method
         token_count = estimator._count_tokens(
@@ -386,7 +386,7 @@ class TestCostEstimationProperties:
         text=medium_text,
         max_cost=st.floats(min_value=0.01, max_value=0.10)
     )
-    @settings(max_examples=30)
+    @settings(max_examples=30, suppress_health_check=[HealthCheck.too_slow])
     def test_property_14_cost_limit_enforcement(self, text, max_cost):
         """
         **Property 14: Cost Limit Enforcement**
@@ -402,9 +402,9 @@ class TestCostEstimationProperties:
         mock_factory = Mock()
         mock_factory.create_agent.return_value = mock_agent
         
-        # Correct API: EnrichmentOrchestrator(agent_factory, prompt_loader, prompt_renderer, cache_system)
+        # Correct API: EnrichmentOrchestrator(provider_factory, prompt_loader, prompt_renderer, cache_system)
         orchestrator = EnrichmentOrchestrator(
-            agent_factory=mock_factory,
+            provider_factory=mock_factory,
             prompt_loader=Mock(),
             prompt_renderer=Mock(),
             cache_system=None
@@ -578,7 +578,7 @@ class TestChunkingProperties:
         text=st.text(min_size=1000, max_size=5000),  # Reduced max_size to avoid Hypothesis limits
         max_tokens=st.integers(min_value=1000, max_value=4000)
     )
-    @settings(max_examples=20)
+    @settings(max_examples=20, suppress_health_check=[HealthCheck.too_slow])
     def test_property_31_automatic_chunking_trigger(self, text, max_tokens):
         """
         **Property 31: Automatic Chunking Trigger**
@@ -592,8 +592,8 @@ class TestChunkingProperties:
         mock_agent = Mock()
         mock_agent.get_context_window.return_value = max_tokens
         
-        # Correct API: ChunkingStrategy(agent)
-        strategy = ChunkingStrategy(agent=mock_agent)
+        # Correct API: ChunkingStrategy(provider)
+        strategy = ChunkingStrategy(provider=mock_agent)
         
         # Check if chunking is needed (correct API: needs_chunking(text, model, prompt_overhead))
         needs_chunking = strategy.needs_chunking(
@@ -612,7 +612,7 @@ class TestChunkingProperties:
         text=st.text(min_size=1000, max_size=5000),  # Reduced max_size to avoid Hypothesis limits
         max_tokens=st.integers(min_value=1000, max_value=4000)
     )
-    @settings(max_examples=20)
+    @settings(max_examples=20, suppress_health_check=[HealthCheck.too_slow])
     def test_property_33_chunk_token_limit_compliance(self, text, max_tokens):
         """
         **Property 33: Chunk Token Limit Compliance**
@@ -626,8 +626,8 @@ class TestChunkingProperties:
         mock_agent = Mock()
         mock_agent.get_context_window.return_value = max_tokens
         
-        # Correct API: ChunkingStrategy(agent)
-        strategy = ChunkingStrategy(agent=mock_agent)
+        # Correct API: ChunkingStrategy(provider)
+        strategy = ChunkingStrategy(provider=mock_agent)
         
         # Check if chunking is needed (correct API)
         if strategy.needs_chunking(text=text, model="test-model", prompt_overhead=500):
@@ -662,8 +662,8 @@ class TestRetryProperties:
         retry the operation with exponential backoff up to max retries.
         **Validates: Requirements 12.1, 12.2, 12.3, 12.4**
         """
-        from pipeline.enrichment.retry import retry_with_backoff
-        from pipeline.enrichment.errors import TimeoutError
+        from pipeline.llm.retry import retry_with_backoff
+        from pipeline.llm.errors import TimeoutError
         
         attempts = []
         
@@ -691,8 +691,8 @@ class TestRetryProperties:
         not retry and should immediately return an error.
         **Validates: Requirements 12.5**
         """
-        from pipeline.enrichment.retry import retry_with_backoff
-        from pipeline.enrichment.errors import InvalidRequestError
+        from pipeline.llm.retry import retry_with_backoff
+        from pipeline.llm.errors import InvalidRequestError
         
         attempts = []
         

@@ -17,7 +17,7 @@ from pipeline.enrichment.orchestrator import (
 )
 from pipeline.enrichment.cache import CacheSystem, CacheEntry
 from pipeline.enrichment.cost_estimator import CostEstimator, CostEstimate
-from pipeline.enrichment.agents.factory import AgentFactory
+from pipeline.llm.factory import LLMProviderFactory
 
 __all__ = [
     "EnrichmentOrchestrator",
@@ -27,5 +27,5 @@ __all__ = [
     "CacheEntry",
     "CostEstimator",
     "CostEstimate",
-    "AgentFactory",
+    "LLMProviderFactory",
 ]
