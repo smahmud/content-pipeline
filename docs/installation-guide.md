@@ -231,7 +231,7 @@ The enrichment system requires provider-specific API keys. Test with your prefer
 python -c "
 from cli.enrich import enrich
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator
-from pipeline.enrichment.agents.factory import AgentFactory
+from pipeline.llm.factory import LLMProviderFactory
 print('✅ Enrichment modules import successfully')
 "
 
