@@ -34,13 +34,13 @@ pipeline/
 │   ├── factory.py           # TranscriptionProviderFactory with caching
 │   ├── config.py            # TranscriptionConfig and provider-specific configs
 │   └── errors.py            # Transcription error hierarchy
-├── transcribers/            # Legacy transcription utilities (deprecated)
+├── transcribers/            # Legacy transcription utilities (still used)
 │   ├── factory.py           # Legacy EngineFactory (compatibility layer)
 │   ├── auto_selector.py     # Legacy auto-selection (uses new providers)
-│   ├── normalize.py         # Transcript normalization
-│   ├── validate.py          # Transcript validation
-│   ├── persistence.py       # Transcript persistence
-│   └── schemas/             # Transcript normalization models (e.g. transcript_v1)
+│   ├── normalize.py         # Transcript normalization (still used)
+│   ├── validate.py          # Transcript validation (still used)
+│   ├── persistence.py       # Transcript persistence (still used)
+│   └── schemas/             # Transcript schemas (e.g. transcript_v1)
 ├── enrichment/              # LLM-powered semantic enrichment (v0.7.0)
 │   ├── schemas/             # Enrichment output models
 │   │   ├── enrichment_v1.py # EnrichmentV1 container
@@ -96,8 +96,8 @@ cli/
 
 ## 🧪 `tests/` — Validation Suite
 
-- **Unit tests** for extractors, transcriber adapters, schema validators, and utility functions  
-- **Integration tests** for CLI workflows (`extract`, `transcribe`) and pipeline orchestration  
+- **Unit tests** for extractors, transcription providers, LLM providers, schema validators, and utility functions  
+- **Integration tests** for CLI workflows (`extract`, `transcribe`, `enrich`) and pipeline orchestration  
 - **Property-based tests** for CLI behavior validation using Hypothesis framework
 - **Schema compliance** checks for metadata and transcript models (`TranscriptV1`)  
 - **Persistence tests** for transcript and metadata file outputs  
@@ -129,14 +129,15 @@ This section describes the purpose of each file located at the root of the repos
 
 This folder contains all architectural, operational, and milestone-related documentation. Each file is scoped to a specific concern to maintain clarity and avoid duplication.
 ```test
-| File                   | Purpose                                                                 |
-|------------------------|-------------------------------------------------------------------------|
-| `README.md`            | Full project overview, key features, milestones, and licensing terms     |
-| `architecture.md`      | High-level system design, agent orchestration, and milestone alignment  |
-| `project_structure.md` | Explains folder layout and rationale (this file)                        |
-| `cli-commands.md`      | CLI reference and development guide                                     |
-| `installation-guide.md`| Setup and dependency installation guide                                 |
-| `metadata_schema.md`   | Canonical schema contract and field definitions                         |
-| `transcript_schema.md` | Transcript normalization model (`TranscriptV1`) and field specifications |
-| `test_strategy.md`     | How unit and integration tests are structured and validated             |
+| File                     | Purpose                                                                 |
+|--------------------------|-------------------------------------------------------------------------|
+| `README.md`              | Full project overview, key features, milestones, and licensing terms     |
+| `architecture.md`        | High-level system design, component relationships, and infrastructure   |
+| `project-structure.md`   | Explains folder layout and rationale (this file)                        |
+| `configuration-guide.md` | Comprehensive configuration documentation (YAML, env vars, API keys)    |
+| `cli-commands.md`        | CLI reference and command usage examples                                |
+| `installation-guide.md`  | Setup and dependency installation guide                                 |
+| `metadata-schema.md`     | Canonical schema contract and field definitions                         |
+| `transcript-schema.md`   | Transcript normalization model (`TranscriptV1`) and field specifications |
+| `test-strategy.md`       | How unit and integration tests are structured and validated             |
 ```

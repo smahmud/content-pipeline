@@ -8,8 +8,22 @@ This document outlines the high-level architecture of the **Content Pipeline**, 
 
 ## 🧩 Core Components
 
+The Content Pipeline has three core components, each mapped directly to a CLI command:
+
+1. **Extractors** (`extract` command) - Platform-specific modules for audio and metadata extraction
+2. **Transcribers** (`transcribe` command) - Audio-to-text transcription using multiple providers
+3. **Enrichment** (`enrich` command) - LLM-powered semantic analysis and content enhancement
+
+Each component uses supporting infrastructure modules (see Section 6: Infrastructure Layer).
+
+For CLI command usage and examples, see [cli-commands.md](cli-commands.md).
+
+---
+
 ### 1. Extractors  
 Platform-specific modules that handle audio and metadata extraction.
+
+**CLI Command**: `extract`
 
 #### `pipeline/extractors/local/`  
 Local file ingestion now uses the unified metadata schema and classification logic:
@@ -37,58 +51,84 @@ Streaming service extractors implement a shared interface (`BaseExtractor`) and 
 
 ---
 
-### 2. Transcribers  
-Modular adapters that convert extracted audio into structured transcript data.
+### 2. Transcribers
 
-#### `pipeline/transcribers/adapters/`  
-Adapter implementations for different transcription engines. Each adapter conforms to a shared interface (`TranscriberAdapter`) and exposes:
-- `transcribe()` — Converts audio file to raw transcript dictionary  
-- `get_engine_info()` — Returns engine name and version for metadata construction  
-- `validate_requirements()` — Checks if engine dependencies and credentials are available
+Converts extracted audio into structured transcript data using multiple transcription providers.
 
-Enhanced in v0.6.5 with multiple engine support:
-- `base.py` — Enhanced adapter protocol with cost estimation and capability reporting
-- `local_whisper.py` — Local Whisper adapter for privacy-first transcription
-- `openai_whisper.py` — OpenAI Whisper API adapter for cloud-based transcription
-- `aws_transcribe.py` — AWS Transcribe adapter for enterprise transcription
-- `whisper.py` — Backward compatibility adapter (deprecated, use `local_whisper.py`)
-- `auto_selector.py` — Smart engine selection with intelligent fallback
-- `factory.py` — Engine factory pattern for adapter instantiation
+**CLI Command**: `transcribe`
 
----
+> **Note**: Transcription provider infrastructure was refactored in v0.7.5 to `pipeline/transcription/` with unified provider architecture. All "adapter" terminology was replaced with "provider" terminology. See Section 6.2 (Infrastructure Layer) for complete provider architecture details.
 
-#### `pipeline/transcribers/normalize.py`  
-Normalizes raw transcript output into a structured `TranscriptV1` object:
-- Applies punctuation, casing, and whitespace normalization
-- Optionally preserves timestamped segments
-- Constructs `TranscriptV1` via `normalize_transcript()` and `build_transcript_metadata()`
+#### Available Transcription Providers
+
+The transcribe command supports multiple providers (see Section 6.2 for infrastructure details):
+- **LocalWhisperProvider** — Local Whisper models (privacy-first)
+- **CloudOpenAIWhisperProvider** — OpenAI Whisper API
+- **CloudAWSTranscribeProvider** — AWS Transcribe (enterprise-grade)
+
+#### Transcript Processing Utilities
+
+The following utilities in `pipeline/transcribers/` handle transcript processing:
+- `normalize.py` — Transcript normalization to `TranscriptV1` format
+- `validate.py` — Schema validation against `TranscriptV1`
+- `persistence.py` — Transcript serialization and file output
+- `schemas/transcript_v1.py` — `TranscriptV1` schema definition
 
 ---
 
-#### `pipeline/transcribers/schemas/transcript_v1.py`
-Defines the `TranscriptV1` schema used across the pipeline:
-- `TranscriptSegment` — Individual text segment with timestamp, speaker, and confidence  
-- `TranscriptMetadata` — Engine, version, language, and creation timestamp  
-- `TranscriptV1` — Full transcript object with metadata and segments
+### 3. Enrichment
+
+AI-powered semantic enrichment for transforming transcripts into structured, semantically rich content.
+
+**CLI Command**: `enrich`
+
+> **Note**: LLM provider infrastructure was refactored in v0.7.5 to `pipeline/llm/` with unified provider architecture. All "agent" terminology was replaced with "provider" terminology. See Section 6.1 (Infrastructure Layer) for complete provider architecture details.
+
+#### Available LLM Providers
+
+The enrich command supports multiple LLM providers (see Section 6.1 for infrastructure details):
+- **LocalOllamaProvider** — Local Ollama models (zero cost)
+- **CloudOpenAIProvider** — OpenAI GPT models
+- **CloudAnthropicProvider** — Anthropic Claude models
+- **CloudAWSBedrockProvider** — AWS Bedrock (Claude and Titan)
+
+#### `pipeline/enrichment/`
+
+Core enrichment infrastructure for LLM-powered analysis:
+- `orchestrator.py` — Coordinates enrichment workflow across providers, prompts, and validation
+- `cost_estimator.py` — Pre-flight cost calculation with token counting and pricing database
+- `cache.py` — File-based caching system with TTL expiration and size limits
+- `chunking.py` — Automatic transcript splitting for long-form content
+- `batch.py` — Batch processing with progress tracking and error handling
+- `validate.py` — Schema validation and automatic repair for LLM responses
+- `output.py` — Output file management with path resolution
+- `errors.py` — Comprehensive error hierarchy for enrichment operations
+
+#### `pipeline/enrichment/schemas/`
+
+Pydantic models for enrichment output validation:
+- `enrichment_v1.py` — EnrichmentV1 container with metadata
+- `summary.py` — SummaryEnrichment (short/medium/long variants)
+- `tag.py` — TagEnrichment (categories, keywords, entities)
+- `chapter.py` — ChapterEnrichment (title, timestamps, description)
+- `highlight.py` — HighlightEnrichment (quote, timestamp, importance level)
+
+#### `pipeline/enrichment/prompts/`
+
+YAML-based prompt engineering system:
+- `loader.py` — PromptLoader for loading and caching templates
+- `renderer.py` — PromptRenderer with Jinja2 templating
+- `summarize.yaml`, `tag.yaml`, `chapterize.yaml`, `highlight.yaml` — Prompt templates
+
+#### `pipeline/enrichment/presets/`
+
+Quality and content profile configurations:
+- `quality.py` — Quality presets (FAST, BALANCED, BEST)
+- `content.py` — Content profiles (PODCAST, MEETING, LECTURE)
 
 ---
 
-#### `pipeline/transcribers/validate.py`  
-Validates raw transcript dictionaries against the `TranscriptV1` schema:
-- Raises `TranscriptValidationError` on malformed input  
-- Enforces timestamp format and confidence bounds  
-- Rejects extra fields via `extra="forbid"` model config
-
----
-
-#### `pipeline/transcribers/persistence.py`  
-Handles transcript serialization and file output:
-- Persists any `TranscriptV1` or compatible object to disk  
-- Returns absolute path to saved file
-
----
-
-### 2.5 Configuration Management
+### 4. Configuration Management
 
 Centralized configuration system introduced in v0.6.5 for managing transcription engines, API keys, and output preferences.
 
@@ -109,7 +149,7 @@ Configuration sources (in precedence order):
 
 ---
 
-### 2.6 Output Management
+### 5. Output Management
 
 Flexible output path management introduced in v0.6.5, replacing hardcoded output directories.
 
@@ -121,13 +161,17 @@ Flexible output path management introduced in v0.6.5, replacing hardcoded output
 
 ---
 
-### 2.7 Infrastructure Layer
+### 6. Infrastructure Layer
 
 Enterprise-grade provider architecture introduced in v0.7.5 for unified LLM and transcription service management.
 
-#### `pipeline/llm/` — LLM Provider Infrastructure
+**Purpose**: These infrastructure modules provide the underlying provider implementations that support the core Transcribers and Enrichment components. They are not directly invoked by users but are used internally by the CLI commands.
 
-Unified infrastructure for all LLM providers with consistent interface and configuration management:
+#### 6.1 `pipeline/llm/` — LLM Provider Infrastructure
+
+Unified infrastructure for all LLM providers with consistent interface and configuration management (introduced in v0.7.5).
+
+**Supports**: Enrichment component (Section 3)
 
 - **Base Protocol**: `BaseLLMProvider` defines the contract for all LLM providers
   - `generate()` — Generate text from prompts
@@ -158,9 +202,11 @@ Unified infrastructure for all LLM providers with consistent interface and confi
   - `ProviderError` — Provider-specific errors
   - `ProviderNotAvailableError` — Provider unavailable errors
 
-#### `pipeline/transcription/` — Transcription Provider Infrastructure
+#### 6.2 `pipeline/transcription/` — Transcription Provider Infrastructure
 
-Unified infrastructure for all transcription providers with consistent interface and configuration management:
+Unified infrastructure for all transcription providers with consistent interface and configuration management (introduced in v0.7.5).
+
+**Supports**: Transcribers component (Section 2)
 
 - **Base Protocol**: `TranscriberProvider` defines the contract for all transcription providers
   - `transcribe()` — Convert audio to text
@@ -198,223 +244,13 @@ Unified infrastructure for all transcription providers with consistent interface
 - **No Hardcoded Values**: All configuration externalized to YAML or environment variables
 - **Factory Pattern**: Centralized provider instantiation with caching
 - **Error Handling**: Comprehensive error hierarchy for debugging
+- **Support Role**: These modules support the core components (Transcribers and Enrichment) but are not directly user-facing
 
-#### Pricing Configuration
-
-Configurable pricing system introduced in v0.7.5 for accurate cost estimation with custom pricing agreements.
-
-**Transcription Provider Pricing**:
-- Simple per-minute pricing model
-- Configurable via `cost_per_minute_usd` field in provider configs
-- Environment variable support: `WHISPER_API_COST_PER_MINUTE`, `AWS_TRANSCRIBE_COST_PER_MINUTE`
-- Default values: OpenAI Whisper ($0.006/min), AWS Transcribe ($0.024/min)
-- Use cases: Volume discounts, regional pricing, custom enterprise agreements
-
-**LLM Provider Pricing**:
-- Complex per-model, per-token pricing
-- Configurable via `pricing_override` field (optional dictionary)
-- Format: `{"model-name": {"input_per_1k": 0.01, "output_per_1k": 0.03}}`
-- Falls back to built-in pricing database if not overridden
-- Supports all models across OpenAI, Anthropic, and AWS Bedrock providers
-
-**Configuration Methods**:
-1. **YAML Configuration** (`.content-pipeline/config.yaml`):
-   ```yaml
-   whisper_api:
-     cost_per_minute_usd: 0.005  # Custom rate
-   
-   llm:
-     openai:
-       pricing_override:
-         gpt-4: {input_per_1k: 0.025, output_per_1k: 0.05}
-   ```
-
-2. **Environment Variables** (for transcription only):
-   ```bash
-   export WHISPER_API_COST_PER_MINUTE=0.005
-   export AWS_TRANSCRIBE_COST_PER_MINUTE=0.020
-   ```
-
-3. **Configuration Precedence**: Environment > YAML > Default
-
-**Benefits**:
-- Enterprise customers can reflect negotiated pricing
-- Easy updates when providers change rates
-- No code changes required for pricing updates
-- Maintains backward compatibility with default values
+**Configuration**: Both LLM and transcription providers support flexible configuration through YAML files, environment variables, and configuration precedence rules. Pricing is also configurable for cost estimation. See [configuration-guide.md](configuration-guide.md) for complete configuration details.
 
 ---
 
-### 3. Enrichment System
-
-AI-powered semantic enrichment introduced in v0.7.0 for transforming transcripts into structured, semantically rich content.
-
-#### `pipeline/enrichment/`
-Core enrichment infrastructure for LLM-powered analysis:
-
-- `orchestrator.py` — Coordinates enrichment workflow across agents, prompts, and validation
-- `cost_estimator.py` — Pre-flight cost calculation with token counting and pricing database
-- `cache.py` — File-based caching system with TTL expiration and size limits
-- `chunking.py` — Automatic transcript splitting for long-form content
-- `batch.py` — Batch processing with progress tracking and error handling
-- `validate.py` — Schema validation and automatic repair for LLM responses
-- `retry.py` — Exponential backoff retry logic for transient failures
-- `output.py` — Output file management with path resolution
-- `errors.py` — Comprehensive error hierarchy for enrichment operations
-
----
-
-#### `pipeline/enrichment/agents/`
-LLM provider adapters implementing unified agent protocol:
-
-- `base.py` — BaseLLMAgent protocol defining agent interface
-- `openai_agent.py` — OpenAI GPT models (GPT-4, GPT-3.5-turbo)
-- `claude_agent.py` — Anthropic Claude models (Claude 3 Opus/Sonnet/Haiku, Claude 2)
-- `bedrock_agent.py` — AWS Bedrock (Claude and Titan models)
-- `ollama_agent.py` — Local Ollama models (Llama 2, Mistral, etc.)
-- `factory.py` — Agent factory with auto-selection and credential validation
-
-All agents support:
-- Cost estimation with provider-specific token counting
-- Context window detection and validation
-- Standardized request/response formats
-- Retry logic with exponential backoff
-
----
-
-#### `pipeline/enrichment/schemas/`
-Pydantic models for enrichment output validation:
-
-- `enrichment_v1.py` — EnrichmentV1 container with metadata
-- `summary.py` — SummaryEnrichment (short/medium/long variants)
-- `tag.py` — TagEnrichment (categories, keywords, entities)
-- `chapter.py` — ChapterEnrichment (title, timestamps, description)
-- `highlight.py` — HighlightEnrichment (quote, timestamp, importance level)
-
-All schemas include:
-- Field validation with Pydantic v2
-- JSON schema generation
-- Automatic repair logic for common LLM output issues
-
----
-
-#### `pipeline/enrichment/prompts/`
-YAML-based prompt engineering system:
-
-- `loader.py` — PromptLoader for loading and caching templates
-- `renderer.py` — PromptRenderer with Jinja2 templating
-- `summarize.yaml` — Summary generation prompt
-- `tag.yaml` — Tag extraction prompt
-- `chapterize.yaml` — Chapter detection prompt
-- `highlight.yaml` — Highlight identification prompt
-
-Supports:
-- Custom prompt directories
-- Template variables (transcript_text, language, duration, word_count)
-- Fallback from custom to default prompts
-
----
-
-#### `pipeline/enrichment/presets/`
-Quality and content profile configurations:
-
-- `quality.py` — Quality presets (FAST, BALANCED, BEST)
-- `content.py` — Content profiles (PODCAST, MEETING, LECTURE)
-
-Quality presets select appropriate models per provider:
-- FAST: Smaller, cheaper models (gpt-3.5-turbo, claude-haiku, llama2:7b)
-- BALANCED: Mid-tier models (gpt-4-turbo, claude-sonnet, llama2:13b)
-- BEST: Largest models (gpt-4, claude-opus, llama2:70b)
-
-Content profiles adapt enrichment to domain:
-- PODCAST: Medium summaries, speaker extraction, chapter detection
-- MEETING: Short summaries, action items, decision highlights
-- LECTURE: Long summaries, key concepts, chapter detection
-
----
-
-### 4. CLI Orchestration
-
-Modular CLI architecture refactored in v0.6.0 into the `cli/` package.
-
-The CLI is organized into subcommands using Click groups with shared components:
-
-- `extract` — triggers the extraction pipeline
-- `transcribe` — triggers the transcription pipeline
-- `enrich` — triggers the enrichment pipeline (NEW in v0.7.0)
-
-Each subcommand is implemented as a separate module with reusable decorators and centralized help text.
-
----
-
-#### 🎧 Extract Flags
-
-Used with the `extract` subcommand:
-
-- `--source` — input media path (YouTube URL or local `.mp4`)
-- `--output` — directory for saving extracted `.mp3` and metadata `.json`
-
-Output includes:
-- `.mp3` audio file
-- Metadata `.json` conforming to the unified schema
-
----
-
-#### 📝 Transcribe Flags
-
-Used with the `transcribe` subcommand:
-
-- `--source` — path to the input audio file (`.mp3`)
-- `--output` — path for saving transcript output (`.json`)
-- `--language` — specifies spoken language in the audio (e.g., `en`, `fr`, `de`)
-
-Enhanced in v0.6.5 with engine selection and configuration:
-- `--engine` — **REQUIRED** transcription engine selection (local-whisper, openai-whisper, aws-transcribe, auto)
-- `--model` — model size/version for selected engine (e.g., `base`, `large`, `whisper-1`)
-- `--api-key` — API key for cloud services (or use environment variables)
-- `--config` — path to YAML configuration file
-- `--output-dir` — output directory (overrides configuration)
-- `--log-level` — logging verbosity (debug, info, warning, error)
-
-Output includes:
-- Transcript `.json` conforming to `TranscriptV1` schema
-
----
-
-#### 🎨 Enrich Flags
-
-Used with the `enrich` subcommand (NEW in v0.7.0):
-
-- `--input` — path to transcript file or glob pattern for batch processing
-- `--output` — path for saving enriched output (auto-generated if not specified)
-- `--output-dir` — directory for batch processing outputs
-- `--provider` — LLM provider selection (openai, claude, bedrock, ollama, auto)
-- `--model` — specific model to use (overrides quality preset)
-- `--quality` — quality preset (fast, balanced, best)
-- `--preset` — content profile (podcast, meeting, lecture, custom)
-- `--summarize` — generate summaries
-- `--tag` — extract tags
-- `--chapterize` — detect chapters
-- `--highlight` — identify highlights
-- `--all` — enable all enrichment types
-- `--max-cost` — maximum cost limit in USD
-- `--dry-run` — preview costs without making API calls
-- `--no-cache` — bypass cache and generate fresh results
-- `--custom-prompts` — directory with custom YAML prompt templates
-- `--config` — path to configuration file
-- `--log-level` — logging verbosity
-
-Output includes:
-- Enriched transcript `.json` conforming to `EnrichmentV1` schema
-- Metadata including provider, model, cost, tokens, and cache status
-
----
-
-Handles logging, error propagation, and output normalization across all flows.
-
----
-
-### 5. Schema Enforcement
+### 7. Schema Enforcement
 
 #### `pipeline/extractors/schema/metadata.py`
 
@@ -424,7 +260,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 #### `pipeline/transcribers/schemas/transcript_v1.py`
 
-- Defines the transcript schema used by transcriber adapters
+- Defines the transcript schema used by transcription providers
 - Enforced via integration tests and schema validation
 - Enables structured enrichment, publishing, and archival
 
@@ -436,7 +272,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 6. Configuration & Logging
+### 8. Configuration & Logging
 
 #### `pipeline/config/logging_config.py`
 
@@ -445,7 +281,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-### 7. Utilities
+### 9. Utilities
 
 #### `pipeline/utils/retry.py`
 
@@ -454,7 +290,7 @@ Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
-## 8. Multi-Agent Protocol (Planned)
+## 10. Multi-Agent Protocol (Planned)
 
 The pipeline will integrate with an MCP server to support agent-based orchestration:
 
@@ -464,7 +300,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 9. Observability & Testing
+## 11. Observability & Testing
 
 - Integration tests validate CLI behavior and extractor output
 - Logging is unified across all components
@@ -472,7 +308,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 10. Test Coverage
+## 12. Test Coverage
 
 - Unit tests validate extractor logic, schema compliance, and CLI flag behavior
 - Integration tests simulate real input scenarios across platforms and verify output normalization
@@ -496,15 +332,6 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ## 📁 Folder Summary
 
-For full folder and file layout, see [project_structure.md](project_structure.md)
-
----
-
-## 🧭 Future Directions
-- 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across major social media platforms
-- 📦 Archive and index all enriched content into a searchable store  
-- 🧠 Integrate MCP server for agent orchestration, routing, retries, and tagging  
-- 🖥️ Build a GUI for reviewing and editing enriched metadata before publishing  
-- 📊 Add real-time observability: structured logging, tracing, and metrics across pipeline stages  
+For full folder and file layout, see [project-structure.md](project-structure.md)  
 
 

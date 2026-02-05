@@ -1,25 +1,25 @@
 # 🧠 Content Pipeline
 
-A modular, multi-agent pipeline for extracting, enriching, and publishing media content from platforms like YouTube, TikTok, and Vimeo. Designed for transparency, auditability, and enterprise-grade scalability.
+A modular pipeline for extracting, enriching, and publishing media content from platforms like YouTube, TikTok, and Vimeo. Designed for transparency, auditability, and enterprise-grade scalability.
 
 ---
 
 ## 🚀 Overview
 
-This project orchestrates audio extraction, transcription, metadata enrichment, and publishing workflows across multiple platforms. It supports CLI invocation, schema enforcement, and future agent-based routing via an MCP server. Powered by AI transcription and LLM enrichment for intelligent content transformation and multi-format publishing.
+This project orchestrates audio extraction, transcription, metadata enrichment, and publishing workflows across multiple platforms. It supports CLI invocation, schema enforcement, and future MCP server integration. Powered by AI transcription and LLM enrichment for intelligent content transformation and multi-format publishing.
 
 For installation and setup, see [installation-guide.md](installation-guide.md).  
 For CLI commands and usage, see [cli-commands.md](cli-commands.md).  
 For system internals, see [architecture.md](architecture.md).  
-For folder layout, see [project_structure.md](project_structure.md).  
-For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
+For folder layout, see [project-structure.md](project-structure.md).  
+For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 
 ---
 
 ## 📦 Key Features
 
 - Multi-platform content extraction and ingestion (YouTube, TikTok, Vimeo, local files, cloud storage)
-- AI-powered transcription with multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto) with YAML configuration and environment variables
+- AI-powered transcription with multiple provider support (local-whisper, openai-whisper, aws-transcribe, auto) with YAML configuration and environment variables
 - LLM-driven content enrichment and semantic analysis (summarization, tagging, chapters, highlights)
 - Multi-format content generation and publishing (blogs, tweet threads, SEO metadata, social media)
 - Enterprise-grade architecture with schema validation and audit trails
@@ -36,21 +36,19 @@ For testing strategy and coverage, see [test_strategy.md](test_strategy.md).
 - Retry logic and logging hardening with yt-dlp integration
 - Post-merge cleanup and changelog recovery
 - Metadata extraction and schema enforcement
-- Architecture overhaul and multi-agent readiness
-- Transcriber functionality with Whisper adapter, transcript normalization, and schema persistence
+- Architecture overhaul and modular design
+- Transcriber functionality with Whisper providers, transcript normalization, and schema persistence
 - Modular CLI architecture with `cli/` package, shared options, extensible subcommands, and comprehensive testing
-- Enhanced transcription and configuration with multiple engine support (local-whisper, openai-whisper, aws-transcribe, auto), explicit engine selection, YAML configuration management, environment variable support, and user-controlled output paths
+- Enhanced transcription and configuration with multiple provider support (local-whisper, openai-whisper, aws-transcribe, auto), explicit provider selection, YAML configuration management, environment variable support, and user-controlled output paths
 - LLM-powered enrichment with semantic analysis for summaries, tags, chapters, and highlights; multi-provider support (OpenAI, Claude, Bedrock, Ollama); cost control and dry-run mode; quality presets and content profiles
+- **v0.7.5** - Infrastructure refactoring: unified provider architecture, renamed "adapters" and "agents" to "providers", configuration management system
+- **v0.7.6** - Documentation fixes: updated all documentation to reflect v0.7.5 terminology and architecture changes
 
-### 🔧 Technical Releases
-- **v0.7.5 Infrastructure Refactoring** - Enterprise-grade provider architecture, unified LLM and transcription infrastructure, configuration management system, comprehensive testing framework (unplanned technical cleanup)
+### 🔧 In Progress
+- **v0.8.0** - Formatter + publishing draft generator with 16 output types, hybrid templates + LLM approach, style profiles, and platform validation
 
-### 🧭 Upcoming
-- 📝 Format outputs for publishing (blogs, threads, chapters, SEO)
-- 📦 Archive and index enriched content in a searchable store
-- 🧠 Integrate MCP server for agent routing, retries, and tagging
-- 🖥️ Build a GUI for reviewing and editing metadata
-- 📊 Add real-time observability: logging, tracing, and metrics
+### 🧭 Future
+- Additional features and enhancements planned
 
 ---
 

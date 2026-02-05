@@ -53,7 +53,7 @@ The `TranscriptV1` model applies the following transformations to raw transcribe
 
 - Used in the `transcribe` CLI command after Whisper transcription
 - Output is persisted as `.txt` (flattened `text`) and optionally `.json` (full structure)
-- Compatible with downstream enrichment agents and summarizers
+- Compatible with downstream enrichment providers and summarizers
 - Normalization is handled by `normalize.py` using the `TranscriptV1` model
 
 ---

@@ -15,25 +15,13 @@ The testing strategy ensures that all core components — extractors, CLI orches
 ## 2. Test Types
 
 - **Unit Tests**  
-  Validate isolated functions and classes, especially in extractors, CLI subcommands, and schema utilities.
+  Validate isolated functions and classes in extractors, CLI subcommands, transcribers, enrichment providers, and schema utilities.
 
 - **Integration Tests**  
-  Simulate end-to-end flows across modular CLI, extractors, and metadata normalization.
+  Simulate end-to-end workflows across the complete pipeline (extract → transcribe → enrich).
 
 - **Property-Based Tests**  
-  Use Hypothesis to validate universal properties across CLI operations, ensuring correctness across input ranges.
-
-- **Schema Validation**  
-  Enforce field-level correctness using `pipeline/schema/metadata.py` and `TranscriptV1` schemas.
-
-- **CLI Subcommand Tests**  
-  Ensure modular CLI commands (`extract`, `transcribe`) execute correctly with shared options and help text consistency.
-
-- **Transcript Normalization Tests**  
-  Validate `TranscriptV1` schema compliance and adapter behavior across transcriber outputs.
-
-- **Enrichment Tests**  
-  Validate LLM-powered semantic enrichment including agent behavior, cost estimation, caching, and schema compliance.
+  Use Hypothesis to validate universal properties and invariants across CLI operations, ensuring correctness across randomized input ranges.
 
 ---
 
@@ -49,13 +37,7 @@ This folder contains unit and integration tests for core pipeline components, or
 
 ```text
 tests/
-├── assets/
-│   ├── sample_audio.mp3
-│   ├── sample_transcript_v1.json
-│   ├── sample_transcript.txt
-│   ├── sample_video_metadata.json
-│   ├── sample_video.mp4
-│   └── sample_whisper_raw_output.json
+├── assets/                      # Test data files (not versioned)
 ├── output/
 ├── cli/
 │   ├── test_extract.py              # Extract subcommand tests
@@ -75,7 +57,7 @@ tests/
 │   └── test_transcribe_pipeline_flow.py
 ├── pipeline/
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
-│   │   ├── test_agents.py           # LLM agent tests (OpenAI, Claude, Bedrock, Ollama)
+│   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)
 │   │   ├── test_orchestrator.py     # Enrichment workflow coordination tests
 │   │   ├── test_cost_estimator.py   # Cost calculation and token counting tests
 │   │   ├── test_cache.py            # Caching system tests
@@ -94,11 +76,11 @@ tests/
 │   │   └── schema/
 │   │       └── test_metadata.py
 │   └── transcribers/
-│       ├── adapters/
-│       │   ├── test_local_whisper_adapter.py    # v0.6.5
-│       │   ├── test_openai_whisper_adapter.py   # v0.6.5
-│       │   ├── test_aws_transcribe_adapter.py   # v0.6.5
-│       │   └── test_whisper_adapter.py          # Backward compatibility
+│       ├── providers/
+│       │   ├── test_local_whisper_provider.py    # v0.6.5
+│       │   ├── test_openai_whisper_provider.py   # v0.6.5
+│       │   ├── test_aws_transcribe_provider.py   # v0.6.5
+│       │   └── test_whisper_provider.py          # Backward compatibility
 │       ├── test_factory.py          # NEW in v0.6.5: Factory pattern tests
 │       ├── schemas/
 │       │   └── test_transcript_v1.py
@@ -165,7 +147,7 @@ pytest tests/cli/test_transcribe.py::TestTranscribeCommand::test_transcribe_help
 
 >**Note:**
 >All tests use pytest with unittest.mock for isolation
->Integration tests reflect real CLI usage and agent orchestration
+>Integration tests reflect real CLI usage and provider orchestration
 
 ---
 
@@ -174,7 +156,7 @@ pytest tests/cli/test_transcribe.py::TestTranscribeCommand::test_transcribe_help
 External dependencies are mocked using `unittest.mock` to ensure deterministic behavior and fast execution.
 
 - **YouTube downloads** and file I/O are mocked to avoid network and disk dependencies  
-- **Whisper transcription** is mocked in transcriber adapter tests to isolate normalization and persistence logic  
+- **Whisper transcription** is mocked in transcriber provider tests to isolate normalization and persistence logic  
 - **Metadata builders** are tested with placeholder inputs to avoid real source classification
 - **CLI subcommands** use Click's CliRunner for isolated testing without subprocess calls
 
@@ -192,44 +174,6 @@ Property-based tests use Hypothesis to validate universal behaviors across CLI o
 Each property test validates correctness across randomized input ranges, catching edge cases that unit tests might miss.
 
 ---
-
-### 7. Testing Coverage by Milestone
-
-The test strategy evolves with each milestone to ensure comprehensive coverage:
-
-#### **Current Testing Focus (v0.7.0)**
-- LLM agent protocol conformance and multi-provider support
-- Cost estimation with provider-specific token counting
-- Enrichment workflow orchestration and validation
-- File-based caching with TTL expiration
-- Long transcript chunking and merging
-- Batch processing with progress tracking
-- Schema validation and automatic repair for LLM outputs
-- Prompt template loading and Jinja2 rendering
-- Retry logic with exponential backoff
-- Property-based testing for enrichment operations
-- Integration testing across all four LLM providers
-
-#### **Previous Milestones**
-- **v0.6.5**: Engine selection, configuration management, output path management
-- **v0.6.0**: CLI refactoring with modular architecture
-- **v0.5.0**: Transcription with Whisper integration
-
-#### **Next Testing Phase (v0.8.0)**
-- Content formatting for multiple platforms (blogs, social media)
-- Template-based output generation
-- Platform-specific formatting validation
-- SEO metadata generation testing
-
-*For complete milestone details, see [docs/README.md](README.md#milestone-status)*
-
-### 8. Future Testing Plans
-
-- Add test coverage for streaming transcription and confidence scoring  
-- Validate transcript enrichment and segment filtering logic  
-- Introduce extractor interface compliance tests for future platforms (TikTok, Vimeo)  
-- Integrate coverage reporting and CI hooks for milestone tracking
-- Multi-engine transcription quality and performance benchmarking
 
 ---
 

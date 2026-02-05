@@ -31,9 +31,6 @@ python -m pytest tests/property_tests/
 ### Integration Tests
 End-to-end tests that test complete workflows with real external services.
 
-**See [Integration Tests Documentation](testing/integration-tests.md) for detailed documentation.**  
-**Quick Start**: [Integration Test Quick Start Guide](testing/integration-quickstart.md)
-
 ```bash
 # All integration tests (includes external APIs - costs money)
 python -m pytest tests/integration/ --external --slow
@@ -76,7 +73,7 @@ python -m pytest -m "not slow and not external"
 
 | Test Category | Count | Time | Marker | Cost |
 |--------------|-------|------|--------|------|
-| Adapter Tests | 5 | ~5 min | - | Free |
+| Provider Tests | 5 | ~5 min | - | Free |
 | Property Tests | 201 | ~4 min | - | Free |
 | Unit Tests | 179 | ~6 min | - | Free |
 | Fast Integration | 2 | ~1 min | `integration` | Free |
@@ -161,7 +158,7 @@ tests/
 ├── assets/                  # Test data files
 ├── pipeline/                # Unit tests mirroring pipeline/ structure
 │   ├── transcribers/
-│   │   ├── adapters/       # Adapter unit tests
+│   │   ├── providers/       # Provider unit tests
 │   │   └── test_*.py       # Component tests
 │   └── ...
 ├── integration/             # Integration tests
@@ -230,5 +227,5 @@ jobs:
 
 - [pytest documentation](https://docs.pytest.org/)
 - [Hypothesis documentation](https://hypothesis.readthedocs.io/)
-- [Test Strategy](docs/test_strategy.md)
+- [Test Strategy](docs/test-strategy.md)
 - [Architecture](docs/architecture.md)

@@ -4,10 +4,43 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Planning
-- **v0.8.0 Content Formatting** - Multi-platform content formatting (planned)
-- **v0.9.0 Validation** - Quality assurance and schema validation (planned)
-- **v0.10.0 Publishing** - External platform publishing (planned)
+No unreleased changes.
+
+## [0.7.6] - 2026-02-05
+
+### Documentation Fixes Release
+
+This is an **unplanned documentation-only release** to fix terminology inconsistencies introduced by the v0.7.5 infrastructure refactoring. The v0.7.5 release renamed all "adapter" terminology to "provider" and "agent" to "provider", but documentation was not fully updated.
+
+### Changed
+- Updated all documentation to use "provider" terminology consistently
+- Fixed import paths in documentation examples:
+  - `pipeline.enrichment.agents.factory` → `pipeline.llm.factory`
+  - `pipeline.transcribers.adapters` → `pipeline.transcription.providers`
+- Updated test directory structure references in testing documentation
+- Fixed class name references throughout documentation:
+  - `*Agent` → `*Provider`
+  - `*Adapter` → `*Provider`
+  - `AgentFactory` → `LLMProviderFactory`
+  - `TranscriberAdapter` → `TranscriberProvider`
+
+### Documentation Files Updated
+- `docs/architecture.md` - Restructured and simplified
+- `docs/project-structure.md` - Updated directory structure
+- `docs/configuration-guide.md` - Created comprehensive configuration guide
+- `docs/cli-commands.md` - Updated terminology and removed future planning
+- `docs/README.md` - Updated milestone structure and terminology
+- `docs/installation-guide.md` - Fixed verification scripts and import paths
+- `docs/testing-guide.md` - Updated test structure references
+- `docs/test-strategy.md` - Updated test folder layout
+- `docs/metadata-schema.md` - Fixed terminology
+- `docs/transcript-schema.md` - Fixed terminology
+- `README.md` (root) - Updated terminology
+
+### Notes
+- No code changes - documentation-only release
+- All changes follow the documentation update protocol
+- Terminology now consistent with v0.7.5 codebase
 
 ## [0.7.5] - 2026-02-03
 

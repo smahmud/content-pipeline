@@ -690,7 +690,7 @@ If you encounter issues during migration:
 
 1. Check this migration guide for common issues
 2. Review the [architecture documentation](architecture.md) for infrastructure details
-3. Check the [project structure](project_structure.md) for directory layout
+3. Check the [project structure](project-structure.md) for directory layout
 4. Review the [CHANGELOG](../CHANGELOG.md) for breaking changes
 5. Check the test files in `tests/pipeline/llm/` and `tests/pipeline/transcription/` for examples
 
