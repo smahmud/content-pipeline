@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
-## [0.8.0] - 2026-02-XX (DRAFT - DO NOT RELEASE)
+## [0.8.0] - 2026-02-18
 
 ### Content Formatting Release
 
@@ -44,6 +44,9 @@ This release introduces the `format` command for transforming enriched content i
   - Tone and length customization
   - Brand voice consistency across outputs
 
+### Fixed
+- LLMConfig now properly resolves `${VAR:-default}` environment variable syntax in YAML config files
+
 ### Changed
 - Updated CLI version to 0.8.0
 - Formatter uses new provider architecture (`pipeline/llm/`) introduced in v0.7.5
@@ -52,6 +55,7 @@ This release introduces the `format` command for transforming enriched content i
 - Formatter integrates with enrichment output from v0.7.0
 - Uses LLM infrastructure from v0.7.5 refactoring
 - All 16 output types fully implemented and tested
+- 228 tests passing (25 integration + 203 property tests)
 - See `.kiro/specs/formatter-v0.8.0/` for complete specification
 
 ## [0.7.6] - 2026-02-05

@@ -3,15 +3,14 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.7.0 — Adds LLM-powered enrichment with multi-provider support
-(OpenAI, Claude, Bedrock, Ollama) for summaries, tags, chapters, and highlights.
-Includes cost control, intelligent caching, and batch processing.
+Version: 0.8.0 — Adds content formatting with 16 output types, hybrid template + LLM
+architecture, style profiles, bundles, and platform validation.
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.7.0",
+    version="0.8.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
