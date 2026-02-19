@@ -1,0 +1,72 @@
+{#
+Chapters/timestamps template.
+
+Generates a formatted chapter list with:
+- Timestamps
+- Chapter titles
+- Optional descriptions
+
+Required context:
+- title: Content title
+- chapters: List of chapter objects with start_time, title, summary
+
+Optional context:
+- summary: Object with short summary
+- total_duration: Total duration in seconds
+#}
+{% from "base.j2" import format_chapter %}
+
+# {{ title | default("Chapters") }}
+
+{% if summary and summary.short %}
+{{ summary.short }}
+{% endif %}
+
+{% if total_duration %}
+**Total Duration:** {{ total_duration | format_timestamp }}
+{% endif %}
+
+---
+
+## Chapters
+
+{% if chapters %}
+{% for chapter in chapters %}
+### {{ chapter.start_time | format_timestamp }} - {{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% if chapter.end_time %}
+*Duration: {{ (chapter.end_time - chapter.start_time) | format_timestamp }}*
+{% endif %}
+
+{% endfor %}
+{% else %}
+*No chapters available.*
+{% endif %}
+
+---
+
+## Quick Navigation
+
+{% if chapters %}
+| Timestamp | Chapter |
+|-----------|---------|
+{% for chapter in chapters %}
+| {{ chapter.start_time | format_timestamp }} | {{ chapter.title }} |
+{% endfor %}
+{% endif %}
+
+---
+
+## Copy-Paste Format
+
+{% if chapters %}
+```
+{% for chapter in chapters %}
+{{ chapter.start_time | format_timestamp }} {{ chapter.title }}
+{% endfor %}
+```
+{% endif %}

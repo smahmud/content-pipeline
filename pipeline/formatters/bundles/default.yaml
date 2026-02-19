@@ -1,0 +1,58 @@
+# Default Bundle Configurations
+#
+# These bundles are shipped with the content-pipeline and provide
+# common output combinations for typical publishing workflows.
+#
+# Users can override these or add custom bundles in:
+#   .content-pipeline/bundles.yaml
+#
+# Or specify a custom file with:
+#   --bundles-config /path/to/bundles.yaml
+
+bundles:
+  blog-launch:
+    description: "Blog article with social promotion"
+    outputs:
+      - blog
+      - tweet
+      - linkedin
+      - seo
+
+  video-launch:
+    description: "YouTube video with supporting content"
+    outputs:
+      - youtube
+      - chapters
+      - tweet
+      - blog
+
+  podcast:
+    description: "Podcast episode package"
+    outputs:
+      - podcast-notes
+      - newsletter
+      - tweet
+      - transcript-clean
+
+  social-only:
+    description: "Social media posts only"
+    outputs:
+      - tweet
+      - linkedin
+
+  full-repurpose:
+    description: "Complete content repurposing package"
+    outputs:
+      - blog
+      - tweet
+      - linkedin
+      - youtube
+      - newsletter
+      - seo
+
+  notes-package:
+    description: "Note-taking and documentation formats"
+    outputs:
+      - notion
+      - obsidian
+      - slides

@@ -1,0 +1,75 @@
+{#
+Tweet/Twitter thread template.
+
+Generates a Twitter thread with:
+- Hook (first tweet)
+- Main points (subsequent tweets)
+- Conclusion with CTA
+
+Required context:
+- title: Content title
+- summary: Object with short, medium summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- highlights: List of highlight objects
+- chapters: List of chapter objects
+- cta_text: Call-to-action text
+- thread_length: Number of tweets (default: 5)
+#}
+{% from "base.j2" import format_tags_as_hashtags %}
+
+{% set max_tweets = thread_length | default(5) %}
+
+🧵 THREAD: {{ title | truncate_chars(200, "...") }}
+
+{{ summary.short | truncate_chars(240, "...") }}
+
+{{ format_tags_as_hashtags(tags, 3) }}
+
+---
+
+{% if highlights %}
+{% for highlight in highlights[:max_tweets - 2] %}
+{{ loop.index }}/{{ [highlights | length, max_tweets - 2] | min }}
+
+{{ highlight.text | truncate_chars(260, "...") }}
+
+{% if highlight.speaker %}
+— {{ highlight.speaker }}
+{% endif %}
+
+---
+
+{% endfor %}
+{% elif chapters %}
+{% for chapter in chapters[:max_tweets - 2] %}
+{{ loop.index }}/{{ [chapters | length, max_tweets - 2] | min }}
+
+{{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary | truncate_chars(220, "...") }}
+{% endif %}
+
+---
+
+{% endfor %}
+{% else %}
+1/2
+
+{{ summary.medium | truncate_chars(260, "...") }}
+
+---
+
+{% endif %}
+
+🎯 Key takeaway:
+
+{{ summary.short | first_sentence | truncate_chars(200, "...") }}
+
+{% if cta_text %}
+{{ cta_text | truncate_chars(50, "...") }}
+{% endif %}
+
+{{ format_tags_as_hashtags(tags, 5) }}

@@ -1,0 +1,53 @@
+# Enhancement prompt for LinkedIn output type
+name: linkedin
+description: Enhance LinkedIn post content for professional engagement
+
+tones:
+  professional: |
+    Use a polished, business-appropriate tone. Position yourself as a thought leader.
+    Balance expertise with accessibility for a professional audience.
+  casual: |
+    Use a personable, authentic tone. Share insights as a peer, not a lecturer.
+    Include personal experiences and lessons learned.
+  technical: |
+    Use industry-specific language for expert audiences. Be precise and informative.
+    Demonstrate deep domain knowledge.
+  friendly: |
+    Use a warm, supportive tone. Encourage engagement and discussion.
+    Make readers feel valued and heard.
+
+lengths:
+  short: |
+    Keep to 150-300 characters. Focus on one powerful insight.
+    Perfect for quick engagement and shares.
+  medium: |
+    Use 500-1000 characters. Include context and a clear takeaway.
+    Ideal for thought leadership posts.
+  long: |
+    Use 1500-2500 characters. Provide comprehensive insights with examples.
+    Great for in-depth professional content.
+
+rules: |
+  1. PRESERVE the hook/opening line structure
+  2. PRESERVE any bullet points or numbered lists
+  3. PRESERVE hashtags and mentions
+  4. START with a compelling hook that stops the scroll
+  5. INCLUDE a clear value proposition
+  6. END with an engagement prompt (question or call-to-action)
+  7. USE line breaks for readability
+
+template: |
+  You are a LinkedIn content strategist. Enhance the following LinkedIn post for professional engagement.
+
+  {rules}
+
+  TONE GUIDANCE:
+  {tone_guidance}
+
+  LENGTH GUIDANCE:
+  {length_guidance}
+
+  LINKEDIN CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED LINKEDIN CONTENT:

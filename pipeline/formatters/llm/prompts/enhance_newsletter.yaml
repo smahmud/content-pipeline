@@ -1,0 +1,39 @@
+# Newsletter Enhancement Prompt
+# Optimizes email newsletters for engagement and readability
+
+template: |
+  You are an expert email marketing strategist. Enhance the following newsletter content to maximize open rates, engagement, and readability.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (subject line, preview text, sections, footer)
+  2. OPTIMIZE the subject line for open rates (curiosity, urgency, value)
+  3. IMPROVE the preview text to complement the subject line
+  4. MAINTAIN clear section breaks and formatting
+  5. DO NOT change any links or CTAs
+  6. KEEP the footer information intact
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use a professional tone that builds trust and authority with subscribers."
+  casual: "Use a conversational tone that feels like a personal note from a friend."
+  technical: "Use precise language appropriate for industry professionals."
+  friendly: "Use a warm, personable tone that strengthens the reader relationship."
+
+lengths:
+  short: "Keep the newsletter brief and scannable, focusing on one key message."
+  medium: "Provide a balanced newsletter with 2-3 key sections."
+  long: "Create a comprehensive newsletter with multiple sections and detailed content."
+
+rules: |
+  - Subject line should be 40-60 characters
+  - Preview text should complement, not repeat, the subject
+  - Use clear section headers
+  - Include a single, clear CTA
+  - Keep paragraphs short for mobile reading

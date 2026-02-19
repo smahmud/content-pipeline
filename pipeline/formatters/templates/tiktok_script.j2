@@ -1,0 +1,172 @@
+{#
+TikTok/Short-form video script template.
+
+Generates a short-form video script with:
+- Strong hook (first 3 seconds)
+- Punchy body content
+- Clear CTA
+- 60-second timing
+
+Required context:
+- title: Video title
+- summary: Object with short summary
+
+Optional context:
+- highlights: List of key points
+- tags: Object for hashtags
+- hook_style: Type of hook (question, statement, shock)
+- cta_type: Type of CTA (follow, comment, share)
+#}
+{% from "base.j2" import format_tags_as_hashtags %}
+
+# TikTok Script: {{ title | default("Video") }}
+
+**Target Duration:** 60 seconds max
+**Format:** Vertical (9:16)
+
+---
+
+## 🎬 THE HOOK (0-3 seconds)
+*This is CRITICAL - viewers decide to stay or scroll in 3 seconds*
+
+{% if hook_style == "question" %}
+```
+"Did you know {{ summary.short | first_sentence | truncate_chars(50, "?") }}"
+```
+{% elif hook_style == "shock" %}
+```
+"This will change everything you know about {{ title | lower | truncate_chars(30, "...") }}"
+```
+{% else %}
+```
+"Stop scrolling! {{ summary.short | first_sentence | truncate_chars(40, "...") }}"
+```
+{% endif %}
+
+**Visual:** 
+- Direct eye contact
+- High energy
+- Text overlay with hook
+
+---
+
+## 📱 THE BODY (3-50 seconds)
+
+### Part 1: The Setup (3-15 seconds)
+```
+{{ summary.short | truncate_chars(150, "...") }}
+```
+
+**Visual:** Quick cuts, engaging visuals
+
+---
+
+### Part 2: The Value (15-35 seconds)
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+**Point {{ loop.index }}:** ({{ loop.index * 7 }}-{{ (loop.index * 7) + 7 }}s)
+```
+{{ highlight.text | first_sentence | truncate_chars(80, "...") }}
+```
+
+{% endfor %}
+{% else %}
+**Main Point:**
+```
+{{ summary.short | truncate_chars(200, "...") }}
+```
+{% endif %}
+
+**Visual:** 
+- Text overlays for each point
+- Quick transitions
+- Keep movement/energy high
+
+---
+
+### Part 3: The Payoff (35-50 seconds)
+```
+{% if highlights %}
+So remember: {{ highlights[0].text | first_sentence | truncate_chars(60, "...") }}
+{% else %}
+And that's {{ title | lower | truncate_chars(40, "...") }}!
+{% endif %}
+```
+
+---
+
+## 🎯 THE CTA (50-60 seconds)
+
+{% if cta_type == "follow" %}
+```
+"Follow for more tips like this!"
+```
+{% elif cta_type == "comment" %}
+```
+"Drop a 🔥 in the comments if this helped!"
+```
+{% elif cta_type == "share" %}
+```
+"Share this with someone who needs to hear it!"
+```
+{% else %}
+```
+"Follow for more and comment what you want to see next!"
+```
+{% endif %}
+
+**Visual:**
+- Point to follow button
+- Engaging end screen
+- Loop-friendly ending
+
+---
+
+## 📝 CAPTION
+
+{{ summary.short | truncate_chars(100, "...") }} 👇
+
+{% if tags %}
+{{ format_tags_as_hashtags(tags, 5) }} #fyp #viral #trending
+{% else %}
+#fyp #viral #trending #tips
+{% endif %}
+
+---
+
+## 🎵 AUDIO SUGGESTIONS
+
+- Trending sound (check TikTok trending)
+- Upbeat background music
+- Or: Original audio for authenticity
+
+---
+
+## ✅ PRE-PUBLISH CHECKLIST
+
+- [ ] Hook grabs attention in first 3 seconds
+- [ ] Total length under 60 seconds
+- [ ] Text overlays are readable
+- [ ] Audio is clear
+- [ ] CTA is clear
+- [ ] Hashtags are relevant
+- [ ] Caption is engaging
+- [ ] Thumbnail/cover is eye-catching
+
+---
+
+## 📊 TIMING BREAKDOWN
+
+| Section | Time | Duration |
+|---------|------|----------|
+| Hook | 0-3s | 3s |
+| Setup | 3-15s | 12s |
+| Value | 15-35s | 20s |
+| Payoff | 35-50s | 15s |
+| CTA | 50-60s | 10s |
+| **Total** | | **60s** |
+
+---
+
+*Remember: TikTok rewards watch time. Keep it punchy, valuable, and entertaining!*

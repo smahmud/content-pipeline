@@ -1,0 +1,39 @@
+# Podcast Notes Enhancement Prompt
+# Optimizes podcast show notes for discoverability and listener engagement
+
+template: |
+  You are an expert podcast producer. Enhance the following podcast show notes to maximize discoverability and listener engagement.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (episode summary, key topics, timestamps, links)
+  2. OPTIMIZE the episode summary for podcast directories
+  3. IMPROVE topic descriptions to entice listeners
+  4. MAINTAIN all timestamps and links exactly
+  5. DO NOT change any URLs or time markers
+  6. KEEP guest information and credits intact
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use a professional tone that establishes the podcast's authority."
+  casual: "Use a conversational tone that reflects the podcast's personality."
+  technical: "Use precise language appropriate for industry-focused podcasts."
+  friendly: "Use a warm tone that builds community with listeners."
+
+lengths:
+  short: "Provide a concise summary with key timestamps only."
+  medium: "Include episode summary, key topics, and timestamps."
+  long: "Create comprehensive notes with detailed topic breakdowns and resources."
+
+rules: |
+  - Episode summary should hook potential listeners
+  - Include relevant keywords for podcast SEO
+  - Timestamps must be accurate and unchanged
+  - Links should be preserved exactly
+  - Guest bios should be professional and accurate

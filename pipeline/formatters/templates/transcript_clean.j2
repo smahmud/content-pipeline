@@ -1,0 +1,78 @@
+{#
+Clean transcript template.
+
+Generates a cleaned-up transcript with:
+- Speaker labels
+- Paragraph formatting
+- Optional timestamps
+
+Required context:
+- title: Content title
+- transcript: Transcript text or list of segments
+
+Optional context:
+- summary: Object with short summary
+- speakers: List of speaker names
+- include_timestamps: Whether to include timestamps
+- chapters: List of chapter objects for section breaks
+#}
+
+# {{ title | default("Transcript") }}
+
+{% if summary and summary.short %}
+*{{ summary.short }}*
+{% endif %}
+
+{% if speakers %}
+**Speakers:** {{ speakers | join(", ") }}
+{% endif %}
+
+---
+
+## Transcript
+
+{% if transcript is string %}
+{# Simple text transcript #}
+{{ transcript }}
+
+{% elif transcript is iterable %}
+{# Segmented transcript with speaker labels #}
+{% set current_speaker = None %}
+{% for segment in transcript %}
+
+{% if segment.speaker and segment.speaker != current_speaker %}
+{% set current_speaker = segment.speaker %}
+
+**{{ segment.speaker }}:**
+{% endif %}
+
+{% if include_timestamps and segment.start_time %}
+[{{ segment.start_time | format_timestamp }}] {% endif %}{{ segment.text }}
+
+{% endfor %}
+{% else %}
+*No transcript available.*
+{% endif %}
+
+{% if chapters %}
+---
+
+## Sections
+
+{% for chapter in chapters %}
+### {{ chapter.title }}
+
+{% if chapter.start_time %}
+*Starts at {{ chapter.start_time | format_timestamp }}*
+{% endif %}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+---
+
+*This transcript has been cleaned and formatted for readability.*

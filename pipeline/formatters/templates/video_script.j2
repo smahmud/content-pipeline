@@ -1,0 +1,182 @@
+{#
+AI Video script template (HeyGen, Synthesia, etc.).
+
+Generates a video script with:
+- Scene markers
+- Dialogue/narration
+- Timing cues
+- Visual directions
+
+Required context:
+- title: Video title
+- summary: Object with short, medium, long summaries
+
+Optional context:
+- chapters: List of sections for scene breaks
+- highlights: List of key points to emphasize
+- duration_target: Target duration in seconds
+- avatar_name: AI avatar name
+- tone: Script tone (professional, casual, etc.)
+#}
+
+# Video Script: {{ title | default("Video Title") }}
+
+{% if avatar_name %}
+**Avatar:** {{ avatar_name }}
+{% endif %}
+{% if duration_target %}
+**Target Duration:** {{ duration_target | format_timestamp }}
+{% endif %}
+{% if tone %}
+**Tone:** {{ tone | title }}
+{% endif %}
+
+---
+
+## SCENE 1: INTRODUCTION
+**Duration:** ~15 seconds
+
+### Visual Direction
+- Avatar appears center frame
+- Friendly, welcoming expression
+- Background: Professional/neutral
+
+### Script
+```
+[AVATAR - FRIENDLY TONE]
+
+{{ summary.short | first_sentence | default("Welcome to this video.") }}
+
+Today, I'll be sharing {{ title | lower | default("important information") }} with you.
+
+Let's dive in!
+```
+
+---
+
+{% if chapters %}
+{% for chapter in chapters %}
+## SCENE {{ loop.index + 1 }}: {{ chapter.title | upper }}
+**Duration:** ~{{ ((duration_target | default(180)) / (chapters | length + 2)) | int }} seconds
+
+### Visual Direction
+- Transition: Fade/Cut
+- Avatar: Engaged, explaining
+{% if loop.index == 1 %}
+- Consider adding text overlay: "{{ chapter.title }}"
+{% endif %}
+
+### Script
+```
+[AVATAR - {{ tone | upper | default("INFORMATIVE") }} TONE]
+
+{% if chapter.summary %}
+{{ chapter.summary | truncate_chars(300, "...") }}
+{% else %}
+Let me tell you about {{ chapter.title | lower }}.
+{% endif %}
+
+{% if highlights and loop.index <= highlights | length %}
+Here's a key point: {{ highlights[loop.index - 1].text | first_sentence }}
+{% endif %}
+```
+
+---
+
+{% endfor %}
+{% else %}
+## SCENE 2: MAIN CONTENT
+**Duration:** ~{{ ((duration_target | default(180)) * 0.6) | int }} seconds
+
+### Visual Direction
+- Avatar: Engaged, explaining
+- Consider adding supporting visuals
+
+### Script
+```
+[AVATAR - {{ tone | upper | default("INFORMATIVE") }} TONE]
+
+{{ summary.medium | default(summary.long | default("")) | truncate_chars(500, "...") }}
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+{{ highlight.text | first_sentence }}
+
+{% endfor %}
+{% endif %}
+```
+
+---
+
+{% endif %}
+
+## SCENE {{ (chapters | length | default(1)) + 2 }}: KEY TAKEAWAYS
+**Duration:** ~20 seconds
+
+### Visual Direction
+- Avatar: Summarizing
+- Consider bullet point overlay
+
+### Script
+```
+[AVATAR - CONCLUSIVE TONE]
+
+Let me quickly recap the key points:
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+{{ loop.index }}. {{ highlight.text | first_sentence | truncate_chars(60, "...") }}
+{% endfor %}
+{% else %}
+{{ summary.short | default("") }}
+{% endif %}
+```
+
+---
+
+## SCENE {{ (chapters | length | default(1)) + 3 }}: CALL TO ACTION
+**Duration:** ~10 seconds
+
+### Visual Direction
+- Avatar: Friendly, inviting
+- End card with CTA
+
+### Script
+```
+[AVATAR - WARM, INVITING TONE]
+
+Thanks for watching!
+
+If you found this helpful, don't forget to like and subscribe.
+
+See you in the next video!
+```
+
+---
+
+## PRODUCTION NOTES
+
+### Timing Breakdown
+| Scene | Duration |
+|-------|----------|
+| Introduction | ~15s |
+{% if chapters %}
+{% for chapter in chapters %}
+| {{ chapter.title }} | ~{{ ((duration_target | default(180)) / (chapters | length + 2)) | int }}s |
+{% endfor %}
+{% else %}
+| Main Content | ~{{ ((duration_target | default(180)) * 0.6) | int }}s |
+{% endif %}
+| Key Takeaways | ~20s |
+| Call to Action | ~10s |
+| **Total** | **~{{ duration_target | default(180) | format_timestamp }}** |
+
+### Avatar Settings
+- Expression: Friendly, professional
+- Gestures: Natural, moderate
+- Eye contact: Direct to camera
+- Pacing: {{ tone | default("moderate") }}
+
+### Audio
+- Background music: Subtle, non-distracting
+- Voice: Clear, {{ tone | default("professional") }}

@@ -1,0 +1,129 @@
+{#
+Obsidian note template.
+
+Generates an Obsidian-formatted note with:
+- YAML frontmatter
+- Wikilinks
+- Tags
+- Callouts
+
+Required context:
+- title: Note title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- chapters: List of sections
+- highlights: List of key points
+- created_date: Creation date
+- source: Source URL or reference
+- aliases: Alternative titles
+#}
+
+---
+title: {{ title | default("Untitled") }}
+created: {{ created_date | default("{{date}}") }}
+{% if tags %}
+tags:
+{% set all_tags = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{% for tag in all_tags[:10] %}
+  - {{ tag | lower | replace(" ", "-") }}
+{% endfor %}
+{% endif %}
+{% if aliases %}
+aliases:
+{% for alias in aliases %}
+  - {{ alias }}
+{% endfor %}
+{% endif %}
+{% if source %}
+source: {{ source }}
+{% endif %}
+---
+
+# {{ title | default("Untitled") }}
+
+## Summary
+
+{{ summary.short | default("") }}
+
+---
+
+## Overview
+
+{{ summary.medium | default(summary.long | default("")) }}
+
+---
+
+{% if chapters %}
+## Sections
+
+{% for chapter in chapters %}
+### {{ chapter.title }}
+
+{% if chapter.start_time %}
+> [!info] Timestamp: {{ chapter.start_time | format_timestamp }}
+{% endif %}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if highlights %}
+---
+
+## Key Points
+
+> [!important] Key Takeaways
+{% for highlight in highlights[:5] %}
+> - {{ highlight.text | first_sentence }}
+{% endfor %}
+
+### Highlights
+
+{% for highlight in highlights %}
+> [!quote]{% if highlight.speaker %} {{ highlight.speaker }}{% endif %}
+> {{ highlight.text | truncate_chars(300, "...") }}
+
+{% endfor %}
+{% endif %}
+
+---
+
+## Notes
+
+{{ summary.long | default("") }}
+
+---
+
+## Related
+
+- [[MOC - Main Topic]]
+{% if tags and tags.categories %}
+{% for category in tags.categories[:3] %}
+- [[{{ category }}]]
+{% endfor %}
+{% endif %}
+
+---
+
+## References
+
+{% if source %}
+- [Source]({{ source }})
+{% endif %}
+- 
+
+---
+
+## Tags
+
+{% if tags %}
+{% set all_tags = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{% for tag in all_tags %}
+#{{ tag | lower | replace(" ", "-") }}{% if not loop.last %} {% endif %}
+{% endfor %}
+{% endif %}

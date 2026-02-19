@@ -1,0 +1,166 @@
+{#
+Presentation slides outline template.
+
+Generates a slide deck outline with:
+- Title slide
+- Agenda
+- Content slides
+- Summary slide
+
+Required context:
+- title: Presentation title
+- summary: Object with short, medium, long summaries
+
+Optional context:
+- subtitle: Presentation subtitle
+- author: Presenter name
+- date: Presentation date
+- chapters: List of topics/sections
+- highlights: List of key points
+- tags: Object with categories and keywords
+#}
+{% from "base.j2" import format_tags_list %}
+
+# Presentation Outline: {{ title | default("Presentation Title") }}
+
+{% if author %}
+**Presenter:** {{ author }}
+{% endif %}
+{% if date %}
+**Date:** {{ date }}
+{% endif %}
+
+---
+
+## Slide 1: Title
+
+**{{ title | default("Presentation Title") }}**
+
+{% if subtitle %}
+*{{ subtitle }}*
+{% endif %}
+
+{% if author %}
+{{ author }}
+{% endif %}
+{% if date %}
+{{ date }}
+{% endif %}
+
+---
+
+## Slide 2: Agenda
+
+{% if chapters %}
+{% for chapter in chapters %}
+{{ loop.index }}. {{ chapter.title }}
+{% endfor %}
+{% elif tags and tags.categories %}
+{% for category in tags.categories %}
+{{ loop.index }}. {{ category }}
+{% endfor %}
+{% else %}
+1. Introduction
+2. Main Content
+3. Key Takeaways
+4. Q&A
+{% endif %}
+
+---
+
+## Slide 3: Introduction
+
+{{ summary.short | default("") }}
+
+**Key Question:** What will you learn today?
+
+---
+
+{% if chapters %}
+{% for chapter in chapters %}
+## Slide {{ loop.index + 3 }}: {{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary | truncate_chars(200, "...") }}
+{% endif %}
+
+**Key Points:**
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+- {{ highlight.text | first_sentence | truncate_chars(80, "...") }}
+{% endfor %}
+{% else %}
+- Point 1
+- Point 2
+- Point 3
+{% endif %}
+
+---
+
+{% endfor %}
+{% else %}
+## Slide 4: Main Content
+
+{{ summary.medium | default(summary.long | default("")) | truncate_chars(300, "...") }}
+
+**Key Points:**
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+- {{ highlight.text | first_sentence | truncate_chars(80, "...") }}
+{% endfor %}
+{% else %}
+- Point 1
+- Point 2
+- Point 3
+{% endif %}
+
+---
+
+{% endif %}
+
+## Slide {{ (chapters | length | default(1)) + 4 }}: Key Takeaways
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+{{ loop.index }}. {{ highlight.text | first_sentence }}
+{% endfor %}
+{% else %}
+1. {{ summary.short | first_sentence | default("Key takeaway 1") }}
+2. Key takeaway 2
+3. Key takeaway 3
+{% endif %}
+
+---
+
+## Slide {{ (chapters | length | default(1)) + 5 }}: Summary
+
+{{ summary.short | default("") }}
+
+{% if tags %}
+**Topics Covered:** {{ format_tags_list(tags) }}
+{% endif %}
+
+---
+
+## Slide {{ (chapters | length | default(1)) + 6 }}: Q&A
+
+**Questions?**
+
+{% if author %}
+Contact: {{ author }}
+{% endif %}
+
+---
+
+## Speaker Notes
+
+### For Title Slide
+- Introduce yourself
+- Set expectations for the presentation
+
+### For Main Content
+{{ summary.medium | default("") }}
+
+### For Closing
+- Summarize key points
+- Open floor for questions

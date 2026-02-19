@@ -1,0 +1,111 @@
+{#
+SEO metadata template.
+
+Generates SEO-optimized metadata including:
+- Meta title (≤60 chars)
+- Meta description (≤160 chars)
+- Keywords
+- Open Graph tags
+- Twitter Card tags
+
+Required context:
+- title: Content title
+- summary: Object with short summary
+- tags: Object with categories and keywords
+
+Optional context:
+- url: Canonical URL
+- image_url: Featured image URL
+- site_name: Website name
+- twitter_handle: Twitter @handle
+- author: Author name
+#}
+
+<!-- SEO Metadata -->
+
+## Meta Tags
+
+**Meta Title:**
+{{ title | truncate_chars(60, "") }}
+
+**Meta Description:**
+{{ summary.short | truncate_chars(160, "") }}
+
+**Keywords:**
+{% if tags %}
+{% set all_keywords = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{{ all_keywords | join(", ") }}
+{% endif %}
+
+---
+
+## Open Graph Tags
+
+```html
+<meta property="og:title" content="{{ title | truncate_chars(60, "") }}" />
+<meta property="og:description" content="{{ summary.short | truncate_chars(160, "") }}" />
+<meta property="og:type" content="article" />
+{% if url %}
+<meta property="og:url" content="{{ url }}" />
+{% endif %}
+{% if image_url %}
+<meta property="og:image" content="{{ image_url }}" />
+{% endif %}
+{% if site_name %}
+<meta property="og:site_name" content="{{ site_name }}" />
+{% endif %}
+```
+
+---
+
+## Twitter Card Tags
+
+```html
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{ title | truncate_chars(60, "") }}" />
+<meta name="twitter:description" content="{{ summary.short | truncate_chars(160, "") }}" />
+{% if twitter_handle %}
+<meta name="twitter:site" content="{{ twitter_handle }}" />
+<meta name="twitter:creator" content="{{ twitter_handle }}" />
+{% endif %}
+{% if image_url %}
+<meta name="twitter:image" content="{{ image_url }}" />
+{% endif %}
+```
+
+---
+
+## Structured Data (JSON-LD)
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ title | truncate_chars(110, "") }}",
+  "description": "{{ summary.short | truncate_chars(160, "") }}",
+  {% if author %}
+  "author": {
+    "@type": "Person",
+    "name": "{{ author }}"
+  },
+  {% endif %}
+  {% if image_url %}
+  "image": "{{ image_url }}",
+  {% endif %}
+  {% if url %}
+  "url": "{{ url }}",
+  {% endif %}
+  "keywords": "{% if tags %}{% set all_keywords = (tags.categories | default([])) + (tags.keywords | default([])) %}{{ all_keywords | join(", ") }}{% endif %}"
+}
+```
+
+---
+
+## SEO Checklist
+
+- [ ] Meta title: {{ title | truncate_chars(60, "") | length }}/60 characters
+- [ ] Meta description: {{ summary.short | truncate_chars(160, "") | length }}/160 characters
+- [ ] Keywords included: {% if tags %}{{ ((tags.categories | default([])) + (tags.keywords | default([]))) | length }}{% else %}0{% endif %}
+- [ ] Open Graph tags: ✓
+- [ ] Twitter Card tags: ✓
+- [ ] Structured data: ✓

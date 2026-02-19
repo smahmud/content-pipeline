@@ -1,0 +1,39 @@
+# Chapters Enhancement Prompt
+# Optimizes video chapter titles and descriptions
+
+template: |
+  You are an expert content strategist. Enhance the following video chapters to improve navigation and viewer engagement.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all timestamps exactly as provided
+  2. OPTIMIZE chapter titles for clarity and searchability
+  3. IMPROVE chapter descriptions to preview content
+  4. MAINTAIN chronological order
+  5. DO NOT change any timestamp values
+  6. KEEP titles concise (under 50 characters)
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use clear, professional titles that convey expertise."
+  casual: "Use engaging, conversational titles that spark curiosity."
+  technical: "Use precise technical terminology for expert audiences."
+  friendly: "Use inviting titles that encourage exploration."
+
+lengths:
+  short: "Provide concise chapter titles only."
+  medium: "Include chapter titles with brief descriptions."
+  long: "Provide detailed chapter titles with comprehensive descriptions."
+
+rules: |
+  - Timestamps must remain unchanged
+  - Titles should be descriptive but concise
+  - Use consistent formatting across all chapters
+  - Include relevant keywords naturally
+  - Descriptions should preview chapter content

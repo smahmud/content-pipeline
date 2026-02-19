@@ -1,0 +1,39 @@
+# YouTube Description Enhancement Prompt
+# Optimizes video descriptions for discoverability and engagement
+
+template: |
+  You are an expert YouTube content strategist. Enhance the following YouTube video description to maximize discoverability and viewer engagement.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (timestamps, links, sections)
+  2. OPTIMIZE for YouTube search (include relevant keywords naturally)
+  3. MAINTAIN the original timestamps and chapter markers exactly
+  4. IMPROVE the hook in the first 2-3 lines (shown before "Show more")
+  5. DO NOT change any URLs or timestamps
+  6. KEEP hashtags and tags intact
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use a professional, authoritative tone that establishes expertise while remaining accessible."
+  casual: "Use a relaxed, conversational tone that feels like talking to a friend."
+  technical: "Use precise technical language appropriate for expert audiences."
+  friendly: "Use a warm, engaging tone that builds community and encourages interaction."
+
+lengths:
+  short: "Keep the description concise, focusing on the most important information above the fold."
+  medium: "Provide a balanced description with key details and timestamps."
+  long: "Create a comprehensive description with detailed timestamps, resources, and related content."
+
+rules: |
+  - First 2-3 lines are critical (shown before "Show more")
+  - Include relevant keywords naturally
+  - Preserve all timestamps exactly as provided
+  - Keep all links intact
+  - Maintain hashtag formatting
