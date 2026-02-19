@@ -3616,7 +3616,7 @@ class TestGracefulDegradationOnLLMFailure:
     def test_property_13_enhance_with_agent_creation_failure(self):
         """
         **Property 13: Graceful Degradation (Agent Creation Failure)**
-        *For any* failure to create LLM agent, the system SHALL fall back
+        *For any* failure to create LLM provider, the system SHALL fall back
         to template-only output.
         **Validates: Requirement 14.4**
         """
@@ -3624,9 +3624,9 @@ class TestGracefulDegradationOnLLMFailure:
         
         # Create enhancer with mock factory that fails
         mock_factory = Mock()
-        mock_factory.create_agent.side_effect = Exception("No API key configured")
+        mock_factory.create_provider.side_effect = Exception("No API key configured")
         
-        enhancer = LLMEnhancer(agent_factory=mock_factory)
+        enhancer = LLMEnhancer(provider_factory=mock_factory)
         
         result = enhancer.enhance(
             content=original_content,
@@ -3648,14 +3648,14 @@ class TestGracefulDegradationOnLLMFailure:
         """
         original_content = "# Test Title\n\nThis is the original content."
         
-        # Create mock agent that always fails with transient error
-        mock_agent = Mock()
-        mock_agent.generate.side_effect = RateLimitError("Rate limit exceeded")
+        # Create mock provider that always fails with transient error
+        mock_provider = Mock()
+        mock_provider.generate.side_effect = RateLimitError("Rate limit exceeded")
         
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
-        enhancer = LLMEnhancer(agent_factory=mock_factory)
+        enhancer = LLMEnhancer(provider_factory=mock_factory)
         
         # Patch sleep to speed up test
         with patch('time.sleep'):
@@ -3678,14 +3678,14 @@ class TestGracefulDegradationOnLLMFailure:
         """
         original_content = "# Test Title\n\nThis is the original content."
         
-        # Create mock agent that fails with permanent error
-        mock_agent = Mock()
-        mock_agent.generate.side_effect = AuthenticationError("Invalid API key")
+        # Create mock provider that fails with permanent error
+        mock_provider = Mock()
+        mock_provider.generate.side_effect = AuthenticationError("Invalid API key")
         
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
-        enhancer = LLMEnhancer(agent_factory=mock_factory)
+        enhancer = LLMEnhancer(provider_factory=mock_factory)
         
         result = enhancer.enhance(
             content=original_content,
@@ -3696,7 +3696,7 @@ class TestGracefulDegradationOnLLMFailure:
         assert result.content == original_content
         assert result.enhanced is False
         assert result.success is False
-        assert mock_agent.generate.call_count == 1  # No retries for permanent error
+        assert mock_provider.generate.call_count == 1  # No retries for permanent error
     
     @given(
         content=template_content_strategy(),
@@ -3711,14 +3711,14 @@ class TestGracefulDegradationOnLLMFailure:
         *For any* output type, the graceful degradation SHALL work correctly.
         **Validates: Requirement 14.4**
         """
-        # Create mock agent that fails
-        mock_agent = Mock()
-        mock_agent.generate.side_effect = RateLimitError("Rate limit")
+        # Create mock provider that fails
+        mock_provider = Mock()
+        mock_provider.generate.side_effect = RateLimitError("Rate limit")
         
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
-        enhancer = LLMEnhancer(agent_factory=mock_factory)
+        enhancer = LLMEnhancer(provider_factory=mock_factory)
         
         # Patch sleep to speed up test
         with patch('time.sleep'):
@@ -3741,20 +3741,20 @@ class TestGracefulDegradationOnLLMFailure:
         original_content = "# Test Title\n\nThis is the original content."
         enhanced_content = "# Test Title\n\nThis is the beautifully enhanced content with better prose."
         
-        # Create mock agent that succeeds
+        # Create mock provider that succeeds
         mock_response = Mock()
         mock_response.content = enhanced_content
         mock_response.model_used = "gpt-4"
         mock_response.tokens_used = 100
         mock_response.cost_usd = 0.01
         
-        mock_agent = Mock()
-        mock_agent.generate.return_value = mock_response
+        mock_provider = Mock()
+        mock_provider.generate.return_value = mock_response
         
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
-        enhancer = LLMEnhancer(agent_factory=mock_factory)
+        enhancer = LLMEnhancer(provider_factory=mock_factory)
         
         result = enhancer.enhance(
             content=original_content,

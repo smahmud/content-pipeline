@@ -27,6 +27,7 @@ Usage:
 from dataclasses import dataclass, field
 from typing import Optional, Any, Dict
 import os
+import re
 import yaml
 from pathlib import Path
 
@@ -319,6 +320,40 @@ class LLMConfig:
         )
     
     @staticmethod
+    def _parse_env_var_syntax(value: Any) -> Any:
+        """Parse shell-style environment variable syntax.
+        
+        Handles syntax like ${VAR_NAME:-default_value} commonly used in YAML configs.
+        
+        Args:
+            value: Value that may contain ${VAR:-default} syntax
+            
+        Returns:
+            Resolved value with environment variables substituted
+            
+        Example:
+            >>> # With OLLAMA_MODEL="mistral" in environment
+            >>> _parse_env_var_syntax('${OLLAMA_MODEL:-llama2}')
+            'mistral'
+            >>> 
+            >>> # Without environment variable set
+            >>> _parse_env_var_syntax('${OLLAMA_MODEL:-llama2}')
+            'llama2'
+        """
+        if not isinstance(value, str):
+            return value
+        
+        # Pattern matches ${VAR_NAME:-default} or ${VAR_NAME}
+        pattern = r'\$\{([^}:]+)(?::-([^}]*))?\}'
+        
+        def replace_match(match):
+            var_name = match.group(1)
+            default_value = match.group(2) if match.group(2) is not None else ''
+            return os.getenv(var_name, default_value)
+        
+        return re.sub(pattern, replace_match, value)
+    
+    @staticmethod
     def _resolve_value(config_value: Any, env_var: str, default: Any) -> Any:
         """Resolve configuration value with precedence: ENV > Config > Default.
         
@@ -326,6 +361,8 @@ class LLMConfig:
         1. If environment variable is set, use it (highest priority)
         2. If config file has a value, use it (medium priority)
         3. Otherwise, use the default value (lowest priority)
+        
+        Also handles shell-style ${VAR:-default} syntax in config values.
         
         Args:
             config_value: Value from config file (may be None)
@@ -355,7 +392,8 @@ class LLMConfig:
         
         # Check config file value (medium priority)
         if config_value is not None:
-            return config_value
+            # Parse shell-style ${VAR:-default} syntax
+            return LLMConfig._parse_env_var_syntax(config_value)
         
         # Use default (lowest priority)
         return default
