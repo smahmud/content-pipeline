@@ -2,7 +2,7 @@
 LLM Enhancer
 
 Enhances template-rendered content using LLM providers.
-Reuses the agent infrastructure from the enrichment module.
+Uses the LLM infrastructure layer from pipeline.llm.
 
 Implements graceful degradation: if LLM enhancement fails after all
 retries, falls back to template-only output with a warning.
@@ -12,9 +12,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 
-from pipeline.enrichment.agents.factory import AgentFactory
-from pipeline.enrichment.agents.base import BaseLLMAgent, LLMRequest, LLMResponse
-from pipeline.enrichment.errors import LLMProviderError
+from pipeline.llm import LLMProviderFactory, LLMConfig
+from pipeline.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
+from pipeline.llm.errors import ProviderError
 from pipeline.formatters.style_profile import StyleProfile
 from pipeline.formatters.retry import (
     retry_enhancement,
@@ -104,11 +104,14 @@ class LLMEnhancer:
     """Enhances template output using LLM providers.
     
     This class provides LLM-powered prose enhancement for formatted content.
-    It reuses the agent infrastructure from the enrichment module and supports
+    It uses the LLM infrastructure layer from pipeline.llm and supports
     style profiles for customization.
     
     Example:
-        >>> enhancer = LLMEnhancer()
+        >>> from pipeline.llm import LLMConfig, LLMProviderFactory
+        >>> llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
+        >>> factory = LLMProviderFactory(llm_config)
+        >>> enhancer = LLMEnhancer(provider_factory=factory)
         >>> result = enhancer.enhance(
         ...     content="# Blog Post\\n\\nThis is content.",
         ...     output_type="blog",
@@ -119,16 +122,21 @@ class LLMEnhancer:
     
     def __init__(
         self,
-        agent_factory: Optional[AgentFactory] = None,
+        provider_factory: Optional[LLMProviderFactory] = None,
         default_provider: str = "auto"
     ):
         """Initialize LLM enhancer.
         
         Args:
-            agent_factory: Factory for creating LLM agents (creates default if None)
+            provider_factory: Factory for creating LLM providers (creates default if None)
             default_provider: Default provider to use
         """
-        self.agent_factory = agent_factory or AgentFactory()
+        if provider_factory is None:
+            # Create default factory with config from default location
+            llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
+            provider_factory = LLMProviderFactory(llm_config)
+        
+        self.provider_factory = provider_factory
         self.default_provider = default_provider
         self._prompt_cache: Dict[str, str] = {}
 
@@ -189,15 +197,15 @@ class LLMEnhancer:
             url=url,
         )
         
-        # Get agent
+        # Get provider
         try:
-            agent = self.agent_factory.create_agent(config.provider)
+            provider = self.provider_factory.create_provider(config.provider)
         except Exception as e:
-            logger.error(f"Failed to create LLM agent: {e}")
+            logger.error(f"Failed to create LLM provider: {e}")
             return self._create_fallback_result(
                 content=content,
                 error=e,
-                reason="Failed to create LLM agent",
+                reason="Failed to create LLM provider",
             )
         
         # Make LLM request with retry and graceful degradation
@@ -210,7 +218,7 @@ class LLMEnhancer:
         for attempt in retry_ctx:
             try:
                 response = self._make_llm_call(
-                    agent=agent,
+                    provider=provider,
                     prompt=prompt,
                     config=config,
                 )
@@ -292,14 +300,14 @@ class LLMEnhancer:
     
     def _make_llm_call(
         self,
-        agent: BaseLLMAgent,
+        provider: BaseLLMProvider,
         prompt: str,
         config: EnhancementConfig,
     ) -> LLMResponse:
         """Make a single LLM call (without retry - retry is handled by caller).
         
         Args:
-            agent: LLM agent to use
+            provider: LLM provider to use
             prompt: Prompt to send
             config: Enhancement configuration
             
@@ -316,7 +324,7 @@ class LLMEnhancer:
             model=config.model,
         )
         
-        return agent.generate(request)
+        return provider.generate(request)
     
     def _resolve_config(
         self,
@@ -566,7 +574,7 @@ ENHANCED CONTENT:"""
             Estimated cost in USD
         """
         try:
-            agent = self.agent_factory.create_agent(provider)
+            llm_provider = self.provider_factory.create_provider(provider)
             
             # Build a sample prompt to estimate tokens
             prompt = self._build_default_prompt(
@@ -583,7 +591,7 @@ ENHANCED CONTENT:"""
                 model=model,
             )
             
-            return agent.estimate_cost(request)
+            return llm_provider.estimate_cost(request)
             
         except Exception as e:
             logger.warning(f"Cost estimation failed: {e}")
@@ -595,4 +603,4 @@ ENHANCED CONTENT:"""
         Returns:
             List of available provider names
         """
-        return self.agent_factory.get_available_providers()
+        return self.provider_factory.get_available_providers()

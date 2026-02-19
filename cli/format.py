@@ -88,7 +88,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--provider",
-    type=click.Choice(["auto", "bedrock", "openai", "anthropic", "ollama"], case_sensitive=False),
+    type=click.Choice(["auto", "cloud-aws-bedrock", "cloud-openai", "cloud-anthropic", "local-ollama"], case_sensitive=False),
     default="auto",
     help="LLM provider (default: auto)"
 )
@@ -208,12 +208,13 @@ def format(
         llm_enhancer_instance = None
         if llm_enhance:
             from pipeline.formatters.llm.enhancer import LLMEnhancer
-            from pipeline.enrichment.agents.factory import AgentFactory
+            from pipeline.llm import LLMProviderFactory, LLMConfig
             
-            # Create agent factory with provider configuration
-            agent_factory = AgentFactory()
+            # Create provider factory with configuration
+            llm_config = LLMConfig.load_from_yaml('.content-pipeline/config.yaml')
+            provider_factory = LLMProviderFactory(llm_config)
             llm_enhancer_instance = LLMEnhancer(
-                agent_factory=agent_factory,
+                provider_factory=provider_factory,
                 default_provider=provider if provider != "auto" else "auto"
             )
         

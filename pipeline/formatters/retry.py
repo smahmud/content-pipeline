@@ -20,13 +20,15 @@ from pipeline.enrichment.retry import (
     TRANSIENT_ERRORS as ENRICHMENT_TRANSIENT_ERRORS,
     PERMANENT_ERRORS as ENRICHMENT_PERMANENT_ERRORS,
 )
-from pipeline.enrichment.errors import (
+
+# Import error classes from the new LLM infrastructure layer
+from pipeline.llm.errors import (
     RateLimitError,
     TimeoutError,
     NetworkError,
     AuthenticationError,
     InvalidRequestError,
-    LLMProviderError,
+    ProviderError,
 )
 
 from pipeline.formatters.errors import EnhancementError
