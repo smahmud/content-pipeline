@@ -9,6 +9,7 @@ This document provides usage reference for the Content Pipeline CLI commands.
 | `extract` | ✅ Implemented | v0.1.0-v0.4.0 | Extract audio from video sources |
 | `transcribe` | ✅ Implemented | v0.5.0-v0.6.5 | Convert audio to text transcripts |
 | `enrich` | ✅ Implemented | v0.7.0 | Generate semantic metadata with LLM |
+| `format` | ✅ Implemented | v0.8.0 | Transform enriched content for publishing |
 
 ---
 
@@ -220,6 +221,131 @@ content-pipeline enrich --input transcript.json --summarize --custom-prompts ./m
 
 ---
 
+### `format`
+**Status:** ✅ Implemented in v0.8.0  
+**Purpose:** Transforms enriched content into various output formats for publishing across multiple platforms.
+
+**Usage:**
+```bash
+content-pipeline format --input ENRICHED_FILE [OPTIONS]
+```
+
+**Key Options:**
+- `--input, -i`: Input enriched JSON file
+- `--output, -o`: Output file path (default: `<input>_<type>.md`)
+- `--type, -t`: Output format type (blog, tweet, linkedin, youtube, etc.)
+- `--platform, -p`: Target platform for validation (twitter, medium, linkedin, etc.)
+- `--style-profile`: Path to style profile Markdown file
+- `--tone`: Tone override (professional, casual, technical, friendly)
+- `--length`: Length override (short, medium, long)
+- `--llm-enhance/--no-llm`: Enable/disable LLM enhancement (default: enabled)
+- `--provider`: LLM provider (auto, cloud-aws-bedrock, cloud-openai, cloud-anthropic, local-ollama)
+- `--model`: Specific LLM model to use
+- `--max-cost`: Maximum cost limit in USD
+- `--url`: URL to include in promotional content
+- `--batch`: Glob pattern for batch processing
+- `--bundle`: Named bundle to generate (blog-launch, video-launch, etc.)
+- `--bundles-config`: Path to custom bundles YAML configuration
+- `--list-bundles`: List available bundles and exit
+- `--dry-run`: Estimate costs without execution
+- `--output-dir`: Output directory for batch/bundle processing
+- `--force`: Overwrite existing files without prompting
+- `--log-level`: Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
+**Supported Output Types (16 total):**
+- `blog` - Blog article format
+- `tweet` - Twitter/X post
+- `linkedin` - LinkedIn post
+- `youtube` - YouTube description
+- `newsletter` - Email newsletter
+- `seo` - SEO metadata
+- `chapters` - Chapter markers
+- `podcast-notes` - Podcast show notes
+- `transcript-clean` - Cleaned transcript
+- `notion` - Notion page format
+- `obsidian` - Obsidian note format
+- `slides` - Presentation slides
+- `meeting-minutes` - Meeting summary
+- `quote-cards` - Quote card content
+- `tiktok-script` - TikTok video script
+- `video-script` - General video script
+
+**Available Bundles:**
+- `blog-launch` - Blog article with social promotion (blog, tweet, linkedin, seo)
+- `video-launch` - YouTube video with supporting content (youtube, chapters, tweet, blog)
+- `podcast` - Podcast episode package (podcast-notes, newsletter, tweet, transcript-clean)
+- `social-only` - Social media posts only (tweet, linkedin)
+- `full-repurpose` - Complete content repurposing (blog, tweet, linkedin, youtube, newsletter, seo)
+- `notes-package` - Note-taking formats (notion, obsidian, slides)
+
+**Examples:**
+
+**Single format generation:**
+```bash
+# Generate blog post
+content-pipeline format --input enriched.json --type blog --output blog.md
+
+# Generate tweet with URL
+content-pipeline format --input enriched.json --type tweet --url "https://myblog.com/post"
+
+# Generate LinkedIn post with style profile
+content-pipeline format --input enriched.json --type linkedin --style-profile ./profiles/professional.md
+```
+
+**LLM enhancement options:**
+```bash
+# Use specific provider
+content-pipeline format --input enriched.json --type blog --provider cloud-openai
+
+# Disable LLM enhancement (template-only)
+content-pipeline format --input enriched.json --type blog --no-llm
+
+# Set cost limit
+content-pipeline format --input enriched.json --type blog --max-cost 0.50
+```
+
+**Bundle generation:**
+```bash
+# Generate blog-launch bundle
+content-pipeline format --input enriched.json --bundle blog-launch --output-dir ./output/
+
+# List available bundles
+content-pipeline format --list-bundles
+
+# Use custom bundles configuration
+content-pipeline format --input enriched.json --bundle my-bundle --bundles-config ./my-bundles.yaml
+```
+
+**Batch processing:**
+```bash
+# Process all enriched files
+content-pipeline format --batch "*.enriched.json" --type blog --output-dir ./blogs/
+
+# Batch with bundle
+content-pipeline format --batch "transcripts/*.json" --bundle social-only --output-dir ./social/
+```
+
+**Cost estimation:**
+```bash
+# Dry run to preview costs
+content-pipeline format --input enriched.json --type blog --dry-run
+
+# Dry run for bundle
+content-pipeline format --input enriched.json --bundle full-repurpose --dry-run
+```
+
+**Key Features in v0.8.0:**
+- ✅ 16 output format types for diverse publishing needs
+- ✅ Hybrid architecture: Jinja2 templates + LLM enhancement
+- ✅ 6 pre-configured bundles for common workflows
+- ✅ Style profiles for consistent brand voice
+- ✅ Platform validation with character limits
+- ✅ Batch processing with glob patterns
+- ✅ Cost estimation and control
+- ✅ Multi-provider LLM support (OpenAI, Anthropic, Bedrock, Ollama)
+
+---
+
 ## 🔄 **Command Workflow**
 
 The commands work together in a content pipeline workflow:
@@ -232,12 +358,15 @@ graph LR
     D --> E[Transcript]
     E --> F[enrich]
     F --> G[Enriched Metadata]
+    G --> H[format]
+    H --> I[Publishing Formats]
 ```
 
-**Current Workflow (v0.7.0):**
+**Current Workflow (v0.8.0):**
 1. `extract` - Get audio from video source
 2. `transcribe` - Convert audio to text transcript
 3. `enrich` - Add semantic metadata (summaries, tags, chapters, highlights)
+4. `format` - Transform enriched content into publishing formats (blog, tweet, linkedin, etc.)
 
 ---
 

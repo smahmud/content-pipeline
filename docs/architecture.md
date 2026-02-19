@@ -8,11 +8,12 @@ This document outlines the high-level architecture of the **Content Pipeline**, 
 
 ## 🧩 Core Components
 
-The Content Pipeline has three core components, each mapped directly to a CLI command:
+The Content Pipeline has four core components, each mapped directly to a CLI command:
 
 1. **Extractors** (`extract` command) - Platform-specific modules for audio and metadata extraction
 2. **Transcribers** (`transcribe` command) - Audio-to-text transcription using multiple providers
 3. **Enrichment** (`enrich` command) - LLM-powered semantic analysis and content enhancement
+4. **Formatters** (`format` command) - Transform enriched content into publishing formats
 
 Each component uses supporting infrastructure modules (see Section 6: Infrastructure Layer).
 
@@ -128,7 +129,68 @@ Quality and content profile configurations:
 
 ---
 
-### 4. Configuration Management
+### 4. Formatters
+
+Transforms enriched content into various publishing formats using a hybrid template + LLM architecture.
+
+**CLI Command**: `format`
+
+#### `pipeline/formatters/`
+
+Core formatting infrastructure for content transformation:
+- `composer.py` — Orchestrates format generation workflow
+- `base.py` — Base definitions for output types, platforms, tones, and lengths
+- `template_engine.py` — Jinja2 template rendering engine
+- `style_profile.py` — Style profile loading and application
+- `input_validator.py` — Input validation for enriched content
+- `validator.py` — Output validation with platform constraints
+- `writer.py` — Output file management
+- `retry.py` — Retry logic for LLM operations
+- `errors.py` — Error hierarchy for formatting operations
+
+#### `pipeline/formatters/generators/`
+
+Format-specific generators (16 output types):
+- `blog.py`, `tweet.py`, `linkedin.py`, `youtube.py` — Social/publishing formats
+- `newsletter.py`, `seo.py`, `chapters.py` — Content marketing formats
+- `podcast_notes.py`, `transcript_clean.py` — Audio content formats
+- `notion.py`, `obsidian.py`, `slides.py` — Note-taking formats
+- `meeting_minutes.py`, `quote_cards.py` — Business formats
+- `tiktok_script.py`, `video_script.py` — Video script formats
+- `factory.py` — Generator factory for instantiation
+- `base_generator.py` — Base generator protocol
+
+#### `pipeline/formatters/templates/`
+
+Jinja2 templates for each output type:
+- `blog.j2`, `tweet.j2`, `linkedin.j2`, etc. — Format-specific templates
+- `base.j2` — Base template with common macros
+
+#### `pipeline/formatters/llm/`
+
+LLM enhancement layer using the infrastructure from `pipeline/llm/`:
+- `enhancer.py` — LLM-based content enhancement
+- `prompts/` — Format-specific prompt templates
+
+#### `pipeline/formatters/bundles/`
+
+Bundle configuration for multi-format generation:
+- `loader.py` — Bundle configuration loader
+- `default.yaml` — Pre-configured bundles (blog-launch, video-launch, podcast, etc.)
+
+#### `pipeline/formatters/profiles/`
+
+Style profile templates for consistent brand voice:
+- `linkedin-professional.md`, `twitter-thread.md`, etc. — Platform-specific profiles
+
+#### `pipeline/formatters/schemas/`
+
+Pydantic models for format output validation:
+- `format_v1.py` — FormatV1 output schema
+
+---
+
+### 5. Configuration Management
 
 Centralized configuration system introduced in v0.6.5 for managing transcription engines, API keys, and output preferences.
 
@@ -149,7 +211,7 @@ Configuration sources (in precedence order):
 
 ---
 
-### 5. Output Management
+### 6. Output Management
 
 Flexible output path management introduced in v0.6.5, replacing hardcoded output directories.
 
@@ -161,17 +223,17 @@ Flexible output path management introduced in v0.6.5, replacing hardcoded output
 
 ---
 
-### 6. Infrastructure Layer
+### 7. Infrastructure Layer
 
 Enterprise-grade provider architecture introduced in v0.7.5 for unified LLM and transcription service management.
 
 **Purpose**: These infrastructure modules provide the underlying provider implementations that support the core Transcribers and Enrichment components. They are not directly invoked by users but are used internally by the CLI commands.
 
-#### 6.1 `pipeline/llm/` — LLM Provider Infrastructure
+#### 7.1 `pipeline/llm/` — LLM Provider Infrastructure
 
 Unified infrastructure for all LLM providers with consistent interface and configuration management (introduced in v0.7.5).
 
-**Supports**: Enrichment component (Section 3)
+**Supports**: Enrichment component (Section 3) and Formatters component (Section 4)
 
 - **Base Protocol**: `BaseLLMProvider` defines the contract for all LLM providers
   - `generate()` — Generate text from prompts
@@ -202,7 +264,7 @@ Unified infrastructure for all LLM providers with consistent interface and confi
   - `ProviderError` — Provider-specific errors
   - `ProviderNotAvailableError` — Provider unavailable errors
 
-#### 6.2 `pipeline/transcription/` — Transcription Provider Infrastructure
+#### 7.2 `pipeline/transcription/` — Transcription Provider Infrastructure
 
 Unified infrastructure for all transcription providers with consistent interface and configuration management (introduced in v0.7.5).
 
@@ -250,7 +312,7 @@ Unified infrastructure for all transcription providers with consistent interface
 
 ---
 
-### 7. Schema Enforcement
+### 8. Schema Enforcement
 
 #### `pipeline/extractors/schema/metadata.py`
 
@@ -272,7 +334,7 @@ Unified infrastructure for all transcription providers with consistent interface
 
 ---
 
-### 8. Configuration & Logging
+### 9. Configuration & Logging
 
 #### `pipeline/config/logging_config.py`
 
@@ -281,7 +343,7 @@ Unified infrastructure for all transcription providers with consistent interface
 
 ---
 
-### 9. Utilities
+### 10. Utilities
 
 #### `pipeline/utils/retry.py`
 
@@ -290,7 +352,7 @@ Unified infrastructure for all transcription providers with consistent interface
 
 ---
 
-## 10. Multi-Agent Protocol (Planned)
+## 11. Multi-Agent Protocol (Planned)
 
 The pipeline will integrate with an MCP server to support agent-based orchestration:
 
@@ -300,7 +362,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 11. Observability & Testing
+## 12. Observability & Testing
 
 - Integration tests validate CLI behavior and extractor output
 - Logging is unified across all components
@@ -308,7 +370,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 12. Test Coverage
+## 13. Test Coverage
 
 - Unit tests validate extractor logic, schema compliance, and CLI flag behavior
 - Integration tests simulate real input scenarios across platforms and verify output normalization
@@ -327,6 +389,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
   - `v0.6.0`: CLI refactoring with modular architecture
   - `v0.6.5`: Enhanced transcription with multiple engines, configuration management, and flexible output paths
   - `v0.7.0`: LLM-powered enrichment with multi-provider support, cost control, and intelligent caching
+  - `v0.8.0`: Content formatting with 16 output types, bundles, style profiles, and hybrid template + LLM architecture
 
 ---
 
