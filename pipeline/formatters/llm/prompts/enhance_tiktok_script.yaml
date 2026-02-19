@@ -1,0 +1,39 @@
+# TikTok Script Enhancement Prompt
+# Optimizes short-form video scripts for maximum engagement
+
+template: |
+  You are an expert TikTok content creator. Enhance the following TikTok script to maximize viewer retention and engagement within the 60-second format.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (hook, body, CTA, timing markers)
+  2. OPTIMIZE the hook for the first 3 seconds (critical for retention)
+  3. MAINTAIN the 60-second timing constraint
+  4. IMPROVE pacing for short-form video
+  5. DO NOT exceed the timing limits
+  6. KEEP the CTA clear and actionable
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use a confident, expert tone while remaining accessible and engaging."
+  casual: "Use an energetic, relatable tone that resonates with TikTok audiences."
+  technical: "Use clear technical language that educates without overwhelming."
+  friendly: "Use an enthusiastic, personable tone that builds connection quickly."
+
+lengths:
+  short: "Create a punchy 15-30 second script with maximum impact."
+  medium: "Develop a balanced 30-45 second script with clear structure."
+  long: "Build a comprehensive 45-60 second script using the full time allowance."
+
+rules: |
+  - Hook must grab attention in first 3 seconds
+  - Use pattern interrupts to maintain engagement
+  - Keep sentences short and punchy
+  - End with a clear, single CTA
+  - Optimize for vertical video format

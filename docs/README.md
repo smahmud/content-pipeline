@@ -43,9 +43,7 @@ For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 - LLM-powered enrichment with semantic analysis for summaries, tags, chapters, and highlights; multi-provider support (OpenAI, Claude, Bedrock, Ollama); cost control and dry-run mode; quality presets and content profiles
 - **v0.7.5** - Infrastructure refactoring: unified provider architecture, renamed "adapters" and "agents" to "providers", configuration management system
 - **v0.7.6** - Documentation fixes: updated all documentation to reflect v0.7.5 terminology and architecture changes
-
-### 🔧 In Progress
-- **v0.8.0** - Formatter + publishing draft generator with 16 output types, hybrid templates + LLM approach, style profiles, and platform validation
+- **v0.8.0** - Formatter and publishing draft generator with 16 output types, hybrid templates + LLM enhancement, style profiles, bundles, and platform validation
 
 ### 🧭 Future
 - Additional features and enhancements planned

@@ -1,0 +1,104 @@
+{#
+Quote cards template.
+
+Generates shareable quote cards with:
+- Quote text
+- Attribution
+- Context
+- Hashtags
+
+Required context:
+- title: Content title
+- highlights: List of highlight/quote objects
+
+Optional context:
+- summary: Object with short summary
+- tags: Object with categories and keywords
+- author: Default author/speaker
+- source: Source reference
+#}
+{% from "base.j2" import format_tags_as_hashtags %}
+
+# Quote Cards: {{ title | default("Quotes") }}
+
+{% if summary and summary.short %}
+*{{ summary.short }}*
+{% endif %}
+
+---
+
+{% if highlights %}
+{% for highlight in highlights %}
+## Quote {{ loop.index }}
+
+```
+┌────────────────────────────────────────┐
+│                                        │
+│  "{{ highlight.text | truncate_chars(140, "...") }}"
+│                                        │
+│  — {{ highlight.speaker | default(author | default("Unknown")) }}
+│                                        │
+└────────────────────────────────────────┘
+```
+
+**Full Quote:**
+> "{{ highlight.text }}"
+
+**Attribution:** {{ highlight.speaker | default(author | default("Unknown")) }}
+
+{% if highlight.timestamp %}
+**Timestamp:** {{ highlight.timestamp | format_timestamp }}
+{% endif %}
+
+{% if source %}
+**Source:** {{ source }}
+{% endif %}
+
+{% if tags %}
+**Hashtags:** {{ format_tags_as_hashtags(tags, 5) }}
+{% endif %}
+
+---
+
+{% endfor %}
+{% else %}
+*No quotes available. Add highlights to generate quote cards.*
+{% endif %}
+
+## Export Formats
+
+### For Instagram/Social Media
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+**Card {{ loop.index }}:**
+"{{ highlight.text | truncate_chars(200, "...") }}"
+— {{ highlight.speaker | default(author | default("")) }}
+{{ format_tags_as_hashtags(tags, 5) }}
+
+{% endfor %}
+{% endif %}
+
+### For Twitter
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+**Tweet {{ loop.index }}:**
+"{{ highlight.text | truncate_chars(220, "...") }}"
+{{ format_tags_as_hashtags(tags, 3) }}
+
+{% endfor %}
+{% endif %}
+
+---
+
+## Design Specifications
+
+- **Recommended Size:** 1080x1080px (Instagram), 1200x675px (Twitter)
+- **Font:** Sans-serif for readability
+- **Background:** Solid color or subtle gradient
+- **Quote marks:** Use curly quotes " "
+
+---
+
+*Generated {{ highlights | length | default(0) }} quote cards from {{ title | default("content") }}*

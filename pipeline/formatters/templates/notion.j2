@@ -1,0 +1,125 @@
+{#
+Notion page template.
+
+Generates a Notion-formatted page with:
+- Page properties
+- Toggle sections
+- Callout blocks
+- Database-ready format
+
+Required context:
+- title: Page title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- chapters: List of sections
+- highlights: List of key points
+- created_date: Creation date
+- status: Page status
+- priority: Priority level
+#}
+{% from "base.j2" import format_tags_list %}
+
+# {{ title | default("Untitled") }}
+
+## Properties
+
+| Property | Value |
+|----------|-------|
+| Status | {{ status | default("Draft") }} |
+| Created | {{ created_date | default("Today") }} |
+| Tags | {{ format_tags_list(tags) }} |
+{% if priority %}
+| Priority | {{ priority }} |
+{% endif %}
+
+---
+
+## 📝 Summary
+
+{{ summary.short | default("") }}
+
+---
+
+## 📖 Overview
+
+<details>
+<summary>Click to expand</summary>
+
+{{ summary.medium | default(summary.long | default("")) }}
+
+</details>
+
+---
+
+{% if chapters %}
+## 📑 Sections
+
+{% for chapter in chapters %}
+<details>
+<summary>{{ chapter.title }}</summary>
+
+{% if chapter.start_time %}
+⏱️ {{ chapter.start_time | format_timestamp }}
+{% endif %}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+</details>
+
+{% endfor %}
+{% endif %}
+
+{% if highlights %}
+---
+
+## 💡 Key Insights
+
+> [!NOTE]
+> Key takeaways from this content
+
+{% for highlight in highlights[:5] %}
+- {{ highlight.text | first_sentence }}
+{% endfor %}
+
+### Notable Quotes
+
+{% for highlight in highlights[:3] %}
+> {{ highlight.text | truncate_chars(200, "...") }}
+{% if highlight.speaker %}
+> — {{ highlight.speaker }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+---
+
+## 📋 Full Content
+
+{{ summary.long | default(summary.medium | default("")) }}
+
+---
+
+## 🏷️ Tags
+
+{% if tags %}
+{% set all_tags = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{% for tag in all_tags %}
+`{{ tag }}`{% if not loop.last %} {% endif %}
+{% endfor %}
+{% endif %}
+
+---
+
+## 🔗 Related
+
+- [[Related Page 1]]
+- [[Related Page 2]]
+
+---
+
+*Last updated: {{ created_date | default("Today") }}*

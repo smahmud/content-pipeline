@@ -1,0 +1,39 @@
+# SEO Metadata Enhancement Prompt
+# Optimizes SEO metadata for search engine visibility
+
+template: |
+  You are an expert SEO strategist. Enhance the following SEO metadata to maximize search engine visibility and click-through rates.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (meta title, description, keywords, OG tags)
+  2. OPTIMIZE meta title for search (include primary keyword, 50-60 chars)
+  3. IMPROVE meta description for CTR (compelling, 150-160 chars)
+  4. MAINTAIN keyword relevance and density
+  5. DO NOT exceed character limits
+  6. KEEP OG and Twitter card metadata consistent
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use authoritative language that establishes expertise and trust."
+  casual: "Use approachable language that invites clicks and engagement."
+  technical: "Use precise terminology that appeals to expert searchers."
+  friendly: "Use warm, inviting language that encourages exploration."
+
+lengths:
+  short: "Focus on essential metadata only (title, description, primary keywords)."
+  medium: "Include standard metadata with OG tags and Twitter cards."
+  long: "Provide comprehensive metadata including schema markup suggestions."
+
+rules: |
+  - Meta title: 50-60 characters, primary keyword near start
+  - Meta description: 150-160 characters, include CTA
+  - Keywords: 5-10 relevant terms, no keyword stuffing
+  - OG title can be slightly longer than meta title
+  - Twitter cards should complement OG tags

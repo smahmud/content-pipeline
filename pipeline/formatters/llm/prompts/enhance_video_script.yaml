@@ -1,0 +1,39 @@
+# Video Script Enhancement Prompt
+# Optimizes AI video scripts for natural delivery and engagement
+
+template: |
+  You are an expert video scriptwriter specializing in AI avatar videos. Enhance the following video script to maximize viewer engagement and ensure natural delivery.
+
+  TONE: {tone_guidance}
+  LENGTH: {length_guidance}
+
+  IMPORTANT RULES:
+  1. PRESERVE all structural elements (scene markers, timing cues, dialogue sections)
+  2. OPTIMIZE dialogue for natural spoken delivery (avoid complex sentences)
+  3. MAINTAIN all timing markers and scene breaks exactly
+  4. IMPROVE transitions between scenes
+  5. DO NOT change scene numbers or timing cues
+  6. KEEP visual/action cues intact
+
+  CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED CONTENT:
+
+tones:
+  professional: "Use a professional, authoritative tone suitable for corporate or educational content."
+  casual: "Use a relaxed, conversational tone that feels natural and approachable."
+  technical: "Use precise technical language while maintaining clarity for spoken delivery."
+  friendly: "Use a warm, engaging tone that connects with viewers personally."
+
+lengths:
+  short: "Keep the script concise, targeting 1-2 minutes of video."
+  medium: "Create a balanced script targeting 3-5 minutes of video."
+  long: "Develop a comprehensive script for longer-form content (5+ minutes)."
+
+rules: |
+  - Write for spoken delivery (short sentences, natural rhythm)
+  - Include pauses and emphasis markers where appropriate
+  - Maintain consistent pacing throughout
+  - Ensure smooth transitions between scenes
+  - Keep dialogue conversational, not written

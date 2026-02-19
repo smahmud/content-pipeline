@@ -1,0 +1,61 @@
+{#
+LinkedIn post template.
+
+Generates a LinkedIn post with:
+- Hook/attention grabber
+- Key insights
+- Engagement prompt
+- Hashtags
+
+Required context:
+- title: Content title
+- summary: Object with short, medium summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- highlights: List of highlight objects
+- author: Author name/title
+- cta_text: Call-to-action text
+#}
+{% from "base.j2" import format_tags_as_hashtags %}
+
+{{ summary.short | first_sentence }}
+
+{% if title %}
+📌 {{ title }}
+{% endif %}
+
+---
+
+{% if summary.medium %}
+{{ summary.medium }}
+{% endif %}
+
+{% if highlights %}
+
+Here's what stood out:
+
+{% for highlight in highlights[:3] %}
+{{ loop.index }}️⃣ {{ highlight.text | truncate_chars(200, "...") }}
+{% endfor %}
+{% endif %}
+
+{% if summary.short and not highlights %}
+
+Key takeaway: {{ summary.short | truncate_chars(300, "...") }}
+{% endif %}
+
+---
+
+{% if cta_text %}
+{{ cta_text }}
+{% else %}
+💬 What are your thoughts? Drop a comment below!
+{% endif %}
+
+{% if author %}
+---
+{{ author }}
+{% endif %}
+
+{{ format_tags_as_hashtags(tags, 5) }}

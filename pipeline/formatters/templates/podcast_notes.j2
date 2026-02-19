@@ -1,0 +1,116 @@
+{#
+Podcast show notes template.
+
+Generates podcast show notes with:
+- Episode title and summary
+- Guest information
+- Key topics and timestamps
+- Resources and links
+
+Required context:
+- title: Episode title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- chapters: List of chapter objects
+- highlights: List of highlight objects
+- guests: List of guest names
+- host: Host name
+- episode_number: Episode number
+- links: List of resource links
+- subscribe_links: Podcast subscription links
+#}
+{% from "base.j2" import format_tags_list %}
+
+# {{ title | default("Episode Title") }}
+
+{% if episode_number %}
+**Episode {{ episode_number }}**
+{% endif %}
+
+{% if host %}
+**Host:** {{ host }}
+{% endif %}
+
+{% if guests %}
+**Guest{% if guests | length > 1 %}s{% endif %}:** {{ guests | join(", ") }}
+{% endif %}
+
+---
+
+## Episode Summary
+
+{{ summary.short | default("") }}
+
+{% if summary.medium %}
+{{ summary.medium }}
+{% endif %}
+
+---
+
+## Topics Covered
+
+{% if chapters %}
+{% for chapter in chapters %}
+- **{{ chapter.start_time | format_timestamp }}** - {{ chapter.title }}
+{% endfor %}
+{% elif tags and tags.categories %}
+{% for category in tags.categories %}
+- {{ category }}
+{% endfor %}
+{% endif %}
+
+---
+
+## Key Takeaways
+
+{% if highlights %}
+{% for highlight in highlights[:5] %}
+{{ loop.index }}. {{ highlight.text | first_sentence }}
+{% endfor %}
+{% else %}
+{{ summary.short | default("") }}
+{% endif %}
+
+---
+
+## Detailed Notes
+
+{{ summary.long | default(summary.medium | default("")) }}
+
+{% if highlights %}
+### Notable Quotes
+
+{% for highlight in highlights[:3] %}
+> "{{ highlight.text | truncate_chars(200, "...") }}"
+{% if highlight.speaker %}
+> — {{ highlight.speaker }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if links %}
+---
+
+## Resources Mentioned
+
+{% for link in links %}
+- [{{ link.title }}]({{ link.url }})
+{% endfor %}
+{% endif %}
+
+{% if subscribe_links %}
+---
+
+## Subscribe
+
+{% for link in subscribe_links %}
+- [{{ link.platform }}]({{ link.url }})
+{% endfor %}
+{% endif %}
+
+---
+
+**Topics:** {{ format_tags_list(tags) }}

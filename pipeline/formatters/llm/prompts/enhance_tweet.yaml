@@ -1,0 +1,53 @@
+# Enhancement prompt for tweet/social media output type
+name: tweet
+description: Enhance tweet content for maximum engagement within character limits
+
+tones:
+  professional: |
+    Use a professional but engaging tone. Be authoritative yet approachable.
+    Suitable for thought leadership and industry insights.
+  casual: |
+    Use a relaxed, conversational tone. Be relatable and authentic.
+    Include personality while staying on message.
+  technical: |
+    Use precise language for technical audiences. Be informative and accurate.
+    Assume readers have domain knowledge.
+  friendly: |
+    Use a warm, inviting tone. Be encouraging and positive.
+    Make readers feel included in the conversation.
+
+lengths:
+  short: |
+    Keep to a single impactful tweet (under 200 characters).
+    Focus on one key message with maximum punch.
+  medium: |
+    Use the full tweet length (up to 280 characters).
+    Include a hook, key point, and call-to-action.
+  long: |
+    Create a thread-ready format with multiple connected points.
+    Each point should stand alone but connect to the whole.
+
+rules: |
+  1. PRESERVE any hashtags exactly as written
+  2. PRESERVE any @mentions exactly as written
+  3. PRESERVE any URLs or links
+  4. KEEP within platform character limits
+  5. MAKE the hook attention-grabbing
+  6. INCLUDE a clear call-to-action when appropriate
+  7. USE emojis sparingly and purposefully
+
+template: |
+  You are a social media expert. Enhance the following tweet content for maximum engagement.
+
+  {rules}
+
+  TONE GUIDANCE:
+  {tone_guidance}
+
+  LENGTH GUIDANCE:
+  {length_guidance}
+
+  TWEET CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED TWEET CONTENT:

@@ -85,6 +85,7 @@ class WhisperAPIConfig(EngineConfig):
     model: str = "whisper-1"
     temperature: float = 0.0
     response_format: str = "json"
+    cost_per_minute_usd: float = 0.006  # Default OpenAI pricing
 
 
 @dataclass
@@ -96,6 +97,7 @@ class AWSTranscribeConfig(EngineConfig):
     language_code: str = "en-US"
     s3_bucket: Optional[str] = None  # Optional custom S3 bucket name
     media_format: str = "auto"  # auto-detect or specify: mp3, mp4, wav, etc.
+    cost_per_minute_usd: float = 0.024  # Default AWS pricing
 
 
 @dataclass

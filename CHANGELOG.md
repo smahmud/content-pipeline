@@ -6,6 +6,58 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.8.0] - 2026-02-18
+
+### Content Formatting Release
+
+This release introduces the `format` command for transforming enriched content into various publishing formats using a hybrid template + LLM architecture.
+
+### Added
+- **Format Command** - New CLI command for content transformation
+  - 16 output format types (blog, tweet, linkedin, youtube, newsletter, seo, chapters, podcast-notes, transcript-clean, notion, obsidian, slides, meeting-minutes, quote-cards, tiktok-script, video-script)
+  - Hybrid architecture: Jinja2 templates for structure + LLM enhancement for quality
+  - Style profiles for consistent brand voice across outputs
+  - Platform validation with character limits and constraints
+  - Bundle generation for multi-format workflows
+  - Batch processing with glob patterns
+  - Cost estimation and control with `--max-cost` and `--dry-run`
+
+- **Formatter Infrastructure** (`pipeline/formatters/`)
+  - `FormatComposer` orchestrator for format generation workflow
+  - Format-specific generators for each output type
+  - Jinja2 template engine with base templates
+  - LLM enhancer using `pipeline/llm/` infrastructure
+  - Style profile loader and applicator
+  - Input/output validation with platform constraints
+  - Bundle configuration system with YAML support
+
+- **Pre-configured Bundles**
+  - `blog-launch` - Blog article with social promotion (blog, tweet, linkedin, seo)
+  - `video-launch` - YouTube video with supporting content (youtube, chapters, tweet, blog)
+  - `podcast` - Podcast episode package (podcast-notes, newsletter, tweet, transcript-clean)
+  - `social-only` - Social media posts only (tweet, linkedin)
+  - `full-repurpose` - Complete content repurposing package
+  - `notes-package` - Note-taking formats (notion, obsidian, slides)
+
+- **Style Profiles**
+  - Platform-specific profiles (linkedin-professional, twitter-thread, medium-tech, etc.)
+  - Tone and length customization
+  - Brand voice consistency across outputs
+
+### Fixed
+- LLMConfig now properly resolves `${VAR:-default}` environment variable syntax in YAML config files
+
+### Changed
+- Updated CLI version to 0.8.0
+- Formatter uses new provider architecture (`pipeline/llm/`) introduced in v0.7.5
+
+### Notes
+- Formatter integrates with enrichment output from v0.7.0
+- Uses LLM infrastructure from v0.7.5 refactoring
+- All 16 output types fully implemented and tested
+- 228 tests passing (25 integration + 203 property tests)
+- See `.kiro/specs/formatter-v0.8.0/` for complete specification
+
 ## [0.7.6] - 2026-02-05
 
 ### Documentation Fixes Release

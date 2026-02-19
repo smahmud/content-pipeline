@@ -1,0 +1,82 @@
+{#
+YouTube description template.
+
+Generates a YouTube video description with:
+- Title and summary
+- Timestamps/chapters
+- Tags and keywords
+- Links section
+
+Required context:
+- title: Video title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- chapters: List of chapter objects with timestamps
+- highlights: List of highlight objects
+- links: List of link objects with title and url
+- channel_name: YouTube channel name
+- subscribe_link: Channel subscribe link
+#}
+{% from "base.j2" import format_chapter, format_tags_as_hashtags %}
+
+{{ title | default("Video Title") }}
+
+{{ summary.medium | default(summary.short | default("")) }}
+
+{% if chapters %}
+---
+📑 TIMESTAMPS
+{% for chapter in chapters %}
+{{ chapter.start_time | format_timestamp }} {{ chapter.title }}
+{% endfor %}
+{% endif %}
+
+{% if highlights %}
+---
+✨ KEY HIGHLIGHTS
+
+{% for highlight in highlights[:5] %}
+• {{ highlight.text | first_sentence | truncate_chars(100, "...") }}
+{% endfor %}
+{% endif %}
+
+---
+🏷️ TAGS
+
+{{ format_tags_as_hashtags(tags, 10) }}
+
+{% if tags and tags.keywords %}
+Keywords: {{ tags.keywords | join(", ") }}
+{% endif %}
+
+{% if links %}
+---
+🔗 LINKS
+
+{% for link in links %}
+{{ link.title }}: {{ link.url }}
+{% endfor %}
+{% endif %}
+
+{% if channel_name or subscribe_link %}
+---
+📺 SUBSCRIBE
+
+{% if channel_name %}
+{{ channel_name }}
+{% endif %}
+{% if subscribe_link %}
+Subscribe: {{ subscribe_link }}
+{% endif %}
+{% endif %}
+
+---
+📝 ABOUT THIS VIDEO
+
+{{ summary.short | default("") }}
+
+{% if summary.long %}
+{{ summary.long | truncate_chars(1000, "...") }}
+{% endif %}

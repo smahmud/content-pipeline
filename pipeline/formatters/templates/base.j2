@@ -1,0 +1,70 @@
+{#
+Base template with common macros for formatter templates.
+
+This template provides reusable macros for:
+- Formatting timestamps
+- Creating bullet lists
+- Generating hashtags
+- Common content sections
+
+Usage in other templates:
+{% from "base.j2" import format_chapter, format_highlight, format_tags %}
+#}
+
+{# Format a chapter with timestamp and title #}
+{% macro format_chapter(chapter) -%}
+{{ chapter.start_time | format_timestamp }} - {{ chapter.title }}
+{%- if chapter.summary %}: {{ chapter.summary }}{% endif %}
+{%- endmacro %}
+
+{# Format a highlight/quote #}
+{% macro format_highlight(highlight) -%}
+{% if highlight.timestamp %}[{{ highlight.timestamp | format_timestamp }}] {% endif %}"{{ highlight.text }}"
+{%- if highlight.speaker %} — {{ highlight.speaker }}{% endif %}
+{%- endmacro %}
+
+{# Format tags as hashtags #}
+{% macro format_tags_as_hashtags(tags, max_tags=5) -%}
+{% set all_tags = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{% for tag in all_tags[:max_tags] %}{{ tag | hashtag }}{% if not loop.last %} {% endif %}{% endfor %}
+{%- endmacro %}
+
+{# Format tags as comma-separated list #}
+{% macro format_tags_list(tags) -%}
+{% set all_tags = (tags.categories | default([])) + (tags.keywords | default([])) %}
+{{ all_tags | join(", ") }}
+{%- endmacro %}
+
+{# Format a list of chapters #}
+{% macro format_chapters_list(chapters) -%}
+{% for chapter in chapters %}
+{{ format_chapter(chapter) }}
+{% endfor %}
+{%- endmacro %}
+
+{# Format a list of highlights #}
+{% macro format_highlights_list(highlights) -%}
+{% for highlight in highlights %}
+{{ format_highlight(highlight) }}
+{% endfor %}
+{%- endmacro %}
+
+{# Generate a call-to-action section #}
+{% macro cta_section(cta_text, link=None) -%}
+{% if cta_text %}
+---
+
+{{ cta_text }}
+{% if link %}[{{ link }}]({{ link }}){% endif %}
+{% endif %}
+{%- endmacro %}
+
+{# Format reading time #}
+{% macro reading_time_badge(text) -%}
+📖 {{ text | reading_time }} min read
+{%- endmacro %}
+
+{# Format word count #}
+{% macro word_count_badge(text) -%}
+📝 {{ text | word_count }} words
+{%- endmacro %}

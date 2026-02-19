@@ -1,0 +1,117 @@
+{#
+Newsletter template.
+
+Generates a newsletter email with:
+- Subject line
+- Preview text
+- Main content sections
+- Footer with links
+
+Required context:
+- title: Newsletter title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+
+Optional context:
+- highlights: List of highlight objects
+- chapters: List of chapter objects
+- author: Author name
+- subscribe_link: Newsletter subscribe link
+- unsubscribe_link: Unsubscribe link
+- website_link: Main website link
+#}
+{% from "base.j2" import format_tags_list %}
+
+**Subject:** {{ title | truncate_chars(60, "...") }}
+
+**Preview Text:** {{ summary.short | truncate_chars(100, "...") }}
+
+---
+
+# {{ title }}
+
+{{ summary.short }}
+
+---
+
+## This Week's Highlights
+
+{% if highlights %}
+{% for highlight in highlights[:5] %}
+### {{ highlight.text | first_sentence | truncate_chars(60, "...") }}
+
+{{ highlight.text }}
+
+{% if highlight.speaker %}
+*— {{ highlight.speaker }}*
+{% endif %}
+
+{% endfor %}
+{% elif chapters %}
+{% for chapter in chapters[:5] %}
+### {{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% endfor %}
+{% else %}
+{{ summary.medium | default(summary.long | default("")) }}
+{% endif %}
+
+---
+
+## Deep Dive
+
+{{ summary.long | default(summary.medium | default("")) }}
+
+---
+
+## Key Takeaways
+
+{% if highlights %}
+{% for highlight in highlights[:3] %}
+- {{ highlight.text | first_sentence }}
+{% endfor %}
+{% else %}
+- {{ summary.short | first_sentence }}
+{% endif %}
+
+---
+
+## What's Next
+
+{% if summary.short %}
+{{ summary.short }}
+{% endif %}
+
+Stay tuned for more updates!
+
+---
+
+**Topics:** {{ format_tags_list(tags) }}
+
+{% if author %}
+---
+
+*Curated by {{ author }}*
+{% endif %}
+
+---
+
+## Footer
+
+{% if website_link %}
+[Visit our website]({{ website_link }})
+{% endif %}
+
+{% if subscribe_link %}
+[Share this newsletter]({{ subscribe_link }})
+{% endif %}
+
+{% if unsubscribe_link %}
+[Unsubscribe]({{ unsubscribe_link }})
+{% endif %}
+
+*You're receiving this because you subscribed to our newsletter.*

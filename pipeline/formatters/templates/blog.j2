@@ -1,0 +1,113 @@
+{#
+Blog post template.
+
+Generates a structured blog post with:
+- Title
+- Introduction
+- Body sections with key points
+- Conclusion
+- Call-to-action
+
+Required context:
+- title: Post title
+- summary: Object with short, medium, long summaries
+- tags: Object with categories and keywords
+- chapters: List of chapter objects (optional)
+- highlights: List of highlight objects (optional)
+
+Optional context:
+- author: Author name
+- cta_text: Call-to-action text
+- cta_link: Call-to-action link
+#}
+{% from "base.j2" import format_tags_list, reading_time_badge %}
+
+# {{ title | default("Untitled Post") }}
+
+{% if summary and summary.long %}
+{{ reading_time_badge(summary.long) }}
+{% endif %}
+
+{% if tags %}
+**Tags:** {{ format_tags_list(tags) }}
+{% endif %}
+
+---
+
+## Introduction
+
+{{ summary.short | default("") }}
+
+---
+
+## Overview
+
+{{ summary.medium | default(summary.short | default("")) }}
+
+---
+
+## Key Points
+
+{% if highlights %}
+{% for highlight in highlights[:5] %}
+### {{ loop.index }}. {{ highlight.text | first_sentence | truncate_chars(80, "...") }}
+
+{{ highlight.text }}
+
+{% if highlight.speaker %}
+*— {{ highlight.speaker }}*
+{% endif %}
+
+{% endfor %}
+{% elif chapters %}
+{% for chapter in chapters[:5] %}
+### {{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% endfor %}
+{% else %}
+{{ summary.long | default(summary.medium | default("")) }}
+{% endif %}
+
+---
+
+## Detailed Analysis
+
+{{ summary.long | default("") }}
+
+---
+
+## Conclusion
+
+{% if summary.short %}
+{{ summary.short }}
+{% endif %}
+
+{% if highlights %}
+### Key Takeaways
+
+{% for highlight in highlights[:3] %}
+- {{ highlight.text | first_sentence }}
+{% endfor %}
+{% endif %}
+
+{% if cta_text %}
+---
+
+## What's Next?
+
+{{ cta_text }}
+
+{% if cta_link %}
+[Learn more]({{ cta_link }})
+{% endif %}
+{% endif %}
+
+{% if author %}
+---
+
+*Written by {{ author }}*
+{% endif %}

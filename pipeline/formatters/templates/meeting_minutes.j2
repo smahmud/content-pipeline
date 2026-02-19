@@ -1,0 +1,130 @@
+{#
+Meeting minutes template.
+
+Generates formal meeting minutes with:
+- Meeting details
+- Attendees
+- Agenda items
+- Discussion points
+- Action items
+
+Required context:
+- title: Meeting title
+- summary: Object with short, medium, long summaries
+
+Optional context:
+- date: Meeting date
+- time: Meeting time
+- location: Meeting location (or "Virtual")
+- attendees: List of attendee names
+- chapters: List of agenda items/topics
+- highlights: List of key discussion points
+- action_items: List of action items with assignee and due date
+- next_meeting: Next meeting date/time
+#}
+
+# Meeting Minutes
+
+## {{ title | default("Meeting Title") }}
+
+{% if date %}
+**Date:** {{ date }}
+{% endif %}
+{% if time %}
+**Time:** {{ time }}
+{% endif %}
+{% if location %}
+**Location:** {{ location }}
+{% endif %}
+
+{% if attendees %}
+---
+
+## Attendees
+
+{% for attendee in attendees %}
+- {{ attendee }}
+{% endfor %}
+{% endif %}
+
+---
+
+## Summary
+
+{{ summary.short | default("") }}
+
+{% if chapters %}
+---
+
+## Agenda
+
+{% for chapter in chapters %}
+{{ loop.index }}. {{ chapter.title }}
+{% endfor %}
+{% endif %}
+
+---
+
+## Discussion
+
+{% if chapters %}
+{% for chapter in chapters %}
+### {{ loop.index }}. {{ chapter.title }}
+
+{% if chapter.summary %}
+{{ chapter.summary }}
+{% endif %}
+
+{% if chapter.start_time %}
+*Discussed at {{ chapter.start_time | format_timestamp }}*
+{% endif %}
+
+{% endfor %}
+{% else %}
+{{ summary.medium | default(summary.long | default("")) }}
+{% endif %}
+
+{% if highlights %}
+---
+
+## Key Points
+
+{% for highlight in highlights %}
+- {{ highlight.text | first_sentence }}
+{% if highlight.speaker %}
+  *({{ highlight.speaker }})*
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if action_items %}
+---
+
+## Action Items
+
+| # | Action | Assignee | Due Date | Status |
+|---|--------|----------|----------|--------|
+{% for item in action_items %}
+| {{ loop.index }} | {{ item.action }} | {{ item.assignee | default("TBD") }} | {{ item.due_date | default("TBD") }} | {{ item.status | default("Pending") }} |
+{% endfor %}
+{% endif %}
+
+{% if summary.long %}
+---
+
+## Detailed Notes
+
+{{ summary.long }}
+{% endif %}
+
+{% if next_meeting %}
+---
+
+## Next Meeting
+
+{{ next_meeting }}
+{% endif %}
+
+---
+
+*Minutes prepared on {{ "now" | default("date") }}*

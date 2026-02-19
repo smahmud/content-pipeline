@@ -51,10 +51,12 @@ tests/
 ├── output/                           # NEW in v0.6.5: Output management testing
 │   └── test_output_manager.py       # OutputManager path resolution tests
 ├── property_tests/
-│   └── test_cli_properties.py       # Property-based tests for CLI refactoring
+│   ├── test_cli_properties.py       # Property-based tests for CLI refactoring
+│   └── test_formatter_properties.py # NEW in v0.8.0: Formatter property tests (203 tests)
 ├── integration/
 │   ├── test_extract_pipeline_flow.py
-│   └── test_transcribe_pipeline_flow.py
+│   ├── test_transcribe_pipeline_flow.py
+│   └── test_formatter_orchestrator.py # NEW in v0.8.0: Formatter integration tests (25 tests)
 ├── pipeline/
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
 │   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)

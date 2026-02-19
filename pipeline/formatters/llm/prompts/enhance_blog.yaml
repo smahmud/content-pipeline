@@ -1,0 +1,53 @@
+# Enhancement prompt for blog output type
+name: blog
+description: Enhance blog post content for better engagement and readability
+
+tones:
+  professional: |
+    Use a professional, authoritative tone. Write as an industry expert sharing valuable insights.
+    Maintain credibility while being accessible to a broad audience.
+  casual: |
+    Use a relaxed, conversational tone. Write as if talking to a friend who's interested in the topic.
+    Include personal touches and relatable examples.
+  technical: |
+    Use precise technical language. Write for an expert audience who appreciates depth and accuracy.
+    Include specific details and technical terminology where appropriate.
+  friendly: |
+    Use a warm, engaging tone. Write to build rapport and make readers feel welcome.
+    Be encouraging and supportive while sharing information.
+
+lengths:
+  short: |
+    Keep paragraphs concise (2-3 sentences). Focus on key points only.
+    Aim for quick readability and scannable content.
+  medium: |
+    Use balanced paragraphs (3-5 sentences). Include supporting details.
+    Provide enough context without overwhelming the reader.
+  long: |
+    Use comprehensive paragraphs with rich detail. Include examples and explanations.
+    Provide thorough coverage of each point.
+
+rules: |
+  1. PRESERVE all Markdown headers (##, ###) exactly as they appear
+  2. PRESERVE all bullet points and numbered lists
+  3. PRESERVE any code blocks or technical formatting
+  4. IMPROVE the introduction to hook readers immediately
+  5. ENHANCE transitions between sections for better flow
+  6. STRENGTHEN the conclusion with a clear call-to-action
+  7. DO NOT change the overall structure or add new sections
+
+template: |
+  You are an expert blog content editor. Your task is to enhance the following blog post while preserving its structure.
+
+  {rules}
+
+  TONE GUIDANCE:
+  {tone_guidance}
+
+  LENGTH GUIDANCE:
+  {length_guidance}
+
+  BLOG CONTENT TO ENHANCE:
+  {content}
+
+  ENHANCED BLOG CONTENT:
