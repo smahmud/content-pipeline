@@ -194,7 +194,7 @@ class ConfigurationYAMLParser:
             errors.append("whisper_api must be a dictionary")
             return errors
         
-        expected_keys = {'api_key', 'model', 'temperature', 'response_format', 'timeout', 'retry_attempts', 'retry_delay'}
+        expected_keys = {'api_key', 'model', 'temperature', 'response_format', 'timeout', 'retry_attempts', 'retry_delay', 'cost_per_minute_usd'}
         unknown_keys = set(config.keys()) - expected_keys
         if unknown_keys:
             errors.append(f"Unknown whisper_api keys: {', '.join(sorted(unknown_keys))}")
@@ -218,7 +218,7 @@ class ConfigurationYAMLParser:
         
         expected_keys = {
             'access_key_id', 'secret_access_key', 'region', 'language_code', 
-            's3_bucket', 'media_format', 'timeout', 'retry_attempts', 'retry_delay'
+            's3_bucket', 'media_format', 'timeout', 'retry_attempts', 'retry_delay', 'cost_per_minute_usd'
         }
         unknown_keys = set(config.keys()) - expected_keys
         if unknown_keys:
