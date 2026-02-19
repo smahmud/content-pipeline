@@ -204,6 +204,15 @@ def format(
     logger.info("Content Pipeline - Format Command")
     
     try:
+        # Initialize bundle loader first (needed for --list-bundles)
+        bundle_loader = _create_bundle_loader(bundles_config)
+        
+        # Handle --list-bundles early (doesn't need LLM)
+        if list_bundles:
+            composer = FormatComposer(bundle_loader=bundle_loader)
+            _display_bundle_list(composer)
+            return
+        
         # Initialize LLM enhancer if LLM enhancement is enabled
         llm_enhancer_instance = None
         if llm_enhance:
@@ -220,17 +229,12 @@ def format(
         
         # Initialize composer with optional custom bundles config and LLM enhancer
         composer = FormatComposer(
-            bundle_loader=_create_bundle_loader(bundles_config),
+            bundle_loader=bundle_loader,
             llm_enhancer=llm_enhancer_instance
         )
         
         # Initialize output writer
         writer = OutputWriter(force_overwrite=force)
-        
-        # Handle --list-bundles
-        if list_bundles:
-            _display_bundle_list(composer)
-            return
         
         # Validate required options based on mode
         if batch:
