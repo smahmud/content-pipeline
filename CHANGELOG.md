@@ -6,6 +6,54 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.8.7] - 2026-02-20
+
+### Format Command Enhancements Release
+
+This release extends the format command with advanced content repurposing capabilities including multi-source input, AI image prompts, code sample generation, and AI video script output.
+
+### Added
+- **Multi-Source Input** (`--sources` flag)
+  - `SourceCombiner` loads and merges multiple enriched JSON, TXT, MD, and PDF files from a folder
+  - Deduplicates tags, topics, and key points across sources
+  - Carries forward enrichment metadata from source files
+
+- **AI Image Prompt Generation** (`--image-prompts` flag)
+  - `ImagePromptGenerator` creates DALL-E/Midjourney/Gemini-ready prompts
+  - Platform-aware dimensions (Medium, YouTube, LinkedIn, etc.)
+  - Generates header, thumbnail, and section image prompts
+
+- **Code Sample Integration** (`--include-code` flag)
+  - `CodeSampleGenerator` detects technical content and generates relevant code samples
+  - Auto-detects programming languages from topics and tags
+  - Supports Python, JavaScript, TypeScript, Bash, SQL, and more
+
+- **AI Video Script Output Type** (`ai-video-script`)
+  - `AIVideoScriptGenerator` creates scripts for Sora, Runway, and Pika
+  - Platform configs for YouTube (16:9), TikTok (9:16), Vimeo (16:9)
+  - Scene-by-scene structure with visual descriptions, voiceover, and music suggestions
+  - Jinja2 template rendering via `ai_video_script.j2`
+
+- **New Platforms**: `tiktok` and `vimeo` added to Platform enum and PlatformValidator
+
+- **FormatComposer Extensions**
+  - `format_from_sources()` method for multi-source workflows
+  - `generate_image_prompts()` method
+  - `generate_code_samples()` method
+  - Error handling for missing/empty source folders
+
+### Changed
+- `FormatComposer.__init__` accepts optional `source_combiner`, `image_prompt_generator`, `code_sample_generator`
+- `SourceCombiner._merge_enriched_json` preserves required metadata fields from first source
+
+### Tests
+- 18 unit tests for FormatComposer extensions
+- 21 unit tests for SourceCombiner
+- 27 unit tests for ImagePromptGenerator
+- 34 unit tests for CodeSampleGenerator
+- 43 unit tests for AIVideoScriptGenerator
+- 4 end-to-end integration tests
+
 ## [0.8.6] - 2026-02-19
 
 ### Enrich Command Enhancement Release

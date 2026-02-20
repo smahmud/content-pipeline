@@ -45,6 +45,8 @@ For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 - **v0.7.6** - Documentation fixes: updated all documentation to reflect v0.7.5 terminology and architecture changes
 - **v0.8.0** - Formatter and publishing draft generator with 16 output types, hybrid templates + LLM enhancement, style profiles, bundles, and platform validation
 - **v0.8.5** - Technical debt fix: updated all enrichment tests to use correct provider terminology
+- **v0.8.6** - Enrich separate output files: per-type output files, --combine flag, --output-dir option
+- **v0.8.7** - Format command enhancements: multi-source input, AI image prompts, code samples, AI video scripts, new platforms (tiktok, vimeo)
 
 ### 🧭 Future
 - Additional features and enhancements planned
