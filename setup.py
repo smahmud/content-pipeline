@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.8.5 — Technical debt fix release updating enrichment tests to provider terminology.
+Version: 0.8.6 — Enrich command separate output files with --combine flag.
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.8.5",
+    version="0.8.6",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",

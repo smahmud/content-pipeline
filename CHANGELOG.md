@@ -6,6 +6,35 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.8.6] - 2026-02-19
+
+### Enrich Command Enhancement Release
+
+This release enhances the `enrich` command with separate output files per enrichment type, improving reliability when using multiple enrichment flags.
+
+### Added
+- **Separate Output Files** - Each enrichment type now creates its own output file by default
+  - `--summarize` creates `<input>-summary.json`
+  - `--tag` creates `<input>-tags.json`
+  - `--chapterize` creates `<input>-chapters.json`
+  - `--highlight` creates `<input>-highlights.json`
+
+- **New CLI Options**
+  - `--combine` flag to merge all enrichments into single file (legacy behavior)
+  - `--output-dir` option to specify output directory for generated files
+
+- **IndividualEnrichment Schema** - New schema for type-specific output files in `pipeline/enrichment/schemas/individual.py`
+
+### Changed
+- Default behavior: Multiple enrichment types create separate files instead of single combined file
+- Single enrichment type now creates type-specific filename (e.g., `-summary.json` instead of `-enriched.json`)
+- `--output` flag now requires `--combine` when using multiple enrichment types
+
+### Migration Notes
+- Scripts expecting `<input>-enriched.json` should add `--combine` flag
+- Scripts using single enrichment type will see filename change (e.g., `-enriched.json` → `-summary.json`)
+- Combined output with `--combine` maintains full backward compatibility
+
 ## [0.8.5] - 2026-02-19
 
 ### Technical Debt Fix Release

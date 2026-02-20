@@ -8,7 +8,7 @@ This document provides usage reference for the Content Pipeline CLI commands.
 |---------|--------|---------|-------------|
 | `extract` | ✅ Implemented | v0.1.0-v0.4.0 | Extract audio from video sources |
 | `transcribe` | ✅ Implemented | v0.5.0-v0.6.5 | Convert audio to text transcripts |
-| `enrich` | ✅ Implemented | v0.7.0 | Generate semantic metadata with LLM |
+| `enrich` | ✅ Implemented | v0.7.0-v0.8.6 | Generate semantic metadata with LLM |
 | `format` | ✅ Implemented | v0.8.0 | Transform enriched content for publishing |
 
 ---
@@ -94,10 +94,10 @@ content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-d
 ---
 
 ### `enrich`
-**Status:** ✅ Implemented in v0.7.0  
+**Status:** ✅ Implemented in v0.7.0, Enhanced in v0.8.6  
 **Purpose:** Generates semantic metadata including summaries, tags, chapters, and key highlights using LLM processing with multi-provider support.
 
-**⚠️ Deprecation Notice**: The `--all` flag is deprecated and will be removed in v0.8.0. It has provider-specific reliability issues (only works with Anthropic Claude, fails with AWS Bedrock and OpenAI). Use separate commands for each enrichment type instead. See [deprecation notice](notes/all-flag-deprecation.md) for migration guide.
+**⚠️ Deprecation Notice**: The `--all` flag is deprecated and will be removed in a future version. It has provider-specific reliability issues (only works with Anthropic Claude, fails with AWS Bedrock and OpenAI). Use separate commands for each enrichment type instead. See [deprecation notice](notes/all-flag-deprecation.md) for migration guide.
 
 **Usage:**
 ```bash
@@ -108,6 +108,7 @@ content-pipeline enrich --input TRANSCRIPT_FILE [OPTIONS]
 - `--input, -i`: Input transcript file or glob pattern for batch processing
 - `--output, -o`: Output file path (auto-generated if not specified)
 - `--output-dir`: Output directory for batch processing
+- `--combine`: Combine all enrichments into single output file (v0.8.6+)
 - `--provider`: LLM provider (openai, claude, bedrock, ollama, auto)
 - `--model`: Specific model to use (overrides quality preset)
 - `--quality`: Quality preset (fast, balanced, best)
@@ -144,6 +145,20 @@ content-pipeline enrich --input transcript.json --highlight
 **Combine multiple enrichment types:**
 ```bash
 content-pipeline enrich --input transcript.json --summarize --tag
+```
+
+**v0.8.6+ Output File Naming:**
+
+By default (v0.8.6+), each enrichment type creates a separate file:
+- `--summarize` → `<input>-summary.json`
+- `--tag` → `<input>-tags.json`
+- `--chapterize` → `<input>-chapters.json`
+- `--highlight` → `<input>-highlights.json`
+
+Use `--combine` to create a single combined file (legacy behavior):
+```bash
+content-pipeline enrich --input transcript.json --summarize --tag --combine
+# Creates: transcript-enriched.json
 ```
 
 **Provider selection:**
@@ -218,6 +233,11 @@ content-pipeline enrich --input transcript.json --summarize --custom-prompts ./m
 - ✅ Custom YAML prompt templates
 - ✅ Retry logic with exponential backoff
 - ⚠️ **Note**: The `--all` flag is deprecated due to provider-specific reliability issues. Use separate flags (e.g., `--summarize --tag`) or run separate commands for each enrichment type. See [deprecation notice](notes/all-flag-deprecation.md) for details.
+
+**New in v0.8.6:**
+- ✅ Separate output files per enrichment type (default behavior)
+- ✅ `--combine` flag for single-file output (backward compatibility)
+- ✅ Auto-loading of `.env.dev`/`.env` files for API keys
 
 ---
 

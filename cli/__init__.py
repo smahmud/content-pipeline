@@ -9,8 +9,17 @@ all available subcommands. The cli() function serves as the console script entry
 for setup.py.
 """
 
+import os
 import click
+from dotenv import load_dotenv
 from pipeline.config.logging_config import configure_logging
+
+# Load environment variables from .env files
+# Priority: .env.dev (if exists) overrides .env
+if os.path.exists('.env.dev'):
+    load_dotenv('.env.dev')
+elif os.path.exists('.env'):
+    load_dotenv('.env')
 from .extract import extract
 from .transcribe import transcribe
 from .enrich import enrich
