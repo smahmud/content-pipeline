@@ -133,6 +133,21 @@ logger = logging.getLogger(__name__)
     help="Estimate costs without execution"
 )
 @click.option(
+    "--sources",
+    type=click.Path(exists=True, file_okay=False),
+    help="Path to folder containing multiple source files to combine"
+)
+@click.option(
+    "--image-prompts",
+    is_flag=True,
+    help="Generate AI image prompts alongside formatted output"
+)
+@click.option(
+    "--include-code",
+    is_flag=True,
+    help="Generate code samples for technical content"
+)
+@click.option(
     "--output-dir",
     type=click.Path(),
     help="Output directory for batch/bundle processing"
@@ -166,6 +181,9 @@ def format(
     bundles_config: Optional[str],
     list_bundles: bool,
     dry_run: bool,
+    sources: Optional[str],
+    image_prompts: bool,
+    include_code: bool,
     output_dir: Optional[str],
     force: bool,
     log_level: str,
@@ -185,6 +203,18 @@ def format(
         
         # Generate a bundle of outputs
         content-pipeline format --input enriched.json --bundle blog-launch --output-dir ./outputs
+        
+        # Combine multiple sources into a blog post
+        content-pipeline format --sources ./enriched-files/ --type blog
+        
+        # Generate with image prompts
+        content-pipeline format --input enriched.json --type blog --image-prompts
+        
+        # Generate with code samples for technical content
+        content-pipeline format --input enriched.json --type blog --include-code
+        
+        # Generate AI video script
+        content-pipeline format --input enriched.json --type ai-video-script --platform youtube
         
         # Batch process multiple files
         content-pipeline format --batch "*.enriched.json" --type tweet --output-dir ./tweets
@@ -237,7 +267,33 @@ def format(
         writer = OutputWriter(force_overwrite=force)
         
         # Validate required options based on mode
-        if batch:
+        if sources:
+            # Sources mode - combine multiple files
+            if not output_type:
+                click.echo("Error: --type is required for sources mode", err=True)
+                sys.exit(1)
+            _run_sources_mode(
+                composer=composer,
+                writer=writer,
+                sources_folder=sources,
+                output_path=output_path,
+                output_dir=output_dir,
+                output_type=output_type,
+                platform=platform,
+                style_profile=style_profile,
+                tone=tone,
+                length=length,
+                llm_enhance=llm_enhance,
+                provider=provider,
+                model=model,
+                max_cost=max_cost,
+                dry_run=dry_run,
+                force=force,
+                url=url,
+                image_prompts=image_prompts,
+                include_code=include_code,
+            )
+        elif batch:
             # Batch mode requires --type
             if not output_type:
                 click.echo("Error: --type is required for batch processing", err=True)
@@ -307,6 +363,8 @@ def format(
                 dry_run=dry_run,
                 force=force,
                 url=url,
+                image_prompts=image_prompts,
+                include_code=include_code,
             )
         
     except BundleNotFoundError as e:
@@ -389,6 +447,8 @@ def _run_single_mode(
     dry_run: bool,
     force: bool,
     url: Optional[str] = None,
+    image_prompts: bool = False,
+    include_code: bool = False,
 ) -> None:
     """Run single format generation mode."""
     from pipeline.formatters.base import FormatRequest
@@ -451,8 +511,181 @@ def _run_single_mode(
         click.echo(f"\n❌ Failed to write output: {write_result.error}", err=True)
         sys.exit(1)
     
+    # Generate image prompts if requested
+    if image_prompts:
+        _process_image_prompts(
+            composer=composer,
+            enriched_content=enriched_content,
+            output_type=output_type,
+            platform=platform,
+            output_path=write_result.output_path,
+            force=force,
+        )
+    
+    # Generate code samples if requested
+    if include_code:
+        _process_code_samples(
+            composer=composer,
+            enriched_content=enriched_content,
+            output_type=output_type,
+        )
+    
     # Display success summary
     _display_single_success(result, write_result.output_path, elapsed)
+
+
+def _run_sources_mode(
+    composer: FormatComposer,
+    writer: OutputWriter,
+    sources_folder: str,
+    output_path: Optional[str],
+    output_dir: Optional[str],
+    output_type: str,
+    platform: Optional[str],
+    style_profile: Optional[str],
+    tone: Optional[str],
+    length: Optional[str],
+    llm_enhance: bool,
+    provider: str,
+    model: Optional[str],
+    max_cost: Optional[float],
+    dry_run: bool,
+    force: bool,
+    url: Optional[str] = None,
+    image_prompts: bool = False,
+    include_code: bool = False,
+) -> None:
+    """Run multi-source format generation mode."""
+    from pathlib import Path
+    
+    sources_path = Path(sources_folder)
+    logger.info(f"Generating {output_type} from sources in {sources_path}")
+    
+    click.echo(f"Loading sources from {sources_path}...")
+    
+    # Load style profile if specified
+    style_profile_data = _load_style_profile(style_profile)
+    
+    # Format from sources
+    start_time = time.time()
+    result = composer.format_from_sources(
+        sources_folder=sources_path,
+        output_type=output_type,
+        platform=platform,
+        style_profile=style_profile_data,
+        tone=tone,
+        length=length,
+        llm_enhance=llm_enhance,
+        provider=provider,
+        model=model,
+        max_cost=max_cost,
+        dry_run=dry_run,
+        url=url,
+    )
+    elapsed = time.time() - start_time
+    
+    if not result.success:
+        click.echo(f"\n❌ Format generation failed: {result.error}", err=True)
+        sys.exit(1)
+    
+    # Determine output path for sources mode
+    if not output_path:
+        output_path = str(
+            sources_path / f"combined_{output_type.replace('-', '_')}.md"
+        )
+    
+    # Write output
+    write_result = writer.write(
+        format_result=result,
+        output_path=output_path,
+        input_path=str(sources_path),
+        output_dir=output_dir,
+        embed_metadata=True,
+        force=force,
+    )
+    
+    if not write_result.success:
+        click.echo(f"\n❌ Failed to write output: {write_result.error}", err=True)
+        sys.exit(1)
+    
+    # Generate image prompts if requested
+    if image_prompts:
+        _process_image_prompts(
+            composer=composer,
+            enriched_content=result.metadata.__dict__ if hasattr(result, 'metadata') else {},
+            output_type=output_type,
+            platform=platform,
+            output_path=write_result.output_path,
+            force=force,
+        )
+    
+    # Display success
+    source_count = len(result.warnings)  # Approximate from warnings
+    click.echo(f"\n✅ Generated {output_type} from sources")
+    click.echo(f"  Output: {write_result.output_path}")
+    click.echo(f"  Time: {elapsed:.1f}s")
+    if result.warnings:
+        click.echo(f"  Warnings: {len(result.warnings)}")
+
+
+def _process_image_prompts(
+    composer: FormatComposer,
+    enriched_content: dict,
+    output_type: str,
+    platform: Optional[str],
+    output_path: str,
+    force: bool,
+) -> None:
+    """Generate and write image prompts alongside main output."""
+    prompts_result = composer.generate_image_prompts(
+        enriched_content=enriched_content,
+        output_type=output_type,
+        platform=platform,
+    )
+    
+    if prompts_result is None or not prompts_result.prompts:
+        click.echo("  ℹ No image prompts generated (unsupported output type or no content)")
+        return
+    
+    # Write image prompts to separate file
+    from pipeline.formatters.image_prompts import ImagePromptGenerator
+    prompts_path = ImagePromptGenerator.get_output_filename(output_path)
+    
+    import json
+    prompts_data = prompts_result.to_json()
+    
+    from pathlib import Path
+    Path(prompts_path).parent.mkdir(parents=True, exist_ok=True)
+    
+    if Path(prompts_path).exists() and not force:
+        click.echo(f"  ⚠ Image prompts file exists: {prompts_path} (use --force to overwrite)")
+        return
+    
+    with open(prompts_path, 'w', encoding='utf-8') as f:
+        json.dump(prompts_data, f, indent=2)
+    
+    click.echo(f"  ✓ Image prompts: {prompts_path} ({len(prompts_result.prompts)} prompts)")
+
+
+def _process_code_samples(
+    composer: FormatComposer,
+    enriched_content: dict,
+    output_type: str,
+) -> None:
+    """Generate code samples and display info."""
+    samples_result = composer.generate_code_samples(
+        enriched_content=enriched_content,
+        output_type=output_type,
+    )
+    
+    if samples_result is None or not samples_result.samples:
+        click.echo("  ℹ No code samples generated (non-technical content or unsupported type)")
+        return
+    
+    click.echo(
+        f"  ✓ Code samples: {len(samples_result.samples)} samples "
+        f"({', '.join(s.language for s in samples_result.samples)})"
+    )
 
 
 def _run_bundle_mode(

@@ -40,6 +40,9 @@ from pipeline.formatters.schemas.format_v1 import FormatV1, LLMMetadata, Validat
 from pipeline.formatters.style_profile import StyleProfile, StyleProfileLoader
 from pipeline.formatters.template_engine import TemplateEngine
 from pipeline.formatters.validator import PlatformValidator
+from pipeline.formatters.source_combiner import SourceCombiner
+from pipeline.formatters.image_prompts import ImagePromptGenerator, ImagePromptsResult
+from pipeline.formatters.code_samples import CodeSampleGenerator, CodeSamplesResult
 
 
 logger = logging.getLogger(__name__)
@@ -121,6 +124,9 @@ class FormatComposer:
         style_profile_loader: Optional[StyleProfileLoader] = None,
         input_validator: Optional[InputValidator] = None,
         bundle_loader: Optional[BundleLoader] = None,
+        source_combiner: Optional[SourceCombiner] = None,
+        image_prompt_generator: Optional[ImagePromptGenerator] = None,
+        code_sample_generator: Optional[CodeSampleGenerator] = None,
     ):
         """Initialize the FormatComposer.
         
@@ -132,6 +138,9 @@ class FormatComposer:
             style_profile_loader: Style profile loader (created if None)
             input_validator: Input validator (created if None)
             bundle_loader: Bundle loader instance (created if None)
+            source_combiner: SourceCombiner for multi-source input (created if None)
+            image_prompt_generator: ImagePromptGenerator for image prompts (optional)
+            code_sample_generator: CodeSampleGenerator for code samples (optional)
         """
         # Initialize components
         self._template_engine = template_engine or TemplateEngine()
@@ -151,6 +160,9 @@ class FormatComposer:
         self._style_profile_loader = style_profile_loader or StyleProfileLoader()
         self._input_validator = input_validator or InputValidator()
         self._bundle_loader = bundle_loader or BundleLoader()
+        self._source_combiner = source_combiner or SourceCombiner()
+        self._image_prompt_generator = image_prompt_generator
+        self._code_sample_generator = code_sample_generator
 
     def format_single(self, request: FormatRequest) -> FormatResult:
         """Format a single output type from enriched content.
@@ -317,6 +329,203 @@ class FormatComposer:
             warnings=warnings,
             success=True,
         )
+
+    def format_from_sources(
+        self,
+        sources_folder: Path,
+        output_type: str,
+        platform: Optional[str] = None,
+        style_profile: Optional[dict] = None,
+        tone: Optional[str] = None,
+        length: Optional[str] = None,
+        llm_enhance: bool = True,
+        provider: str = "auto",
+        model: Optional[str] = None,
+        max_cost: Optional[float] = None,
+        dry_run: bool = False,
+        url: Optional[str] = None,
+    ) -> FormatResult:
+        """Format content from multiple source files in a folder.
+
+        Loads all supported files from the folder, combines them into
+        unified enriched content, then formats using the standard pipeline.
+
+        Args:
+            sources_folder: Path to folder containing source files
+            output_type: Target output format
+            platform: Optional target platform
+            style_profile: Optional style profile dict
+            tone: Optional tone override
+            length: Optional length override
+            llm_enhance: Whether to enable LLM enhancement
+            provider: LLM provider
+            model: Optional specific model
+            max_cost: Optional cost limit
+            dry_run: If True, estimate cost only
+            url: Optional URL for promotional content
+
+        Returns:
+            FormatResult with formatted content
+        """
+        logger.info(f"Loading sources from {sources_folder}")
+
+        # Load and combine sources
+        try:
+            sources = self._source_combiner.load_sources(sources_folder)
+        except (FileNotFoundError, ValueError) as exc:
+            return FormatResult(
+                content="",
+                metadata=self._create_metadata(
+                    request=FormatRequest(
+                        enriched_content={},
+                        output_type=output_type,
+                    ),
+                    source_file=str(sources_folder),
+                    style_profile_name=None,
+                    llm_metadata=None,
+                    validation_metadata=ValidationMetadata(
+                        platform=platform,
+                        character_count=0,
+                        truncated=False,
+                        warnings=[],
+                    ),
+                ),
+                warnings=[str(exc)],
+                success=False,
+                error=str(exc),
+            )
+
+        if not sources:
+            return FormatResult(
+                content="",
+                metadata=self._create_metadata(
+                    request=FormatRequest(
+                        enriched_content={},
+                        output_type=output_type,
+                    ),
+                    source_file=str(sources_folder),
+                    style_profile_name=None,
+                    llm_metadata=None,
+                    validation_metadata=ValidationMetadata(
+                        platform=platform,
+                        character_count=0,
+                        truncated=False,
+                        warnings=[],
+                    ),
+                ),
+                warnings=[f"No supported files found in {sources_folder}"],
+                success=False,
+                error=f"No supported files found in {sources_folder}",
+            )
+
+        combined = self._source_combiner.combine(sources)
+        logger.info(
+            f"Combined {combined.source_count} sources "
+            f"({len(combined.warnings)} warnings)"
+        )
+
+        # Create format request with combined content
+        request = FormatRequest(
+            enriched_content=combined.enriched_content,
+            output_type=output_type,
+            platform=platform,
+            style_profile=style_profile,
+            tone=tone,
+            length=length,
+            llm_enhance=llm_enhance,
+            provider=provider,
+            model=model,
+            max_cost=max_cost,
+            dry_run=dry_run,
+            url=url,
+        )
+
+        # Format using standard pipeline
+        result = self.format_single(request)
+
+        # Append source combiner warnings
+        if combined.warnings:
+            result.warnings.extend(combined.warnings)
+
+        return result
+
+    def generate_image_prompts(
+        self,
+        enriched_content: dict,
+        output_type: str,
+        platform: Optional[str] = None,
+    ) -> Optional[ImagePromptsResult]:
+        """Generate image prompts for content.
+
+        Args:
+            enriched_content: The enriched content data
+            output_type: Target output format
+            platform: Optional target platform
+
+        Returns:
+            ImagePromptsResult or None if not supported/available
+        """
+        if self._image_prompt_generator is None:
+            self._image_prompt_generator = ImagePromptGenerator()
+
+        if not self._image_prompt_generator.is_supported(output_type):
+            logger.info(
+                f"Image prompts not supported for output type: {output_type}"
+            )
+            return None
+
+        return self._image_prompt_generator.generate(
+            enriched_content=enriched_content,
+            output_type=output_type,
+            platform=platform,
+        )
+
+    def generate_code_samples(
+        self,
+        enriched_content: dict,
+        output_type: str,
+    ) -> Optional[CodeSamplesResult]:
+        """Generate code samples for technical content.
+
+        Args:
+            enriched_content: The enriched content data
+            output_type: Target output format
+
+        Returns:
+            CodeSamplesResult or None if not supported/technical
+        """
+        if self._code_sample_generator is None:
+            self._code_sample_generator = CodeSampleGenerator()
+
+        if not self._code_sample_generator.is_supported(output_type):
+            logger.info(
+                f"Code samples not supported for output type: {output_type}"
+            )
+            return None
+
+        if not self._code_sample_generator.is_technical_content(enriched_content):
+            logger.info("Content is not technical, skipping code samples")
+            return None
+
+        return self._code_sample_generator.generate(
+            enriched_content=enriched_content,
+            output_type=output_type,
+        )
+
+    @property
+    def source_combiner(self) -> SourceCombiner:
+        """Get the source combiner instance."""
+        return self._source_combiner
+
+    @property
+    def image_prompt_generator(self) -> Optional[ImagePromptGenerator]:
+        """Get the image prompt generator instance."""
+        return self._image_prompt_generator
+
+    @property
+    def code_sample_generator(self) -> Optional[CodeSampleGenerator]:
+        """Get the code sample generator instance."""
+        return self._code_sample_generator
 
     def estimate_cost(self, request: FormatRequest) -> CostEstimate:
         """Estimate LLM enhancement cost before execution.

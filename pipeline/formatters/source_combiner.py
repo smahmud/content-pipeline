@@ -298,6 +298,12 @@ class SourceCombiner:
             "topics": [],
         }
         
+        # Carry forward required metadata fields from first source
+        first_meta = json_sources[0].content.get("metadata", {}) if json_sources else {}
+        for field in ("provider", "model", "timestamp", "cost_usd", "tokens_used", "enrichment_types"):
+            if field in first_meta:
+                merged["metadata"][field] = first_meta[field]
+        
         all_tags: list[str] = []
         all_topics: list[str] = []
         all_key_points: list[str] = []
