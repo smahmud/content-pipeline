@@ -24,6 +24,7 @@ from .extract import extract
 from .transcribe import transcribe
 from .enrich import enrich
 from .format import format
+from .validate import validate
 
 # Configure logging when CLI package is imported
 configure_logging()
@@ -44,6 +45,7 @@ main.add_command(extract)
 main.add_command(transcribe)
 main.add_command(enrich)
 main.add_command(format)
+main.add_command(validate)
 
 # Entry point for setup.py console script
 def cli():
