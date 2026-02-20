@@ -56,7 +56,8 @@ tests/
 ├── integration/
 │   ├── test_extract_pipeline_flow.py
 │   ├── test_transcribe_pipeline_flow.py
-│   └── test_formatter_orchestrator.py # NEW in v0.8.0: Formatter integration tests (25 tests)
+│   ├── test_formatter_orchestrator.py # NEW in v0.8.0: Formatter integration tests (25 tests)
+│   └── test_format_enhancements_e2e.py # NEW in v0.8.7: Multi-source, image prompts, code samples E2E (4 tests)
 ├── pipeline/
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
 │   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)
@@ -184,4 +185,18 @@ Each property test validates correctness across randomized input ranges, catchin
 - **[Testing Guide](testing-guide.md)** - Practical guide for running tests, markers, and workflows
 - **[Architecture](architecture.md)** - System design and component overview
 - **[CLI Commands](cli-commands.md)** - Command-line interface documentation
+
+---
+
+## Testing Coverage by Milestone
+
+### v0.8.7 — Format Command Enhancements
+- `tests/pipeline/formatters/test_source_combiner.py` — 21 tests (SourceCombiner)
+- `tests/pipeline/formatters/test_image_prompts.py` — 27 tests (ImagePromptGenerator)
+- `tests/pipeline/formatters/test_code_samples.py` — 34 tests (CodeSampleGenerator)
+- `tests/pipeline/formatters/test_ai_video_script.py` — 43 tests (AIVideoScriptGenerator)
+- `tests/pipeline/formatters/test_format_composer_extensions.py` — 18 tests (FormatComposer extensions)
+- `tests/pipeline/formatters/test_video_script_schemas.py` — 17 tests (video script schemas)
+- `tests/integration/test_format_enhancements_e2e.py` — 4 tests (end-to-end)
+- **Total: 164 tests for v0.8.7 features**
 

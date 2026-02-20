@@ -4,10 +4,11 @@ This directory contains detailed release notes for each published version of the
 
 ## Current Release
 
-- **[v0.8.6](v0.8.6.md)** - Enrich Separate Output Files (February 19, 2026)
+- **[v0.8.7](v0.8.7.md)** - Format Command Enhancements (February 20, 2026)
 
 ## Previous Releases
 
+- **[v0.8.6](v0.8.6.md)** - Enrich Separate Output Files (February 19, 2026)
 - **[v0.8.5](v0.8.5.md)** - Technical Debt Fix (February 19, 2026)
 - **[v0.8.0](v0.8.0.md)** - Content Formatting (February 18, 2026)
 - **[v0.7.5](v0.7.5.md)** - Infrastructure Refactoring (February 3, 2026)

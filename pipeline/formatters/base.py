@@ -39,6 +39,9 @@ class OutputType(str, Enum):
     # AI Video formats
     VIDEO_SCRIPT = "video-script"
     TIKTOK_SCRIPT = "tiktok-script"
+    
+    # AI Video Generation formats (for Sora, Runway, Pika, etc.)
+    AI_VIDEO_SCRIPT = "ai-video-script"
 
 
 class Platform(str, Enum):
@@ -54,6 +57,10 @@ class Platform(str, Enum):
     TWITTER = "twitter"
     LINKEDIN = "linkedin"
     YOUTUBE = "youtube"
+    
+    # Video platforms
+    TIKTOK = "tiktok"
+    VIMEO = "vimeo"
 
 
 class Tone(str, Enum):

@@ -46,6 +46,7 @@ TEMPLATE_OUTPUT_TYPES = [
     "quote_cards",
     "video_script",
     "tiktok_script",
+    "ai_video_script",
 ]
 
 

@@ -9,7 +9,7 @@ This document provides usage reference for the Content Pipeline CLI commands.
 | `extract` | ✅ Implemented | v0.1.0-v0.4.0 | Extract audio from video sources |
 | `transcribe` | ✅ Implemented | v0.5.0-v0.6.5 | Convert audio to text transcripts |
 | `enrich` | ✅ Implemented | v0.7.0-v0.8.6 | Generate semantic metadata with LLM |
-| `format` | ✅ Implemented | v0.8.0 | Transform enriched content for publishing |
+| `format` | ✅ Implemented | v0.8.0-v0.8.7 | Transform enriched content for publishing |
 
 ---
 
@@ -242,7 +242,7 @@ content-pipeline enrich --input transcript.json --summarize --custom-prompts ./m
 ---
 
 ### `format`
-**Status:** ✅ Implemented in v0.8.0  
+**Status:** ✅ Implemented in v0.8.0, Enhanced in v0.8.7  
 **Purpose:** Transforms enriched content into various output formats for publishing across multiple platforms.
 
 **Usage:**
@@ -267,12 +267,15 @@ content-pipeline format --input ENRICHED_FILE [OPTIONS]
 - `--bundle`: Named bundle to generate (blog-launch, video-launch, etc.)
 - `--bundles-config`: Path to custom bundles YAML configuration
 - `--list-bundles`: List available bundles and exit
+- `--sources`: Folder path for multi-source input (v0.8.7+)
+- `--image-prompts`: Generate AI image prompts alongside output (v0.8.7+)
+- `--include-code`: Include code samples for technical content (v0.8.7+)
 - `--dry-run`: Estimate costs without execution
 - `--output-dir`: Output directory for batch/bundle processing
 - `--force`: Overwrite existing files without prompting
 - `--log-level`: Logging verbosity (DEBUG, INFO, WARNING, ERROR)
 
-**Supported Output Types (16 total):**
+**Supported Output Types (17 total):**
 - `blog` - Blog article format
 - `tweet` - Twitter/X post
 - `linkedin` - LinkedIn post
@@ -289,6 +292,7 @@ content-pipeline format --input ENRICHED_FILE [OPTIONS]
 - `quote-cards` - Quote card content
 - `tiktok-script` - TikTok video script
 - `video-script` - General video script
+- `ai-video-script` - AI video generation script for Sora/Runway/Pika (v0.8.7+)
 
 **Available Bundles:**
 - `blog-launch` - Blog article with social promotion (blog, tweet, linkedin, seo)
@@ -363,6 +367,32 @@ content-pipeline format --input enriched.json --bundle full-repurpose --dry-run
 - ✅ Batch processing with glob patterns
 - ✅ Cost estimation and control
 - ✅ Multi-provider LLM support (OpenAI, Anthropic, Bedrock, Ollama)
+
+**New in v0.8.7:**
+- ✅ `--sources` flag for multi-source input (combine multiple enriched files from a folder)
+- ✅ `--image-prompts` flag for AI image prompt generation (DALL-E, Midjourney, Gemini)
+- ✅ `--include-code` flag for code sample integration in technical content
+- ✅ `ai-video-script` output type for Sora, Runway, and Pika video generation
+- ✅ New platforms: `tiktok` and `vimeo` in Platform enum and PlatformValidator
+- ✅ 17 output format types (added ai-video-script)
+
+**v0.8.7 Examples:**
+```bash
+# Multi-source input from folder
+content-pipeline format --sources ./enriched-folder/ --type blog
+
+# Generate with image prompts
+content-pipeline format --input enriched.json --type blog --image-prompts
+
+# Include code samples for technical content
+content-pipeline format --input enriched.json --type blog --include-code
+
+# AI video script for YouTube
+content-pipeline format --input enriched.json --type ai-video-script --platform youtube
+
+# AI video script for TikTok (9:16 aspect ratio)
+content-pipeline format --input enriched.json --type ai-video-script --platform tiktok
+```
 
 ---
 

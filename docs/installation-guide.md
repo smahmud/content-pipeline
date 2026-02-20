@@ -183,16 +183,17 @@ ffmpeg -version
 ```bash
 # Test CLI installation
 python -m cli --version
-# Expected: content-pipeline, version 0.7.0
+# Expected: content-pipeline, version 0.8.7
 
 # Test CLI help
 python -m cli --help
-# Should show main CLI help with extract, transcribe, and enrich commands
+# Should show main CLI help with extract, transcribe, enrich, and format commands
 
 # Test subcommand help
 python -m cli extract --help
 python -m cli transcribe --help
 python -m cli enrich --help
+python -m cli format --help
 ```
 
 **Note:** In v0.7.0, the transcribe command requires explicit engine selection via `--engine` flag. Available engines: local-whisper, openai-whisper, aws-transcribe, auto. The enrich command supports multiple LLM providers: openai, claude, bedrock, ollama, auto. See [cli-commands.md](cli-commands.md) for usage examples.

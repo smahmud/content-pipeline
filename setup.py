@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.8.6 — Enrich command separate output files with --combine flag.
+Version: 0.8.7 — Format command enhancements (multi-source, image prompts, code samples, AI video scripts).
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.8.6",
+    version="0.8.7",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",

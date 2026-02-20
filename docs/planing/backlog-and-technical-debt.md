@@ -6,21 +6,21 @@ This document tracks postponed features, enhancement ideas, and technical debt i
 
 ## 📋 Nice-to-Have Features (Future Enhancements)
 
-### Format Command Enhancements
+### Enrich Command Enhancements (v0.8.6)
 
 | Feature | Description | Priority | Target |
 |---------|-------------|----------|--------|
-| Blog with images | Generate blog articles with placeholder images or AI-generated image prompts | Medium | v0.9.0+ |
-| Code sample integration | Include code samples in blog/technical content outputs | Medium | v0.9.0+ |
-| Multi-source input | Accept supporting materials (PDFs, docs) alongside enriched JSON | Low | v1.0+ |
-| Image prompt generator | New output type that generates detailed prompts for image generation LLMs (DALL-E, Midjourney) | Medium | v0.9.0+ |
+| Separate output files | Option to output summary, tags, chapters as separate files instead of single JSON | High | v0.8.6 |
+| Combined output flag | Explicit flag to merge separate enrichments into single file | High | v0.8.6 |
 
-### Enrich Command Enhancements
+### Format Command Enhancements (v0.8.7)
 
 | Feature | Description | Priority | Target |
 |---------|-------------|----------|--------|
-| Separate output files | Option to output summary, tags, chapters as separate files instead of single JSON | Low | v0.9.0+ |
-| Combined output flag | Explicit flag to merge separate enrichments into single file | Low | v0.9.0+ |
+| Image prompt generator | New output type that generates detailed prompts for image generation LLMs (DALL-E, Midjourney) | High | v0.8.7 |
+| Blog with images | Generate blog articles with placeholder images or AI-generated image prompts | High | v0.8.7 |
+| Code sample integration | Include code samples in blog/technical content outputs | High | v0.8.7 |
+| Multi-source input | Accept supporting materials (PDFs, docs) alongside enriched JSON | Medium | v0.8.7 |
 
 ---
 
