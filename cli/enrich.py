@@ -8,6 +8,11 @@ New in v0.7.0 to support:
 - Cost estimation and control
 - Intelligent caching
 - Batch processing
+
+v0.8.6 additions:
+- Separate output files per enrichment type (default)
+- --combine flag for backward compatibility (single file)
+- --output-dir for specifying output directory
 """
 
 import os
@@ -16,12 +21,13 @@ import logging
 import json
 import click
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Tuple, Any
 
 from pipeline.llm.factory import LLMProviderFactory
 from pipeline.llm.config import OpenAIConfig, OllamaConfig, BedrockConfig
 from pipeline.enrichment.orchestrator import EnrichmentOrchestrator, EnrichmentRequest, DryRunReport
 from pipeline.enrichment.prompts.loader import PromptLoader
+from pipeline.enrichment.schemas import IndividualEnrichment, extract_individual_enrichment
 from pipeline.enrichment.errors import (
     EnrichmentError,
     CostLimitExceededError,
@@ -111,6 +117,16 @@ from pipeline.enrichment.errors import (
     default="INFO",
     help="Logging level"
 )
+@click.option(
+    "--combine",
+    is_flag=True,
+    help="Combine all enrichments into single output file (legacy behavior)"
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(),
+    help="Directory for output files (default: same as input)"
+)
 def enrich(
     input,
     output,
@@ -125,7 +141,9 @@ def enrich(
     dry_run,
     no_cache,
     custom_prompts,
-    log_level
+    log_level,
+    combine,
+    output_dir
 ):
     """
     Enrich transcripts with LLM-powered semantic analysis.
@@ -133,15 +151,20 @@ def enrich(
     Generates summaries, tags, chapters, and highlights using
     multiple LLM providers with cost control and caching.
     
+    By default (v0.8.6+), each enrichment type is saved to a separate file.
+    Use --combine to save all enrichments to a single file (legacy behavior).
+    
     Examples:
-        # Generate summary and tags (recommended approach)
+        # Generate summary and tags (separate files by default)
         content-pipeline enrich --input transcript.json --summarize --tag
+        # Creates: transcript-summary.json, transcript-tags.json
         
-        # Generate all enrichments separately (recommended for production)
-        content-pipeline enrich --input transcript.json --summarize
-        content-pipeline enrich --input transcript.json --tag
-        content-pipeline enrich --input transcript.json --chapterize
-        content-pipeline enrich --input transcript.json --highlight
+        # Combine into single file (legacy behavior)
+        content-pipeline enrich --input transcript.json --summarize --tag --combine
+        # Creates: transcript-enriched.json
+        
+        # Specify output directory
+        content-pipeline enrich --input transcript.json --summarize --output-dir ./enriched/
         
         # Estimate costs without executing
         content-pipeline enrich --input transcript.json --summarize --tag --dry-run
@@ -156,19 +179,25 @@ def enrich(
     )
     logger = logging.getLogger(__name__)
     
-    logger.info(f"Content Pipeline v0.7.0 - Enrich Command")
+    logger.info(f"Content Pipeline v0.8.6 - Enrich Command")
     logger.debug(f"CLI arguments: input={input}, provider={provider}, model={model}")
     
     try:
-        # Step 1: Load transcript
-        logger.info(f"Loading transcript from {input}")
-        transcript_data = _load_transcript(input)
-        
-        # Step 2: Determine enrichment types
+        # Validate --output with multiple types without --combine
         enrichment_types = _determine_enrichment_types(
             summarize, tag, chapterize, highlight, all_types
         )
         
+        if output and not combine and len(enrichment_types) > 1:
+            click.echo("Error: --output cannot be used with multiple enrichment types.", err=True)
+            click.echo("Use --output-dir instead, or add --combine for single file output.", err=True)
+            sys.exit(1)
+        
+        # Step 1: Load transcript
+        logger.info(f"Loading transcript from {input}")
+        transcript_data = _load_transcript(input)
+        
+        # Step 2: Determine enrichment types (already done above for validation)
         if not enrichment_types:
             click.echo("Error: No enrichment types specified. Use --summarize, --tag, --chapterize, or --highlight.")
             click.echo("Run 'content-pipeline enrich --help' for usage information.")
@@ -186,6 +215,7 @@ def enrich(
             click.echo("⚠️  Separate commands provide better reliability, cost control, and debugging.\n", err=True)
         
         logger.info(f"Enrichment types: {', '.join(enrichment_types)}")
+        logger.info(f"Output mode: {'combined' if combine else 'separate files'}")
         
         # Step 3: Create provider factory
         logger.info(f"Initializing LLM provider: {provider}")
@@ -198,37 +228,40 @@ def enrich(
             prompt_loader=prompt_loader
         )
         
-        # Step 5: Create enrichment request
-        request = EnrichmentRequest(
-            transcript_text=transcript_data.get("text", ""),
-            language=transcript_data.get("metadata", {}).get("language", "en"),
-            duration=transcript_data.get("metadata", {}).get("duration", 0.0),
-            enrichment_types=enrichment_types,
-            provider=provider,
-            model=model,
-            max_cost=max_cost,
-            dry_run=dry_run,
-            use_cache=not no_cache,
-            custom_prompts_dir=custom_prompts
-        )
-        
-        # Step 6: Execute enrichment
-        logger.info("Starting enrichment...")
-        result = orchestrator.enrich(request)
-        
-        # Step 7: Handle result
-        if isinstance(result, DryRunReport):
-            _display_dry_run_report(result)
+        # Step 5: Execute based on mode
+        if combine or len(enrichment_types) == 1:
+            # Combined mode or single type: existing behavior
+            _execute_combined_mode(
+                orchestrator=orchestrator,
+                transcript_data=transcript_data,
+                enrichment_types=enrichment_types,
+                provider=provider,
+                model=model,
+                max_cost=max_cost,
+                dry_run=dry_run,
+                no_cache=no_cache,
+                custom_prompts=custom_prompts,
+                input_path=input,
+                output_path=output,
+                output_dir=output_dir,
+                logger=logger
+            )
         else:
-            # Determine output path
-            output_path = output or _generate_output_path(input)
-            
-            # Save result
-            logger.info(f"Saving enriched result to {output_path}")
-            _save_enrichment(result, output_path)
-            
-            # Display summary
-            _display_success_summary(result, output_path)
+            # Separate mode: new default behavior
+            _execute_separate_mode(
+                orchestrator=orchestrator,
+                transcript_data=transcript_data,
+                enrichment_types=enrichment_types,
+                provider=provider,
+                model=model,
+                max_cost=max_cost,
+                dry_run=dry_run,
+                no_cache=no_cache,
+                custom_prompts=custom_prompts,
+                input_path=input,
+                output_dir=output_dir,
+                logger=logger
+            )
         
         logger.info("Enrichment completed successfully")
         
@@ -420,4 +453,270 @@ def _display_success_summary(enrichment, output_path: str):
     click.echo(f"Tokens used: {metadata.tokens_used:,}")
     
     click.echo(f"\nOutput saved to: {output_path}")
+    click.echo("="*60 + "\n")
+
+
+# ============================================================================
+# v0.8.6 - Separate Output Files Support
+# ============================================================================
+
+def _generate_output_path_for_type(
+    input_path: str,
+    enrichment_type: str,
+    output_dir: Optional[str] = None
+) -> str:
+    """Generate output path for individual enrichment type.
+    
+    Args:
+        input_path: Input file path
+        enrichment_type: Type of enrichment (summary, tag, chapter, highlight)
+        output_dir: Optional output directory
+        
+    Returns:
+        Output file path with type-specific suffix
+        
+    Examples:
+        input: transcript.json, type: summary -> transcript-summary.json
+        input: transcript.json, type: tag -> transcript-tags.json
+    """
+    path = Path(input_path)
+    
+    # Map enrichment type to file suffix (pluralize where appropriate)
+    suffix_map = {
+        "summary": "summary",
+        "tag": "tags",
+        "chapter": "chapters",
+        "highlight": "highlights"
+    }
+    suffix = suffix_map.get(enrichment_type, enrichment_type)
+    
+    filename = f"{path.stem}-{suffix}.json"
+    
+    if output_dir:
+        return str(Path(output_dir) / filename)
+    return str(path.parent / filename)
+
+
+def _execute_combined_mode(
+    orchestrator: EnrichmentOrchestrator,
+    transcript_data: dict,
+    enrichment_types: List[str],
+    provider: str,
+    model: Optional[str],
+    max_cost: Optional[float],
+    dry_run: bool,
+    no_cache: bool,
+    custom_prompts: Optional[str],
+    input_path: str,
+    output_path: Optional[str],
+    output_dir: Optional[str],
+    logger: logging.Logger
+):
+    """Execute enrichment in combined mode (single output file).
+    
+    This is the legacy behavior and is used when:
+    - --combine flag is specified
+    - Only one enrichment type is requested
+    """
+    # Create enrichment request
+    request = EnrichmentRequest(
+        transcript_text=transcript_data.get("text", ""),
+        language=transcript_data.get("metadata", {}).get("language", "en"),
+        duration=transcript_data.get("metadata", {}).get("duration", 0.0),
+        enrichment_types=enrichment_types,
+        provider=provider,
+        model=model,
+        max_cost=max_cost,
+        dry_run=dry_run,
+        use_cache=not no_cache,
+        custom_prompts_dir=custom_prompts
+    )
+    
+    # Execute enrichment
+    logger.info("Starting enrichment (combined mode)...")
+    result = orchestrator.enrich(request)
+    
+    # Handle result
+    if isinstance(result, DryRunReport):
+        _display_dry_run_report(result)
+    else:
+        # Determine output path
+        if output_path:
+            final_output_path = output_path
+        elif len(enrichment_types) == 1:
+            # Single type: use type-specific filename
+            final_output_path = _generate_output_path_for_type(
+                input_path, enrichment_types[0], output_dir
+            )
+        elif output_dir:
+            # Multiple types with --combine and --output-dir
+            final_output_path = str(Path(output_dir) / f"{Path(input_path).stem}-enriched.json")
+        else:
+            # Multiple types with --combine: use -enriched suffix
+            final_output_path = _generate_output_path(input_path)
+        
+        # Save result
+        logger.info(f"Saving enriched result to {final_output_path}")
+        _save_enrichment(result, final_output_path)
+        
+        # Display summary
+        _display_success_summary(result, final_output_path)
+
+
+def _execute_separate_mode(
+    orchestrator: EnrichmentOrchestrator,
+    transcript_data: dict,
+    enrichment_types: List[str],
+    provider: str,
+    model: Optional[str],
+    max_cost: Optional[float],
+    dry_run: bool,
+    no_cache: bool,
+    custom_prompts: Optional[str],
+    input_path: str,
+    output_dir: Optional[str],
+    logger: logging.Logger
+):
+    """Execute enrichment in separate mode (one file per type).
+    
+    This is the new default behavior (v0.8.6+). Each enrichment type
+    is processed independently and saved to its own file.
+    """
+    results: Dict[str, Tuple[str, Any]] = {}
+    
+    for etype in enrichment_types:
+        logger.info(f"Processing enrichment type: {etype}")
+        
+        try:
+            # Create request for single type
+            request = EnrichmentRequest(
+                transcript_text=transcript_data.get("text", ""),
+                language=transcript_data.get("metadata", {}).get("language", "en"),
+                duration=transcript_data.get("metadata", {}).get("duration", 0.0),
+                enrichment_types=[etype],
+                provider=provider,
+                model=model,
+                max_cost=max_cost,
+                dry_run=dry_run,
+                use_cache=not no_cache,
+                custom_prompts_dir=custom_prompts
+            )
+            
+            # Execute enrichment
+            result = orchestrator.enrich(request)
+            
+            if isinstance(result, DryRunReport):
+                results[etype] = ("dry_run", result)
+            else:
+                # Generate output path for this type
+                output_path = _generate_output_path_for_type(input_path, etype, output_dir)
+                
+                # Extract individual enrichment and save
+                individual = extract_individual_enrichment(result, etype)
+                _save_individual_enrichment(individual, output_path)
+                
+                results[etype] = ("success", {
+                    "output_path": output_path,
+                    "metadata": result.metadata
+                })
+                logger.info(f"Saved {etype} to {output_path}")
+                
+        except Exception as e:
+            logger.error(f"Failed to process {etype}: {e}")
+            results[etype] = ("failed", str(e))
+    
+    # Display summary
+    if dry_run:
+        _display_separate_dry_run_summary(results)
+    else:
+        _display_separate_summary(results)
+    
+    # Determine exit code
+    failures = sum(1 for status, _ in results.values() if status == "failed")
+    if failures == len(results):
+        click.echo("\n❌ All enrichments failed", err=True)
+        sys.exit(1)
+    elif failures > 0:
+        click.echo(f"\n⚠️  {failures} enrichment(s) failed", err=True)
+
+
+def _save_individual_enrichment(enrichment: IndividualEnrichment, output_path: str):
+    """Save individual enrichment result to file.
+    
+    Args:
+        enrichment: IndividualEnrichment result
+        output_path: Output file path
+    """
+    # Create output directory if needed
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    
+    # Convert to dict and save
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(enrichment.model_dump(mode='json'), f, indent=2, ensure_ascii=False)
+
+
+def _display_separate_summary(results: Dict[str, Tuple[str, Any]]):
+    """Display summary for separate enrichment mode.
+    
+    Args:
+        results: Dict mapping enrichment type to (status, data) tuple
+    """
+    click.echo("\n" + "="*60)
+    click.echo("Enrichment Results (Separate Files)")
+    click.echo("="*60)
+    
+    total_cost = 0.0
+    total_tokens = 0
+    
+    for etype, (status, data) in results.items():
+        if status == "success":
+            click.echo(f"  ✓ {etype}: {data['output_path']}")
+            total_cost += data['metadata'].cost_usd
+            total_tokens += data['metadata'].tokens_used
+        else:
+            click.echo(f"  ✗ {etype}: FAILED - {data}")
+    
+    click.echo(f"\nTotal cost: ${total_cost:.4f}")
+    click.echo(f"Total tokens: {total_tokens:,}")
+    click.echo("="*60 + "\n")
+
+
+def _display_separate_dry_run_summary(results: Dict[str, Tuple[str, Any]]):
+    """Display dry-run summary for separate enrichment mode.
+    
+    Args:
+        results: Dict mapping enrichment type to (status, data) tuple
+    """
+    click.echo("\n" + "="*60)
+    click.echo("DRY RUN - Cost Estimate (Separate Files)")
+    click.echo("="*60)
+    
+    total_cost = 0.0
+    total_input_tokens = 0
+    total_output_tokens = 0
+    
+    for etype, (status, data) in results.items():
+        if status == "dry_run":
+            report: DryRunReport = data
+            click.echo(f"\n{etype}:")
+            click.echo(f"  Provider: {report.provider}")
+            click.echo(f"  Model: {report.model}")
+            click.echo(f"  Estimated cost: ${report.estimate.total_cost:.4f}")
+            click.echo(f"  Input tokens: {report.estimate.input_tokens:,}")
+            click.echo(f"  Output tokens: {report.estimate.output_tokens:,}")
+            if report.cache_hit:
+                click.echo("  ✓ Result is cached (no API calls needed)")
+            
+            total_cost += report.estimate.total_cost
+            total_input_tokens += report.estimate.input_tokens
+            total_output_tokens += report.estimate.output_tokens
+        else:
+            click.echo(f"\n{etype}: FAILED - {data}")
+    
+    click.echo(f"\n" + "-"*40)
+    click.echo(f"Total estimated cost: ${total_cost:.4f}")
+    click.echo(f"Total input tokens: {total_input_tokens:,}")
+    click.echo(f"Total output tokens: {total_output_tokens:,}")
+    click.echo("\n" + "="*60)
+    click.echo("No API calls were made (dry-run mode)")
     click.echo("="*60 + "\n")

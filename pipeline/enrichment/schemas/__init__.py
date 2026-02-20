@@ -23,6 +23,13 @@ from pipeline.enrichment.schemas.enrichment_v1 import (
     _resolve_forward_refs,
 )
 
+# Import individual enrichment schema (v0.8.6+)
+from pipeline.enrichment.schemas.individual import (
+    IndividualEnrichment,
+    IndividualEnrichmentMetadata,
+    extract_individual_enrichment,
+)
+
 # Resolve forward references now that all schemas are imported
 _resolve_forward_refs()
 
@@ -34,4 +41,7 @@ __all__ = [
     "ChapterEnrichment",
     "HighlightEnrichment",
     "ImportanceLevel",
+    "IndividualEnrichment",
+    "IndividualEnrichmentMetadata",
+    "extract_individual_enrichment",
 ]

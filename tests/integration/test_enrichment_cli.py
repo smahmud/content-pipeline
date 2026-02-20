@@ -143,13 +143,13 @@ class TestEnrichmentCLIWorkflow:
     
     @patch('cli.enrich.LLMProviderFactory')
     def test_all_enrichment_types(self, mock_factory_class, sample_transcript, tmp_path, mock_llm_provider):
-        """Test enrichment with all types enabled."""
+        """Test enrichment with all types enabled using --combine flag."""
         # Setup mock factory
         mock_factory = Mock()
         mock_factory.create_provider.return_value = mock_llm_provider
         mock_factory_class.return_value = mock_factory
         
-        # Run CLI command with --all flag
+        # Run CLI command with --all flag and --combine (required for --output with multiple types)
         runner = CliRunner()
         output_path = tmp_path / "output_all.json"
         
@@ -157,7 +157,8 @@ class TestEnrichmentCLIWorkflow:
             '--input', str(sample_transcript),
             '--output', str(output_path),
             '--provider', 'openai',
-            '--all'
+            '--all',
+            '--combine'
         ])
         
         # Verify command succeeded
@@ -180,7 +181,10 @@ class TestEnrichmentCLIWorkflow:
     
     @patch('cli.enrich.LLMProviderFactory')
     def test_auto_output_path_generation(self, mock_factory_class, sample_transcript, mock_llm_provider):
-        """Test automatic output path generation when not specified."""
+        """Test automatic output path generation when not specified.
+        
+        v0.8.6+: Single enrichment type creates type-specific filename.
+        """
         # Setup mock factory
         mock_factory = Mock()
         mock_factory.create_provider.return_value = mock_llm_provider
@@ -198,8 +202,8 @@ class TestEnrichmentCLIWorkflow:
         # Verify command succeeded
         assert result.exit_code == 0
         
-        # Verify output file was created with auto-generated name
-        expected_output = sample_transcript.parent / "test_transcript-enriched.json"
+        # v0.8.6+: Single type creates type-specific filename
+        expected_output = sample_transcript.parent / "test_transcript-summary.json"
         assert expected_output.exists()
         
         # Cleanup
