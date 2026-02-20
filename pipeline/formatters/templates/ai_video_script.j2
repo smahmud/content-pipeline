@@ -1,0 +1,83 @@
+{#
+AI Video Script template for AI video generators (Sora, Runway, Pika).
+
+Generates a scene-by-scene script with:
+- Visual prompts for AI generation
+- Voiceover narration
+- Music suggestions
+- Platform-specific metadata
+
+Required context:
+- title: Video title
+- scenes: List of scene dicts
+- target_platform: Platform name
+- aspect_ratio: Video aspect ratio
+- total_duration_seconds: Total video duration
+
+Optional context:
+- topics: List of content topics
+- tone: Script tone
+#}
+
+# AI Video Script: {{ title | default("Untitled Video") }}
+
+**Platform:** {{ target_platform | default("youtube") | title }}
+**Aspect Ratio:** {{ aspect_ratio | default("16:9") }}
+**Total Duration:** ~{{ total_duration_seconds | default(0) | format_timestamp }}
+**Scenes:** {{ scene_count | default(scenes | length) }}
+{% if tone %}
+**Tone:** {{ tone | title }}
+{% endif %}
+
+---
+
+{% for scene in scenes %}
+## SCENE {{ scene.scene_number }}: {{ scene.type | upper }}
+**Duration:** ~{{ scene.duration_seconds }}s
+
+### Visual Prompt
+{{ scene.visual_prompt }}
+
+### Voiceover
+{{ scene.voiceover_text }}
+
+### Music
+- **Mood:** {{ scene.music_suggestion.mood }}
+- **Genre:** {{ scene.music_suggestion.genre }}
+- **Tempo:** {{ scene.music_suggestion.tempo }}
+
+---
+
+{% endfor %}
+
+## PRODUCTION SUMMARY
+
+### Timing Breakdown
+| Scene | Type | Duration |
+|-------|------|----------|
+{% for scene in scenes %}
+| {{ scene.scene_number }} | {{ scene.type | title }} | ~{{ scene.duration_seconds }}s |
+{% endfor %}
+| **Total** | | **~{{ total_duration_seconds | format_timestamp }}** |
+
+{% if topics %}
+### Content Topics
+{% for topic in topics[:5] %}
+- {{ topic }}
+{% endfor %}
+{% endif %}
+
+### Platform Notes
+{% if target_platform == "tiktok" %}
+- Vertical format (9:16) - optimize visuals for mobile
+- Keep scenes fast-paced and attention-grabbing
+- Front-load the hook in the first 3 seconds
+{% elif target_platform == "vimeo" %}
+- Widescreen format (16:9) - cinematic quality preferred
+- Longer scenes allowed for artistic expression
+- Focus on visual storytelling and production value
+{% else %}
+- Widescreen format (16:9) - standard YouTube layout
+- Include end card elements in outro scene
+- Optimize thumbnail from intro scene visual
+{% endif %}

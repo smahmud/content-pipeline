@@ -119,6 +119,16 @@ class PlatformValidator:
             max_chars=160,
             allowed_formatting=[],
         ),
+        
+        # Video platforms
+        "tiktok": PlatformLimits(
+            max_chars=None,
+            allowed_formatting=["links"],
+        ),
+        "vimeo": PlatformLimits(
+            max_chars=None,
+            allowed_formatting=["links"],
+        ),
     }
     
     # Sentence ending characters

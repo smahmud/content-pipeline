@@ -57,6 +57,10 @@ class Platform(str, Enum):
     TWITTER = "twitter"
     LINKEDIN = "linkedin"
     YOUTUBE = "youtube"
+    
+    # Video platforms
+    TIKTOK = "tiktok"
+    VIMEO = "vimeo"
 
 
 class Tone(str, Enum):
