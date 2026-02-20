@@ -39,6 +39,9 @@ class OutputType(str, Enum):
     # AI Video formats
     VIDEO_SCRIPT = "video-script"
     TIKTOK_SCRIPT = "tiktok-script"
+    
+    # AI Video Generation formats (for Sora, Runway, Pika, etc.)
+    AI_VIDEO_SCRIPT = "ai-video-script"
 
 
 class Platform(str, Enum):
