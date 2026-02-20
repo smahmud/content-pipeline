@@ -44,6 +44,7 @@ For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 - **v0.7.5** - Infrastructure refactoring: unified provider architecture, renamed "adapters" and "agents" to "providers", configuration management system
 - **v0.7.6** - Documentation fixes: updated all documentation to reflect v0.7.5 terminology and architecture changes
 - **v0.8.0** - Formatter and publishing draft generator with 16 output types, hybrid templates + LLM enhancement, style profiles, bundles, and platform validation
+- **v0.8.5** - Technical debt fix: updated all enrichment tests to use correct provider terminology
 
 ### 🧭 Future
 - Additional features and enhancements planned

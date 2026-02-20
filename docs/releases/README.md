@@ -4,10 +4,11 @@ This directory contains detailed release notes for each published version of the
 
 ## Current Release
 
-- **[v0.8.0](v0.8.0.md)** - Content Formatting (February 18, 2026)
+- **[v0.8.5](v0.8.5.md)** - Technical Debt Fix (February 19, 2026)
 
 ## Previous Releases
 
+- **[v0.8.0](v0.8.0.md)** - Content Formatting (February 18, 2026)
 - **[v0.7.5](v0.7.5.md)** - Infrastructure Refactoring (February 3, 2026)
 - **[v0.7.0](v0.7.0.md)** - LLM-Powered Enrichment (January 30, 2026)
 - **[v0.6.5](v0.6.5.md)** - Enhanced Transcription & Configuration (January 29, 2026)

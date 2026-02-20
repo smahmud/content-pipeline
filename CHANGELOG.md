@@ -6,6 +6,35 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.8.5] - 2026-02-19
+
+### Technical Debt Fix Release
+
+This release fixes technical debt from the v0.7.5 provider architecture migration by updating all enrichment tests to use the correct terminology.
+
+### Fixed
+- **Enrichment Test Terminology** - Updated all test files from old agent terminology to new provider terminology
+  - `agent_factory` → `provider_factory`
+  - `create_agent` → `create_provider`
+  - `mock_agent` → `mock_provider`
+  - `AgentFactory` → `LLMProviderFactory`
+
+- **Production Code Bug** - Fixed `batch.py` which still used `agent_factory` in `_estimate_batch_cost` method
+
+- **Mock Patch Paths** - Updated test mock decorators to patch correct module paths
+  - `@patch('openai.OpenAI')` instead of `@patch('pipeline.llm.providers.cloud_openai.OpenAI')`
+  - `@patch('anthropic.Anthropic')` instead of old agent paths
+
+- **Test Infrastructure Workflows** - Fixed `EnrichmentOrchestrator` constructor calls to use `provider_factory=` keyword
+
+### Changed
+- Updated timing assertions in batch tests to use `>= 0` for mocks that return instantly
+
+### Notes
+- All 88 enrichment tests now pass (3 skipped for complex provider scenarios)
+- No behavioral changes - purely mechanical refactoring
+- Debug scripts in `tests/my-test-scripts/` not updated (not part of test suite)
+
 ## [0.8.0] - 2026-02-18
 
 ### Content Formatting Release
