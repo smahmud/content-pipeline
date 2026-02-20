@@ -6,6 +6,29 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.9.0] - 2026-02-20
+
+### Validation & Quality Gates Release
+
+This release introduces the `validate` command for verifying pipeline artifacts against schemas and platform requirements, with batch support and JSON reports for CI/CD integration.
+
+### Added
+- **Validate Command** (`content-pipeline validate`)
+  - Schema validation for TranscriptV1, EnrichmentV1, and FormatV1 artifacts
+  - Auto-detection of schema type from file content
+  - Platform validation against character, hashtag, and link limits
+  - Batch validation with glob patterns (`--batch "outputs/*.json"`)
+  - JSON report generation (`--report report.json`) for CI/CD pipelines
+  - Per-file reports with `--output-dir`
+  - Strict mode (`--strict`) that fails on warnings in addition to errors
+  - Cross-reference validation (source file existence, enrichment type consistency)
+
+- **Validation Engine** (`pipeline/validation/`)
+  - `ValidationEngine` — central orchestrator with auto-detect, batch, and strict mode
+  - `SchemaValidator` — Pydantic schema wrappers with field-level error details
+  - `CrossReferenceValidator` — validates relationships between pipeline artifacts
+  - `ValidationReport` / `ValidationIssue` — structured report dataclasses with JSON and human-readable output
+
 ## [0.8.7] - 2026-02-20
 
 ### Format Command Enhancements Release

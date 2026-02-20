@@ -10,6 +10,7 @@ This document provides usage reference for the Content Pipeline CLI commands.
 | `transcribe` | ✅ Implemented | v0.5.0-v0.6.5 | Convert audio to text transcripts |
 | `enrich` | ✅ Implemented | v0.7.0-v0.8.6 | Generate semantic metadata with LLM |
 | `format` | ✅ Implemented | v0.8.0-v0.8.7 | Transform enriched content for publishing |
+| `validate` | ✅ Implemented | v0.9.0 | Validate pipeline artifacts against schemas and platform limits |
 
 ---
 
@@ -396,6 +397,48 @@ content-pipeline format --input enriched.json --type ai-video-script --platform 
 
 ---
 
+### `validate`
+**Status:** ✅ Implemented in v0.9.0  
+**Purpose:** Validates pipeline artifacts (TranscriptV1, EnrichmentV1, FormatV1) against their schemas and platform requirements.
+
+**Usage:**
+```bash
+content-pipeline validate --input FILE [OPTIONS]
+content-pipeline validate --batch PATTERN [OPTIONS]
+```
+
+**Key Options:**
+- `--input, -i`: File path to validate
+- `--schema, -s`: Schema type (`auto`, `transcript`, `enrichment`, `format`; default: auto-detect)
+- `--platform, -p`: Validate against platform limits (e.g., `twitter`, `linkedin`)
+- `--strict`: Fail on warnings in addition to errors
+- `--report, -r`: Output JSON report to file
+- `--batch, -b`: Glob pattern for batch validation
+- `--output-dir`: Directory for per-file batch reports
+
+**Examples:**
+```bash
+# Validate a single enriched file (auto-detect schema)
+content-pipeline validate --input enriched.json
+
+# Validate with explicit schema type
+content-pipeline validate --input enriched.json --schema enrichment
+
+# Validate against platform limits
+content-pipeline validate --input enriched.json --platform twitter
+
+# Strict mode (fail on warnings)
+content-pipeline validate --input enriched.json --strict
+
+# Batch validation with consolidated report
+content-pipeline validate --batch "outputs/*.json" --report report.json
+
+# Batch with per-file reports
+content-pipeline validate --batch "outputs/*.json" --output-dir ./reports
+```
+
+---
+
 ## 🔄 **Command Workflow**
 
 The commands work together in a content pipeline workflow:
@@ -412,11 +455,12 @@ graph LR
     H --> I[Publishing Formats]
 ```
 
-**Current Workflow (v0.8.0):**
+**Current Workflow (v0.9.0):**
 1. `extract` - Get audio from video source
 2. `transcribe` - Convert audio to text transcript
 3. `enrich` - Add semantic metadata (summaries, tags, chapters, highlights)
 4. `format` - Transform enriched content into publishing formats (blog, tweet, linkedin, etc.)
+5. `validate` - Verify artifacts against schemas and platform limits before publishing
 
 ---
 

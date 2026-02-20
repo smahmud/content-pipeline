@@ -42,6 +42,7 @@ tests/
 ├── cli/
 │   ├── test_extract.py              # Extract subcommand tests
 │   ├── test_transcribe.py           # Transcribe subcommand tests (v0.6.5: engine selection)
+│   ├── test_validate.py            # NEW in v0.9.0: Validate subcommand tests
 │   ├── test_shared_options.py       # Shared decorator tests
 │   └── test_help_texts.py           # Help text consistency tests
 ├── config/                           # NEW in v0.6.5: Configuration testing
@@ -59,6 +60,10 @@ tests/
 │   ├── test_formatter_orchestrator.py # NEW in v0.8.0: Formatter integration tests (25 tests)
 │   └── test_format_enhancements_e2e.py # NEW in v0.8.7: Multi-source, image prompts, code samples E2E (4 tests)
 ├── pipeline/
+│   ├── validation/                   # NEW in v0.9.0: Validation testing
+│   │   ├── test_engine.py           # Validation engine tests (single, batch, strict, platform)
+│   │   ├── test_schema_validator.py # Schema detection and validation tests
+│   │   └── test_cross_reference.py  # Cross-reference validation tests
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
 │   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)
 │   │   ├── test_orchestrator.py     # Enrichment workflow coordination tests

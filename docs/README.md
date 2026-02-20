@@ -47,6 +47,7 @@ For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 - **v0.8.5** - Technical debt fix: updated all enrichment tests to use correct provider terminology
 - **v0.8.6** - Enrich separate output files: per-type output files, --combine flag, --output-dir option
 - **v0.8.7** - Format command enhancements: multi-source input, AI image prompts, code samples, AI video scripts, new platforms (tiktok, vimeo)
+- **v0.9.0** - Validation & quality gates: `validate` command with schema validation, platform checks, batch support, JSON reports, strict mode
 
 ### 🧭 Future
 - Additional features and enhancements planned

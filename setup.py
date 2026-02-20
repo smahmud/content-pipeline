@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.8.7 — Format command enhancements (multi-source, image prompts, code samples, AI video scripts).
+Version: 0.9.0 — Validation & quality gates (validate command, schema validation, platform checks, batch support).
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.8.7",
+    version="0.9.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
