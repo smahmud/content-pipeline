@@ -107,8 +107,8 @@ class TestMultiProviderAgentProperties:
         from pipeline.enrichment.orchestrator import EnrichmentOrchestrator
         
         # Mock components
-        mock_agent = Mock()
-        mock_agent.generate.return_value = Mock(
+        mock_provider = Mock()
+        mock_provider.generate.return_value = Mock(
             content='{"short": "test", "medium": "test", "long": "test"}',
             model_used="test-model",
             tokens_used=100,
@@ -116,11 +116,11 @@ class TestMultiProviderAgentProperties:
         )
         
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
         # Verify factory is called with correct provider
-        mock_factory.create_agent(provider)
-        mock_factory.create_agent.assert_called_with(provider)
+        mock_factory.create_provider(provider)
+        mock_factory.create_provider.assert_called_with(provider)
 
 
 # ============================================================================
@@ -398,9 +398,9 @@ class TestCostEstimationProperties:
         from pipeline.enrichment.errors import CostLimitExceededError
         
         # Mock components
-        mock_agent = Mock()
+        mock_provider = Mock()
         mock_factory = Mock()
-        mock_factory.create_agent.return_value = mock_agent
+        mock_factory.create_provider.return_value = mock_provider
         
         # Correct API: EnrichmentOrchestrator(provider_factory, prompt_loader, prompt_renderer, cache_system)
         orchestrator = EnrichmentOrchestrator(

@@ -26,12 +26,12 @@ def mock_orchestrator():
     """Create mock orchestrator."""
     orchestrator = Mock(spec=EnrichmentOrchestrator)
     
-    # Configure agent factory
-    orchestrator.agent_factory = Mock()
-    agent = Mock()
-    agent.get_context_window.return_value = 8000
-    agent.estimate_cost.return_value = 0.050  # High cost to trigger limit
-    orchestrator.agent_factory.create_agent.return_value = agent
+    # Configure provider factory
+    orchestrator.provider_factory = Mock()
+    provider = Mock()
+    provider.get_context_window.return_value = 8000
+    provider.estimate_cost.return_value = 0.050  # High cost to trigger limit
+    orchestrator.provider_factory.create_provider.return_value = provider
     
     # Configure enrich method
     orchestrator.enrich.return_value = EnrichmentV1(
@@ -321,7 +321,7 @@ class TestBatchProcessor:
         assert result.success is True
         assert result.cost > 0
         assert result.tokens > 0
-        assert result.duration > 0
+        assert result.duration >= 0  # Mocks may return instantly
         assert result.error is None
     
     def test_process_single_file_failure(self, batch_processor, mock_orchestrator, temp_transcript_files, tmp_path):

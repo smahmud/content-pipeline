@@ -24,6 +24,7 @@ from pipeline.llm.config import LLMConfig, OllamaConfig, OpenAIConfig
 from pipeline.transcription.factory import TranscriptionProviderFactory
 from pipeline.transcription.config import TranscriptionConfig, WhisperLocalConfig
 from pipeline.enrichment.schemas.enrichment_v1 import EnrichmentV1
+from pipeline.formatters.llm.enhancer import LLMEnhancer
 
 
 @pytest.mark.integration
@@ -62,7 +63,7 @@ class TestEnrichmentWorkflow:
         factory = LLMProviderFactory(llm_config)
         
         # Create orchestrator
-        orchestrator = EnrichmentOrchestrator(agent_factory=factory)
+        orchestrator = EnrichmentOrchestrator(provider_factory=factory)
         
         # Create enrichment request
         request = EnrichmentRequest(
@@ -85,7 +86,7 @@ class TestEnrichmentWorkflow:
         assert result.summary is not None
         assert result.summary.short == "Test summary"
     
-    @patch('pipeline.llm.providers.cloud_openai.OpenAI')
+    @patch('openai.OpenAI')
     def test_complete_enrichment_workflow_with_openai(self, mock_openai_class):
         """Test complete enrichment workflow using new OpenAI provider."""
         # Setup mock OpenAI client
@@ -114,7 +115,7 @@ class TestEnrichmentWorkflow:
         factory = LLMProviderFactory(llm_config)
         
         # Create orchestrator
-        orchestrator = EnrichmentOrchestrator(agent_factory=factory)
+        orchestrator = EnrichmentOrchestrator(provider_factory=factory)
         
         # Create enrichment request
         request = EnrichmentRequest(
@@ -220,7 +221,7 @@ class TestTranscriptionWorkflow:
         assert 'segments' in result
         assert len(result['segments']) == 1
     
-    @patch('pipeline.transcription.providers.cloud_openai_whisper.OpenAI')
+    @patch('openai.OpenAI')
     def test_complete_transcription_workflow_with_openai_whisper(self, mock_openai_class, tmp_path):
         """Test complete transcription workflow using new CloudOpenAIWhisperProvider."""
         # Setup mock OpenAI client
@@ -334,14 +335,15 @@ class TestFormattingWorkflow:
         # Execute formatting
         result = enhancer.enhance(
             content=content,
+            output_type="blog",
             provider="local-ollama",
             model="llama2"
         )
         
         # Verify result
         assert result is not None
-        assert isinstance(result, str)
-        assert len(result) > 0
+        assert hasattr(result, 'content')
+        assert len(result.content) > 0
 
 
 @pytest.mark.integration
@@ -411,7 +413,7 @@ class TestEndToEndWorkflow:
             )
         )
         llm_factory = LLMProviderFactory(llm_config)
-        orchestrator = EnrichmentOrchestrator(agent_factory=llm_factory)
+        orchestrator = EnrichmentOrchestrator(provider_factory=llm_factory)
         
         enrichment_request = EnrichmentRequest(
             transcript_text=transcript_text,

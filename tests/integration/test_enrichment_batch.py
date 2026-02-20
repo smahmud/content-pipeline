@@ -52,18 +52,26 @@ def mock_orchestrator():
     """Create mock orchestrator for batch testing."""
     orchestrator = Mock(spec=EnrichmentOrchestrator)
     
-    # Configure agent factory
-    orchestrator.agent_factory = Mock()
-    agent = Mock()
-    agent.get_capabilities.return_value = {
+    # Configure provider factory
+    orchestrator.provider_factory = Mock()
+    provider = Mock()
+    provider.get_capabilities.return_value = {
         "provider": "openai",
         "models": ["gpt-4-turbo"],
-        "max_tokens": 128000
+        "max_tokens": 128000,
+        "default_model": "gpt-4-turbo"
     }
-    orchestrator.agent_factory.create_agent.return_value = agent
+    provider.estimate_cost.return_value = 0.05
+    orchestrator.provider_factory.create_provider.return_value = provider
     
     # Configure enrich method to return successful results
     def mock_enrich(request):
+        # Check cost limit
+        if request.max_cost and request.max_cost < 0.05:
+            raise CostLimitExceededError(
+                f"Estimated cost $0.05 exceeds limit ${request.max_cost}"
+            )
+        
         return EnrichmentV1(
             enrichment_version="v1",
             metadata=EnrichmentMetadata(
@@ -338,8 +346,8 @@ class TestBatchProcessing:
             provider="openai"
         )
         
-        # Verify timing metrics
-        assert report.total_duration > 0
+        # Verify timing metrics (mocks may return instantly, so >= 0 is valid)
+        assert report.total_duration >= 0
         
         for result in report.results:
             assert result.duration >= 0

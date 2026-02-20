@@ -215,9 +215,9 @@ class BatchProcessor:
         """
         total_estimate = 0.0
         
-        # Create agent for cost estimation
-        agent = self.orchestrator.agent_factory.create_agent(provider)
-        cost_estimator = CostEstimator(agent)
+        # Create provider for cost estimation
+        provider_instance = self.orchestrator.provider_factory.create_provider(provider)
+        cost_estimator = CostEstimator(provider_instance)
         
         for input_path in input_files:
             try:
