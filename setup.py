@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.9.5 — MCP server integration (AI-agent-callable tools wrapping CLI commands).
+Version: 0.10.0 — REST API (FastAPI endpoints for all pipeline operations).
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.9.5",
+    version="0.10.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
@@ -26,6 +26,7 @@ setup(
         "jinja2>=3.0",
         "requests>=2.31.0",
         "mcp>=1.0",
+        "fastapi>=0.100",
     ],
     entry_points={
         "console_scripts": [

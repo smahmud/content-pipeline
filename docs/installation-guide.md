@@ -36,6 +36,7 @@ The following packages are automatically installed when you install the Content 
 | **jinja2** | ≥3.0 | Prompt template rendering |
 | **requests** | ≥2.31.0 | HTTP client for Ollama (optional) |
 | **mcp** | ≥1.0 | Model Context Protocol SDK for MCP server (optional) |
+| **fastapi** | ≥0.100 | REST API web framework (optional) |
 
 ### Installation Methods
 

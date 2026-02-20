@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.10.0] - 2026-02-20
+
+### REST API Release
+
+This release adds a FastAPI-based REST API exposing all pipeline operations via HTTP endpoints with OpenAPI/Swagger documentation, API key authentication, and CORS support.
+
+### Added
+- **REST API** (`api/`)
+  - FastAPI application with `/api/v1/` prefix and auto-generated Swagger docs
+  - Endpoints: `extract`, `transcribe`, `enrich`, `format`, `validate`, `pipeline`
+  - Health check, version, and tools listing endpoints
+  - API key authentication via `X-API-Key` header (optional, env-based)
+  - CORS middleware for web client access
+  - Pydantic request/response models for all endpoints
+
+- **New Dependency**: `fastapi>=0.100` (web framework)
+
 ## [0.9.5] - 2026-02-20
 
 ### MCP Server Integration Release

@@ -13,3 +13,4 @@ pyyaml>=6.0
 jinja2>=3.0
 requests>=2.31.0
 mcp>=1.0
+fastapi>=0.100

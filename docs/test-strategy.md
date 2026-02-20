@@ -68,6 +68,10 @@ tests/
 │   ├── test_config.py           # Server configuration tests
 │   ├── test_server.py           # Tool registration tests
 │   └── test_tools.py            # Tool wrapper tests (validate, extract)
+├── api/                          # NEW in v0.10.0: REST API tests
+│   ├── test_endpoints.py        # Endpoint tests (health, validate, extract, format)
+│   ├── test_auth.py             # API key authentication tests
+│   └── test_models.py           # Request/response model tests
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
 │   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)
 │   │   ├── test_orchestrator.py     # Enrichment workflow coordination tests
