@@ -4,10 +4,11 @@ This directory contains detailed release notes for each published version of the
 
 ## Current Release
 
-- **[v0.10.0](v0.10.0.md)** - REST API (February 20, 2026)
+- **[v1.0.0](v1.0.0.md)** - First Public Release (February 20, 2026)
 
 ## Previous Releases
 
+- **[v0.10.0](v0.10.0.md)** - REST API (February 20, 2026)
 - **[v0.9.5](v0.9.5.md)** - MCP Server Integration (February 20, 2026)
 - **[v0.9.0](v0.9.0.md)** - Validation & Quality Gates (February 20, 2026)
 - **[v0.8.7](v0.8.7.md)** - Format Command Enhancements (February 20, 2026)

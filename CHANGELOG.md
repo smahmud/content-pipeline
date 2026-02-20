@@ -6,6 +6,29 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [1.0.0] - 2026-02-20
+
+### First Public Release 🎉
+
+Content Pipeline v1.0.0 marks the first stable release with a complete pipeline from extraction to publishing, three interfaces (CLI, MCP, REST API), and frozen schemas.
+
+### Added
+- **CI/CD Pipeline**: GitHub Actions for testing on Python 3.11/3.12 and release automation
+- **Schema Freeze**: TranscriptV1, EnrichmentV1, FormatV1 schemas locked — no breaking changes
+- **Schema Documentation**: `docs/schemas/` with field references for all three schemas
+- **Quick Start Guide**: `docs/quick-start.md` for new users
+- **Contributor Guide**: `CONTRIBUTING.md` with setup, standards, and PR process
+- **Updated README**: Comprehensive project overview with all interfaces documented
+
+### Summary of All Features (v0.1.0 → v1.0.0)
+- 5 CLI commands: extract, transcribe, enrich, format, validate
+- 17 output format types with LLM enhancement and style profiles
+- Multi-provider support: OpenAI, Claude, Bedrock, Ollama, Whisper
+- MCP server with 6 AI-agent-callable tools
+- REST API with FastAPI, Swagger docs, and API key auth
+- Schema validation, platform checks, batch processing, JSON reports
+- Bundle generation, batch formatting, cost estimation
+
 ## [0.10.0] - 2026-02-20
 
 ### REST API Release

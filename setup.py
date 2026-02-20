@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.10.0 — REST API (FastAPI endpoints for all pipeline operations).
+Version: 1.0.0 — First public release with complete pipeline, MCP server, REST API, and frozen schemas.
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.10.0",
+    version="1.0.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",

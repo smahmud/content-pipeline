@@ -50,6 +50,7 @@ For testing strategy and coverage, see [test-strategy.md](test-strategy.md).
 - **v0.9.0** - Validation & quality gates: `validate` command with schema validation, platform checks, batch support, JSON reports, strict mode
 - **v0.9.5** - MCP server integration: AI-agent-callable tools wrapping all CLI commands via Model Context Protocol
 - **v0.10.0** - REST API: FastAPI-based HTTP interface with Swagger docs, API key auth, CORS support
+- **v1.0.0** - First public release: CI/CD, schema freeze, documentation, contributor guide
 
 ### 🧭 Future
 - Additional features and enhancements planned
