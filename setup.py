@@ -3,8 +3,7 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.8.0 — Adds content formatting with 16 output types, hybrid template + LLM
-architecture, style profiles, bundles, and platform validation.
+Version: 0.8.5 — Technical debt fix release updating enrichment tests to provider terminology.
 """
 from setuptools import setup, find_packages
 
