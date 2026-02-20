@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 0.9.0 — Validation & quality gates (validate command, schema validation, platform checks, batch support).
+Version: 0.9.5 — MCP server integration (AI-agent-callable tools wrapping CLI commands).
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="0.9.0",
+    version="0.9.5",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
@@ -25,6 +25,7 @@ setup(
         "pyyaml>=6.0",
         "jinja2>=3.0",
         "requests>=2.31.0",
+        "mcp>=1.0",
     ],
     entry_points={
         "console_scripts": [

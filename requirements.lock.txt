@@ -46,6 +46,7 @@ pytokens==0.3.0
 PyYAML==6.0.2
 regex==2025.11.3
 requests==2.32.5
+mcp==1.26.0
 ruff==0.14.4
 setuptools==80.9.0
 sympy==1.14.0

@@ -30,7 +30,7 @@ from .validate import validate
 configure_logging()
 
 @click.group()
-@click.version_option(version='0.9.0', prog_name='content-pipeline')
+@click.version_option(version='0.9.5', prog_name='content-pipeline')
 def main():
     """Content Pipeline CLI - Extract, transcribe, enrich, and format multimedia content.
     

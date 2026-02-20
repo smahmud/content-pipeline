@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [0.9.5] - 2026-02-20
+
+### MCP Server Integration Release
+
+This release introduces a Model Context Protocol (MCP) server that wraps existing CLI commands as AI-agent-callable tools, enabling Claude, GPT, and other AI agents to orchestrate content pipeline workflows programmatically.
+
+### Added
+- **MCP Server** (`mcp_server/`)
+  - FastMCP-based server with stdio and SSE transport support
+  - 6 registered tools: `extract`, `transcribe`, `enrich`, `format_content`, `validate`, `run_pipeline`
+  - YAML-based server configuration with environment variable overrides
+  - Structured JSON responses with success/error status for all tools
+  - `run_pipeline` convenience tool chains extract → transcribe → enrich → format
+
+- **New Dependency**: `mcp>=1.0` (Model Context Protocol SDK)
+
 ## [0.9.0] - 2026-02-20
 
 ### Validation & Quality Gates Release

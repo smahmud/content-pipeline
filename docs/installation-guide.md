@@ -35,6 +35,7 @@ The following packages are automatically installed when you install the Content 
 | **pyyaml** | ≥6.0 | YAML configuration and prompt templates |
 | **jinja2** | ≥3.0 | Prompt template rendering |
 | **requests** | ≥2.31.0 | HTTP client for Ollama (optional) |
+| **mcp** | ≥1.0 | Model Context Protocol SDK for MCP server (optional) |
 
 ### Installation Methods
 

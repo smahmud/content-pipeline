@@ -64,6 +64,10 @@ tests/
 │   │   ├── test_engine.py           # Validation engine tests (single, batch, strict, platform)
 │   │   ├── test_schema_validator.py # Schema detection and validation tests
 │   │   └── test_cross_reference.py  # Cross-reference validation tests
+├── mcp_server/                   # NEW in v0.9.5: MCP server tests
+│   ├── test_config.py           # Server configuration tests
+│   ├── test_server.py           # Tool registration tests
+│   └── test_tools.py            # Tool wrapper tests (validate, extract)
 │   ├── enrichment/                   # NEW in v0.7.0: Enrichment testing
 │   │   ├── test_providers.py        # LLM provider tests (OpenAI, Claude, Bedrock, Ollama)
 │   │   ├── test_orchestrator.py     # Enrichment workflow coordination tests
