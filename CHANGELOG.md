@@ -6,6 +6,25 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes.
 
+## [1.0.1] - 2026-02-21
+
+### Repository Cleanup Release
+
+Removes files that were incorrectly versioned from `.gitignore`-excluded folders, fixes broken documentation links, and corrects placeholder GitHub URLs.
+
+### Fixed
+- Removed `docs/planing/backlog-and-technical-debt.md` from git tracking (was in `.gitignore`-excluded folder)
+- Removed `docs/others/testing-archive/integration-quickstart.md` from git tracking (was in `.gitignore`-excluded folder)
+- Removed `docs/others/testing-archive/integration-tests.md` from git tracking (was in `.gitignore`-excluded folder)
+- Fixed broken links to `notes/all-flag-deprecation.md` in `docs/cli-commands.md` (file was never versioned)
+- Replaced placeholder `your-org` GitHub URLs with correct `smahmud` in `docs/installation-guide.md`
+- Fixed `whisper>=1.0` → `openai-whisper>=20230314` in `requirements.txt` (wrong package name)
+- Added missing `python-dotenv>=1.0` to `requirements.txt` and `setup.py`
+- Removed duplicate entries from `requirements-dev.txt`
+
+### Changed
+- Cleaned up remote branches (all feature/chore branches deleted, only `main` remains)
+
 ## [1.0.0] - 2026-02-20
 
 ### First Public Release 🎉

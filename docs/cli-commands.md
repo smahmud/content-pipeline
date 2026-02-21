@@ -98,7 +98,7 @@ content-pipeline transcribe --source audio.mp3 --engine local-whisper --output-d
 **Status:** ✅ Implemented in v0.7.0, Enhanced in v0.8.6  
 **Purpose:** Generates semantic metadata including summaries, tags, chapters, and key highlights using LLM processing with multi-provider support.
 
-**⚠️ Deprecation Notice**: The `--all` flag is deprecated and will be removed in a future version. It has provider-specific reliability issues (only works with Anthropic Claude, fails with AWS Bedrock and OpenAI). Use separate commands for each enrichment type instead. See [deprecation notice](notes/all-flag-deprecation.md) for migration guide.
+**⚠️ Deprecation Notice**: The `--all` flag is deprecated. It has provider-specific reliability issues (only works with Anthropic Claude, fails with AWS Bedrock and OpenAI). Use separate flags for each enrichment type instead (e.g., `--summarize --tag --chapterize --highlight`).
 
 **Usage:**
 ```bash
@@ -233,7 +233,7 @@ content-pipeline enrich --input transcript.json --summarize --custom-prompts ./m
 - ✅ Long transcript handling with automatic chunking
 - ✅ Custom YAML prompt templates
 - ✅ Retry logic with exponential backoff
-- ⚠️ **Note**: The `--all` flag is deprecated due to provider-specific reliability issues. Use separate flags (e.g., `--summarize --tag`) or run separate commands for each enrichment type. See [deprecation notice](notes/all-flag-deprecation.md) for details.
+- ⚠️ **Note**: The `--all` flag is deprecated due to provider-specific reliability issues. Use separate flags (e.g., `--summarize --tag`) or run separate commands for each enrichment type.
 
 **New in v0.8.6:**
 - ✅ Separate output files per enrichment type (default behavior)

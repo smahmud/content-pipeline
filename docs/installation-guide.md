@@ -44,7 +44,7 @@ The following packages are automatically installed when you install the Content 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/content-pipeline.git
+git clone https://github.com/smahmud/content-pipeline.git
 cd content-pipeline
 
 # Install Python dependencies
@@ -58,7 +58,7 @@ pip install -e .
 
 ```bash
 # Install directly from source
-pip install git+https://github.com/your-org/content-pipeline.git
+pip install git+https://github.com/smahmud/content-pipeline.git
 ```
 
 #### Method 3: Production Installation
@@ -515,8 +515,8 @@ python validate_installation.py
 - [MoviePy Documentation](https://zulko.github.io/moviepy/)
 
 ### Getting Help
-- **Issues:** Report problems on [GitHub Issues](https://github.com/your-org/content-pipeline/issues)
-- **Discussions:** Join [GitHub Discussions](https://github.com/your-org/content-pipeline/discussions)
+- **Issues:** Report problems on [GitHub Issues](https://github.com/smahmud/content-pipeline/issues)
+- **Discussions:** Join [GitHub Discussions](https://github.com/smahmud/content-pipeline/discussions)
 - **Development:** See [CLI Commands Guide](cli-commands.md) for development information
 
 ### Version Compatibility
