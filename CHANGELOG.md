@@ -8,9 +8,9 @@ No unreleased changes.
 
 ## [1.0.1] - 2026-02-21
 
-### Repository Cleanup Release
+### Repository Cleanup and Bug Fix Release
 
-Removes files that were incorrectly versioned from `.gitignore`-excluded folders, fixes broken documentation links, and corrects placeholder GitHub URLs.
+Removes files that were incorrectly versioned from `.gitignore`-excluded folders, fixes broken documentation links, corrects placeholder GitHub URLs, and fixes bugs discovered during end-to-end pipeline testing.
 
 ### Fixed
 - Removed `docs/planing/backlog-and-technical-debt.md` from git tracking (was in `.gitignore`-excluded folder)
@@ -21,6 +21,14 @@ Removes files that were incorrectly versioned from `.gitignore`-excluded folders
 - Fixed `whisper>=1.0` → `openai-whisper>=20230314` in `requirements.txt` (wrong package name)
 - Added missing `python-dotenv>=1.0` to `requirements.txt` and `setup.py`
 - Removed duplicate entries from `requirements-dev.txt`
+- Fixed `extract` command hardcoding `output/` prefix — now respects user-provided output paths
+- Added legacy provider name mapping in `LLMProviderFactory` — `ollama`, `openai`, `claude`, `bedrock` now correctly resolve to `local-ollama`, `cloud-openai`, `cloud-anthropic`, `cloud-aws-bedrock`
+- Fixed enrichment validation crash when LLM returns uppercase enum values (e.g., `"HIGH"` instead of `"high"` for highlight importance)
+- Fixed enrichment validation crash when LLM returns a dict instead of an array for highlights — now auto-wraps in array during repair
+- Fixed `SourceCombiner` tag merging — now correctly reads `categories`, `keywords`, `entities` from EnrichmentV1 schema instead of non-existent `primary`/`secondary` fields
+- Fixed `ImagePromptGenerator.get_output_filename()` called as class method instead of instance method in `cli/format.py`
+- Fixed `ImagePromptsResult` serialization — replaced missing `.to_json()` call with `dataclasses.asdict()`
+- Fixed `chapters.j2` template crash when LLM returns timestamps as strings — `format_timestamp` filter now handles string inputs, and template safely skips duration calculation for non-numeric timestamps
 
 ### Changed
 - Cleaned up remote branches (all feature/chore branches deleted, only `main` remains)
