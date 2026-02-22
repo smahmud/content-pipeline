@@ -649,10 +649,11 @@ def _process_image_prompts(
     
     # Write image prompts to separate file
     from pipeline.formatters.image_prompts import ImagePromptGenerator
-    prompts_path = ImagePromptGenerator.get_output_filename(output_path)
+    prompts_path = ImagePromptGenerator().get_output_filename(output_path)
     
     import json
-    prompts_data = prompts_result.to_json()
+    from dataclasses import asdict
+    prompts_data = asdict(prompts_result)
     
     from pathlib import Path
     Path(prompts_path).parent.mkdir(parents=True, exist_ok=True)

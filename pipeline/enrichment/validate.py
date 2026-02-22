@@ -86,7 +86,11 @@ class SchemaValidator:
         # Chapters and highlights return arrays, not single objects
         if enrichment_type in ['chapter', 'highlight']:
             if not isinstance(data, list):
-                raise SchemaValidationError(
+                # If it's a dict, wrap it in a list (common LLM output issue)
+                if isinstance(data, dict) and attempt_repair:
+                    data = [data]
+                else:
+                    raise SchemaValidationError(
                     f"{enrichment_type} enrichment must return an array",
                     enrichment_type=enrichment_type,
                     response_text=response_text,
@@ -352,6 +356,11 @@ class SchemaValidator:
                         # Can't repair - need actual data
                         return None
             
+            # Handle enum case mismatch (e.g., "HIGH" -> "high")
+            elif error_type == 'enum':
+                if isinstance(repaired_data.get(field), str):
+                    repaired_data[field] = repaired_data[field].lower()
+
             # Handle invalid timestamp format
             elif error_type == 'value_error' and field in ['timestamp', 'start_time', 'end_time']:
                 # Try to fix common timestamp issues

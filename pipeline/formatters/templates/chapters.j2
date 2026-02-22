@@ -38,8 +38,10 @@ Optional context:
 {{ chapter.summary }}
 {% endif %}
 
-{% if chapter.end_time %}
+{% if chapter.end_time and chapter.start_time is number and chapter.end_time is number %}
 *Duration: {{ (chapter.end_time - chapter.start_time) | format_timestamp }}*
+{% elif chapter.end_time %}
+*End: {{ chapter.end_time | format_timestamp }}*
 {% endif %}
 
 {% endfor %}

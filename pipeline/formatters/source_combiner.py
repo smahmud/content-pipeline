@@ -305,6 +305,9 @@ class SourceCombiner:
                 merged["metadata"][field] = first_meta[field]
         
         all_tags: list[str] = []
+        all_categories: list[str] = []
+        all_keywords: list[str] = []
+        all_entities: list[str] = []
         all_topics: list[str] = []
         all_key_points: list[str] = []
         summaries: list[str] = []
@@ -329,6 +332,11 @@ class SourceCombiner:
             # Collect tags
             tags = content.get("tags", [])
             if isinstance(tags, dict):
+                # Handle EnrichmentV1 schema format (categories, keywords, entities)
+                all_categories.extend(tags.get("categories", []))
+                all_keywords.extend(tags.get("keywords", []))
+                all_entities.extend(tags.get("entities", []))
+                # Also handle legacy format (primary, secondary)
                 all_tags.extend(tags.get("primary", []))
                 all_tags.extend(tags.get("secondary", []))
             elif isinstance(tags, list):
@@ -355,7 +363,15 @@ class SourceCombiner:
                 merged["highlights"].extend(highlights)
         
         # Deduplicate and set merged values
-        merged["tags"] = self._deduplicate_list(all_tags)
+        # Rebuild tags in EnrichmentV1 schema format if we have structured data
+        if all_categories or all_keywords or all_entities:
+            merged["tags"] = {
+                "categories": self._deduplicate_list(all_categories),
+                "keywords": self._deduplicate_list(all_keywords),
+                "entities": self._deduplicate_list(all_entities),
+            }
+        else:
+            merged["tags"] = self._deduplicate_list(all_tags)
         merged["topics"] = self._deduplicate_list(all_topics)
         merged["key_points"] = self._deduplicate_list(all_key_points)
         

@@ -33,8 +33,8 @@ def extract(source, output):
     """
     source_type = classify_source(source)
     
-    os.makedirs("output", exist_ok=True)
-    output_path = os.path.join("output", output)
+    os.makedirs(os.path.dirname(output) or "output", exist_ok=True)
+    output_path = output if os.path.dirname(output) else os.path.join("output", output)
     metadata_path = output_path.replace(".mp3", ".json")
 
     if source_type == "streaming":        

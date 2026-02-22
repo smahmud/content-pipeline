@@ -1,11 +1,3 @@
-# Test artifacts
-tests/output/
-tests/assets/
-test_output/
-
-# Personal test scripts (not versioned)
-tests/my-test-scripts/
-
 # Virtual environments
 .venv/
 env/
@@ -22,50 +14,24 @@ __pycache__/
 # Logs
 *.log
 
+# Pipeline output
 output/
 
-# Build artifact
+# Build artifacts
 *.egg-info/
 
-#VS Code Workspace
+# VS Code Workspace
 *.code-workspace
 .vscode/
-
-# Documentation folders excluded from versioning
-docs/milestones/
-docs/planing/
-docs/strategy/
-docs/tools/
-docs/code_review/
-docs/notes/
-docs/others/
-docs/logs/
-
-# Configuration examples (personal reference)
-examples/
 
 # Environment variables (contains API keys)
 .env
 .env.dev
-.env.local
-.env.production
-.env.test
 # But DO version the template
 !.env.template
-
-# Kiro development artifacts
-.kiro/
 
 # Hypothesis testing artifacts
 .hypothesis/
 
 # Content pipeline cache (runtime data)
 .content-pipeline/cache/
-
-
-# Temporary development files
-.out
-TEST_FIX_SUMMARY.md
-
-# Development scripts (not versioned)
-scripts/

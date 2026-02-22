@@ -3,13 +3,13 @@ setup.py
 
 Packaging metadata and CLI entry point for the content-pipeline.
 
-Version: 1.0.0 — First public release with complete pipeline, MCP server, REST API, and frozen schemas.
+Version: 1.0.1 — Repository cleanup: removed incorrectly versioned files, fixed broken links, corrected placeholder URLs.
 """
 from setuptools import setup, find_packages
 
 setup(
     name="content-pipeline",
-    version="1.0.0",
+    version="1.0.1",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
@@ -25,6 +25,7 @@ setup(
         "pyyaml>=6.0",
         "jinja2>=3.0",
         "requests>=2.31.0",
+        "python-dotenv>=1.0",
         "mcp>=1.0",
         "fastapi>=0.100",
     ],

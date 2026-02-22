@@ -113,15 +113,19 @@ def truncate_chars(text: str, max_chars: int, suffix: str = "...") -> str:
     return truncated + suffix
 
 
-def format_timestamp(seconds: float) -> str:
+def format_timestamp(seconds) -> str:
     """Format seconds as HH:MM:SS or MM:SS timestamp.
     
     Args:
-        seconds: Time in seconds
+        seconds: Time in seconds (int, float, or timestamp string)
         
     Returns:
         Formatted timestamp string
     """
+    if isinstance(seconds, str):
+        # Already a formatted timestamp string, return as-is
+        return seconds
+    
     if not isinstance(seconds, (int, float)):
         return "00:00"
     

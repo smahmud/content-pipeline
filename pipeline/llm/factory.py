@@ -81,6 +81,15 @@ class LLMProviderFactory:
         Raises:
             ConfigurationError: If provider is unknown or unavailable
         """
+        # Map legacy provider names to new format
+        legacy_map = {
+            "openai": "cloud-openai",
+            "claude": "cloud-anthropic",
+            "bedrock": "cloud-aws-bedrock",
+            "ollama": "local-ollama",
+        }
+        provider = legacy_map.get(provider, provider)
+
         if provider == "auto":
             return self._auto_select_provider()
         
